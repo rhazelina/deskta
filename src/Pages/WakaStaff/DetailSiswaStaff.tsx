@@ -46,7 +46,7 @@ export default function DetailSiswaStaff({
   onLogout,
   currentPage,
   onMenuClick,
-  kelasId,
+  kelasId: _kelasId,
   onBack,
 }: DetailSiswaStaffProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -203,7 +203,12 @@ export default function DetailSiswaStaff({
       <FormModal isOpen={isEditOpen} onClose={handleCloseEdit} title="Edit Kehadiran" onSubmit={handleSubmitEdit} submitLabel="Simpan" isSubmitting={isSubmitting}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <p style={{ margin: 0, marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Pilih Kehadiran</p>
-          <Select value={editStatus} onChange={(val) => setEditStatus(val as StatusType)} options={statusOptions} placeholder="Pilih status kehadiran" />
+          <Select
+            value={editStatus}
+            onChange={(val) => setEditStatus(val as DetailStatusType)}
+            options={statusOptions}
+            placeholder="Pilih status kehadiran"
+          />
         </div>
       </FormModal>
     </StaffLayout>
