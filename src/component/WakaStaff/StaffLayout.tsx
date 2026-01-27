@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import Sidebar from '../Sidebar';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AWANKANAN from '../../assets/Icon/AWANKANAN.png';

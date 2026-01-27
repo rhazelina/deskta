@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Edit, Trash2, Eye } from "lucide-react";
 
 interface Column {

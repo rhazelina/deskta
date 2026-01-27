@@ -18,6 +18,8 @@ interface KelasFormProps {
     waliKelasId: string;
   };
   jurusanList: { id: string; nama: string }[];
+  kelasList?: { id: string; nama: string }[];
+  waliKelasList?: { id: string; nama: string }[];
 }
 
 export function TambahKelasForm({
@@ -27,6 +29,8 @@ export function TambahKelasForm({
   isEdit = false,
   initialData,
   jurusanList,
+  kelasList = [],
+  waliKelasList = [],
 }: KelasFormProps) {
   const [jurusanId, setJurusanId] = useState("");
   const [kelasId, setKelasId] = useState("");
@@ -116,9 +120,18 @@ export function TambahKelasForm({
             style={inputStyle}
           >
             <option value="">Pilih tingkat kelas</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
+            {(kelasList.length > 0
+              ? kelasList
+              : [
+                  { id: "10", nama: "10" },
+                  { id: "11", nama: "11" },
+                  { id: "12", nama: "12" },
+                ]
+            ).map((item) => (
+              <option key={item.id} value={item.nama}>
+                {item.nama}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -148,13 +161,28 @@ export function TambahKelasForm({
         {/* Wali Kelas */}
         <div>
           <label style={labelStyle}>Wali Kelas</label>
-          <input
-            type="text"
-            placeholder="Masukkan nama guru"
-            value={waliKelasId}
-            onChange={(e) => setWaliKelasId(e.target.value)}
-            style={inputStyle}
-          />
+          {waliKelasList.length > 0 ? (
+            <select
+              value={waliKelasId}
+              onChange={(e) => setWaliKelasId(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="">Pilih wali kelas</option>
+              {waliKelasList.map((item) => (
+                <option key={item.id} value={item.nama}>
+                  {item.nama}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              placeholder="Masukkan nama guru"
+              value={waliKelasId}
+              onChange={(e) => setWaliKelasId(e.target.value)}
+              style={inputStyle}
+            />
+          )}
         </div>
       </div>
     </FormModal>

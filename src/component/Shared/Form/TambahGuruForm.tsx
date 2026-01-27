@@ -135,13 +135,6 @@ export function TambahGuruForm({
     }
   };
 
-  const handleNoTelpChange = (value: string) => {
-    if (/^\d*$/.test(value) && value.length <= 13) {
-      setNoTelp(value);
-      if (errors.noTelp) setErrors({ ...errors, noTelp: undefined });
-    }
-  };
-
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     width: '100%',
     padding: '12px 14px',

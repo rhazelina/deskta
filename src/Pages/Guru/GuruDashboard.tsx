@@ -813,13 +813,12 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               onClose={() => setActiveModal(null)}
               data={
                 selectedSchedule
-                  ? {
-                      subject: selectedSchedule.subject,
-                      className: selectedSchedule.className,
-                      jurusan: selectedSchedule.jurusan,
-                      jam: selectedSchedule.jam,
-                      statusGuru: "Hadir",
-                    }
+                      ? {
+                          subject: selectedSchedule.subject,
+                          className: selectedSchedule.className,
+                          jurusan: selectedSchedule.jurusan,
+                          jam: selectedSchedule.jam,
+                        }
                   : null
               }
               onMulaiAbsen={handleMulaiAbsen}
@@ -839,13 +838,12 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               onClose={() => setActiveModal(null)}
               data={
                 selectedSchedule
-                  ? {
-                      subject: selectedSchedule.subject,
-                      className: selectedSchedule.className,
-                      jurusan: selectedSchedule.jurusan,
-                      jam: selectedSchedule.jam,
-                      statusGuru: "Hadir",
-                    }
+                      ? {
+                          subject: selectedSchedule.subject,
+                          className: selectedSchedule.className,
+                          jurusan: selectedSchedule.jurusan,
+                          jam: selectedSchedule.jam,
+                        }
                   : null
               }
               onSubmit={handleSubmitTidakBisaMengajar}
@@ -858,38 +856,6 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
 
   return renderPage();
 }
-
-// ==================== UTILITY FUNCTIONS ====================
-function getCurrentDate() {
-  const now = new Date();
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const months = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
-
-  return {
-    day: days[now.getDay()],
-    date: now.getDate(),
-    month: months[now.getMonth()],
-    year: now.getFullYear(),
-    time: now.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
-}
-
 
 // ======= lEGACY CODE =======
 

@@ -1,8 +1,7 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
-import { Button } from '../../component/Shared/Button';
 import { EditSiswaForm } from '../../component/Shared/EditSiswa';
-import { Edit } from 'lucide-react';
+import { Edit, User as UserIcon } from 'lucide-react';
 
 interface User {
   role: string;
@@ -65,7 +64,7 @@ export default function DetailSiswa({
   onLogout,
   currentPage,
   onMenuClick,
-  siswaId,
+  siswaId: _siswaId,
 }: DetailSiswaProps) {
   const [siswaData, setSiswaData] = useState<Siswa>(dummySiswaData);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -92,7 +91,7 @@ export default function DetailSiswa({
       kelasId: data.kelasId,
     });
     setIsEditModalOpen(false);
-    alert('✅ Data siswa berhasil diperbarui!');
+    alert('âœ… Data siswa berhasil diperbarui!');
     // TODO: Nanti ganti dengan API call
   };
 
@@ -200,14 +199,12 @@ export default function DetailSiswa({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
                 color: 'white',
-                fontWeight: 'bold',
               }}
             >
-              👤
+              <UserIcon size={28} color="#FFFFFF" />
             </div>
-            {/* Info */}
+{/* Info */}
             <div>
               <h2
                 style={{
@@ -303,3 +300,5 @@ export default function DetailSiswa({
     </AdminLayout>
   );
 }
+
+

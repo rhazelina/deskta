@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import GuruLayout from '../../component/Guru/GuruLayout';
 import { StatusBadge } from '../../component/Shared/StatusBadge';
-import { Edit } from 'lucide-react';
 
 interface KehadiranSiswaGuruProps {
   user: { name: string; role: string };
@@ -28,7 +27,7 @@ export default function KehadiranSiswaGuru({
   currentPage,
   onMenuClick,
 }: KehadiranSiswaGuruProps) {
-  const [selectedKelas, setSelectedKelas] = useState('XII Mekatronika 2');
+  const [selectedKelas] = useState('XII Mekatronika 2');
   const [selectedJam, setSelectedJam] = useState('Jam Ke-1');
   const [selectedMatkul, setSelectedMapel] = useState('Semua');
   const [selectedTanggal, setSelectedTanggal] = useState(new Date().toISOString().slice(0, 10));
@@ -43,7 +42,7 @@ export default function KehadiranSiswaGuru({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [kehadiranData, setKehadiranData] = useState<KehadiranSiswa[]>([
+  const [kehadiranData] = useState<KehadiranSiswa[]>([
     { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.00', status: 'hadir' },
     { id: '2', nisn: '1348576393', nama: 'Ahmad Fauzi', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.05', status: 'hadir' },
     { id: '3', nisn: '1348576394', nama: 'Siti Nurhaliza', mapel: 'Fisika', jam: 'Jam Ke-2', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'sakit' },
@@ -58,10 +57,6 @@ export default function KehadiranSiswaGuru({
     (selectedMatkul === 'Semua' || s.mapel === selectedMatkul) &&
     s.tanggal === selectedTanggal
   );
-
-  const handleEdit = (item: KehadiranSiswa) => {
-    alert(`Edit absensi: ${item.nama}`);
-  };
 
   const StatCard = ({ label, value, color, bgColor, icon }: any) => (
     <div style={{

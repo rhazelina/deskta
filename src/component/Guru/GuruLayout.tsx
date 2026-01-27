@@ -1,4 +1,5 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import Sidebar from '../Sidebar';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
@@ -103,7 +104,8 @@ export default function GuruLayout({
             {pageTitle}
           </h1>
 
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
             <img
               src={LogoSchool}
               alt="Logo SMK"

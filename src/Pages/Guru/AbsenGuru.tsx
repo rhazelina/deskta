@@ -47,7 +47,7 @@ export default function ScanAbsenGuru({
   
   // 1. Timer Effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isScanning) {
       interval = setInterval(() => {
         setTimer(prev => prev + 1);
@@ -58,7 +58,7 @@ export default function ScanAbsenGuru({
 
   // 2. Simulation Effect (Live Scan)
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     if (isScanning) {
       interval = setInterval(() => {
@@ -492,7 +492,7 @@ const styles = {
     overflow: 'hidden'
   },
   statCard: (color: string, bg: string) => ({
-    backgroundColor: '#FFFFFF',
+    backgroundColor: bg,
     padding: '20px',
     borderRadius: '16px',
     borderLeft: `5px solid ${color}`,

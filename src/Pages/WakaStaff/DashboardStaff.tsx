@@ -112,7 +112,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
         return (
           <JadwalKelasStaff
             {...commonProps}
-            onSelectKelas={(kelasId: string) => {
+            onselectKelas={(kelasId: string) => {
               setSelectedKelas(kelasId);
               handleMenuClick("lihat-kelas");
             }}
@@ -123,7 +123,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
         return (
           <JadwalGuruStaff
             {...commonProps}
-            onSelectGuru={(guruId: string) => {
+            onselectGuru={(guruId: string) => {
               setSelectedGuru(guruId);
               handleMenuClick("lihat-guru");
             }}
@@ -134,7 +134,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
         return (
           <DetailGuru
             {...commonProps}
-            selectedGuru={selectedGuru}
+            namaGuru={selectedGuru || undefined}
             onBack={() => handleMenuClick("jadwal-guru")}
           />
         );
@@ -143,7 +143,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
         return (
           <DetailKelas
             {...commonProps}
-            selectedKelas={selectedKelas}
+            kelas={selectedKelas || undefined}
             onBack={() => handleMenuClick("jadwal-kelas")}
           />
         );

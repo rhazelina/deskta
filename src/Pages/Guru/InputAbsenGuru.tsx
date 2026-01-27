@@ -25,9 +25,15 @@ export default function InputAbsenGuru({
   currentPage,
   onMenuClick,
 }: InputAbsenGuruProps) {
-  const [selectedKelas, setSelectedKelas] = useState('XII Mekatronika 2');
-  const [selectedJam, setSelectedJam] = useState('Jam Ke-1');
-  const [selectedTanggal, setSelectedTanggal] = useState(new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+  const [selectedKelas] = useState('XII Mekatronika 2');
+  const [selectedJam] = useState('Jam Ke-1');
+  const [selectedTanggal] = useState(
+    new Date().toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  );
   const [siswaList, setSiswaList] = useState<Siswa[]>([
     { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', status: null },
     { id: '2', nisn: '1348576393', nama: 'Ahmad Fauzi', status: null },

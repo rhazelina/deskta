@@ -29,6 +29,7 @@ export function MetodeGuru({
   const [dispSelesai, setDispSelesai] = useState<string>("");
   const [dispKeterangan, setDispKeterangan] = useState("");
   const [dispBukti, setDispBukti] = useState<File | null>(null);
+  const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -79,6 +80,11 @@ export function MetodeGuru({
 
   const handleScan = () => {
     onPilihQR();
+  };
+
+  const handleManual = () => {
+    onPilihManual();
+    handleClose();
   };
 
   return (
@@ -157,6 +163,22 @@ export function MetodeGuru({
                 gap: 12,
               }}
             >
+              <button
+                type="button"
+                onClick={handleManual}
+                style={{
+                  border: "1px solid #D1D5DB",
+                  background: "#FFFFFF",
+                  color: "#1F2937",
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                Manual
+              </button>
               <span style={{ fontSize: 14, color: "#4B5563" }}>Live Mode</span>
               <button
                 type="button"
@@ -301,7 +323,13 @@ export function MetodeGuru({
               {selectedFile ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#E5E7EB' }}>
-                    <img src={URL.createObjectURL(selectedFile)} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
                   </div>
                   <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{selectedFile.name}</span>
                   <span style={{ fontSize: '12px', color: '#2563EB', fontWeight: '500' }}>Klik untuk ganti file</span>

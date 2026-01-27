@@ -1,8 +1,8 @@
-import React from "react";
+import type { ReactNode } from "react";
 
 interface ButtonProps {
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   iconPosition?: "left" | "right";
   onClick?: () => void;
   variant?: "primary" | "secondary" | "danger";

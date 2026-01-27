@@ -72,7 +72,7 @@ export function TidakBisaMengajar({
   const handleRemoveFile = (
     setFile: (file: File | null) => void,
     setPreview: (preview: string | null) => void,
-    inputRef: React.RefObject<HTMLInputElement>
+    inputRef: React.RefObject<HTMLInputElement | null>
   ) => {
     setFile(null);
     setPreview(null);
@@ -245,8 +245,8 @@ export function TidakBisaMengajar({
               }}
             >
               <option value="">Pilih alasan ketidakhadiran</option>
-              {ALASAN_OPTIONS.map((option) => (
-                <option key={option} value={option}>
+              {ALASAN_OPTIONS.map((option, idx) => (
+                <option key={`${option}-${idx}`} value={option}>
                   {option}
                 </option>
               ))}

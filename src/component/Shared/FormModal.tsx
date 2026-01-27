@@ -6,10 +6,11 @@ interface FormModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   submitLabel?: string;
   isSubmitting?: boolean;
   titleStyle?: React.CSSProperties;
+  showSubmitButton?: boolean;
 }
 
 export function FormModal({
@@ -21,10 +22,13 @@ export function FormModal({
   submitLabel = "Tambahkan",
   isSubmitting = false,
   titleStyle = {},
+  showSubmitButton = true,
 }: FormModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+    if (onSubmit) {
+      onSubmit();
+    }
   };
 
   return (
@@ -106,24 +110,26 @@ export function FormModal({
             >
               Batal
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                padding: "10px 24px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: "#1e40af",
-                color: "white",
-                fontWeight: "600",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                minWidth: "100px",
-                opacity: isSubmitting ? 0.7 : 1,
-              }}
-            >
-              {isSubmitting ? "Menyimpan..." : submitLabel}
-            </button>
+            {showSubmitButton && (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "#1e40af",
+                  color: "white",
+                  fontWeight: "600",
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                  fontSize: "14px",
+                  minWidth: "100px",
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
+              >
+                {isSubmitting ? "Menyimpan..." : submitLabel}
+              </button>
+            )}
           </div>
         </form>
       </div>

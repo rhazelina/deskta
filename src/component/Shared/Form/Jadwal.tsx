@@ -150,6 +150,9 @@ export function JadwalModal({
           style={{
             padding: '16px 24px',
             backgroundColor: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
           }}
         >
           <button
@@ -181,6 +184,35 @@ export function JadwalModal({
           >
             Mulai Absensi
           </button>
+          {onTidakBisaMengajar && (
+            <button
+              type="button"
+              onClick={() => {
+                onTidakBisaMengajar();
+                onClose();
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: '#EF4444',
+                color: 'white',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '16px',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#DC2626';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EF4444';
+              }}
+            >
+              Tidak Bisa Mengajar
+            </button>
+          )}
         </div>
       </div>
     </Modal>

@@ -1,4 +1,3 @@
-import React from "react";
 interface SelectProps {
   label?: string;
   value: string;

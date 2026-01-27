@@ -85,8 +85,7 @@ export function EditSiswaForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (validate()) {
       setIsSubmitting(true);
       setTimeout(() => {

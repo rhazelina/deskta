@@ -46,7 +46,7 @@ export default function SiswaLayout({
       <div style={{ position: "relative", zIndex: 10, flexShrink: 0 }}>
         <Sidebar
           currentPage={currentPage}
-          onMenuClick={onMenuClick}
+          onMenuClick={(page) => onMenuClick(page as MenuKey)}
           onLogout={onLogout}
           isOpen={isOpen}
           onToggle={() => setOpen((v) => !v)}

@@ -1,5 +1,4 @@
 // src/Pages/WakaStaff/components/ScheduleDetail.tsx
-import React from "react";
 
 type Cell = { label: string; sub?: string };
 type ScheduleGrid = Cell[][]; // [row][col]

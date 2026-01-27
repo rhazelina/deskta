@@ -1,8 +1,8 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
 import { EditGuruForm } from '../../component/Shared/EditGuru';
-import { Edit } from 'lucide-react';
+import { Edit, User as UserIcon } from 'lucide-react';
 
 interface User {
   role: string;
@@ -46,7 +46,7 @@ export default function DetailGuruAdmin({
   onLogout,
   currentPage,
   onMenuClick,
-  guruId,
+  guruId: _guruId,
   onNavigateToRiwayat,
 }: DetailGuruAdminProps) {
   const [guruData, setGuruData] = useState<Guru>(dummyGuruData);
@@ -69,7 +69,7 @@ export default function DetailGuruAdmin({
       mataPelajaran: data.mataPelajaran,
     });
     setIsEditModalOpen(false);
-    alert('✅ Data guru berhasil diperbarui!');
+    alert('âœ… Data guru berhasil diperbarui!');
     
   };
 
@@ -177,14 +177,12 @@ export default function DetailGuruAdmin({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
                 color: 'white',
-                fontWeight: 'bold',
               }}
             >
-              👤
+              <UserIcon size={28} color="#FFFFFF" />
             </div>
-            {/* Info */}
+{/* Info */}
             <div>
               <h2
                 style={{
@@ -292,3 +290,5 @@ export default function DetailGuruAdmin({
     </AdminLayout>
   );
 }
+
+
