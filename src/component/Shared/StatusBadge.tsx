@@ -1,4 +1,4 @@
-type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'alpha';
+type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'tanpa-keterangan';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -10,11 +10,11 @@ const statusConfig: Record<StatusType, { label: string; color: string; bgColor: 
   'tidak-hadir': { label: 'Tidak Hadir', color: '#991B1B', bgColor: '#FEE2E2' },
   sakit: { label: 'Sakit', color: '#1E40AF', bgColor: '#DBEAFE' },
   izin: { label: 'Izin', color: '#7C2D12', bgColor: '#FED7AA' },
-  alpha: { label: 'Alpha', color: '#991B1B', bgColor: '#FEE2E2' },
+  'tanpa-keterangan': { label: 'Tanpa Keterangan', color: '#991B1B', bgColor: '#FEE2E2' },
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const config = statusConfig[status] ?? statusConfig['tidak-hadir'];
 
   return (
     <span

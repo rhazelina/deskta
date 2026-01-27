@@ -2,7 +2,7 @@ import { useState } from 'react';
 import WalikelasLayout from '../../component/Walikelas/layoutwakel';
 import { FilterBar, FilterItem } from '../../component/Shared/FilterBar';
 import { StatusBadge } from '../../component/Shared/StatusBadge';
-import InputManualIcon from '../../assets/Icon/inputmanual.png';
+import { FileText } from 'lucide-react';
 
 interface InputAbsenWalikelasProps {
   user: { name: string; role: string };
@@ -91,16 +91,7 @@ export function InputAbsenWalikelas({
               flexShrink: 0,
             }}
           >
-            <img
-              src={InputManualIcon}
-              alt="Input Manual"
-              style={{
-                width: '28px',
-                height: '28px',
-                objectFit: 'contain',
-                filter: 'brightness(0) invert(1)',
-              }}
-            />
+            <FileText size={28} color="white" strokeWidth={2} />
           </div>
           <div>
             <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#111827', margin: 0, marginBottom: '4px' }}>

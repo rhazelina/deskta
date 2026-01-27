@@ -1,7 +1,5 @@
 import { useState, useMemo } from "react";
 import { Table } from "../../component/Shared/Table";
-import { Select } from "../../component/Shared/Select";
-import { StatusBadge } from "../../component/Shared/StatusBadge";
 
 interface AbsensiRecord {
   id: string;

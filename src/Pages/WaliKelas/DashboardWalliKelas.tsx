@@ -1,52 +1,11 @@
 import { useState, useEffect } from "react";
+import { Calendar, Clock, BookOpen, Users, Eye, QrCode } from "lucide-react";
 import WalikelasLayout from "../../component/Walikelas/layoutwakel";
-import BookIcon from "../../assets/Icon/open-book.png";
-import EyeIcon from "../../assets/Icon/Eye.png";
-import QRCodeIcon from "../../assets/Icon/qr_code.png";
 import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
 import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
 import { InputAbsenWalikelas } from "./InputAbsenWalikelas";
 import { KehadiranSiswaWakel } from "./KehadiranSiswaWakel";
-
-// Icon Components
-function CalendarIconSVG() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
-
-function ClockIconSVG() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
 
 // ==================== INTERFACES ====================
 interface DashboardWalliKelasProps {
@@ -111,125 +70,135 @@ const styles = {
     zIndex: 1,
     display: "flex",
     flexDirection: "column" as const,
-    gap: isMobile ? 16 : 24,
-    padding: isMobile ? "16px" : "24px",
+    gap: isMobile ? 20 : 28,
+    padding: isMobile ? "16px" : "28px",
+    backgroundColor: "#F9FAFB",
+    minHeight: "100vh",
   }),
 
   topGrid: (isMobile: boolean) => ({
     display: "grid" as const,
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
     gap: isMobile ? 12 : 16,
-    marginBottom: 24,
+    marginBottom: 8,
   }),
 
   userCard: (isMobile: boolean) => ({
     position: "relative" as const,
     padding: isMobile ? "16px" : "20px",
-    background: "linear-gradient(135deg, #2563EB 0%, #1E40AF 100%)",
-    borderRadius: "12px",
+    background: "linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)",
+    borderRadius: "14px",
     color: "white",
     display: "flex",
     alignItems: "center",
     gap: "16px",
     overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
+    boxShadow: "0 4px 16px rgba(30, 58, 138, 0.3)",
+    gridColumn: isMobile ? "1" : "span 2",
   }),
 
   decorativeCircle: {
     position: "absolute" as const,
-    width: "120px",
-    height: "120px",
+    width: "140px",
+    height: "140px",
     borderRadius: "50%",
-    background: "rgba(255, 255, 255, 0.1)",
-    top: "-40px",
-    right: "-40px",
+    background: "rgba(255, 255, 255, 0.08)",
+    top: "-50px",
+    right: "-50px",
   },
 
   userIcon: (isMobile: boolean) => ({
     position: "relative" as const,
     zIndex: 1,
-    width: isMobile ? "40px" : "48px",
-    height: isMobile ? "40px" : "48px",
-    borderRadius: "10px",
-    background: "rgba(255, 255, 255, 0.2)",
+    width: isMobile ? "44px" : "52px",
+    height: isMobile ? "44px" : "52px",
+    borderRadius: "12px",
+    background: "rgba(255, 255, 255, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    border: "2px solid rgba(255, 255, 255, 0.3)",
+    border: "2px solid rgba(255, 255, 255, 0.25)",
   }),
 
   dateTimeCard: (isMobile: boolean) => ({
     position: "relative" as const,
     padding: isMobile ? "16px" : "20px",
-    background: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-    borderRadius: "12px",
+    background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+    borderRadius: "14px",
     color: "white",
     display: "flex",
     flexDirection: "column" as const,
-    gap: "12px",
-    boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)",
+    gap: "14px",
+    boxShadow: "0 4px 16px rgba(99, 102, 241, 0.3)",
   }),
 
-  infoCard: (isMobile: boolean) => ({
+  infoCard: (isMobile: boolean, color: string) => ({
     position: "relative" as const,
     padding: isMobile ? "16px" : "20px",
-    background: "linear-gradient(135deg, #EC4899 0%, #DB2777 100%)",
-    borderRadius: "12px",
+    background: color,
+    borderRadius: "14px",
     color: "white",
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "space-between",
-    gap: "12px",
-    boxShadow: "0 4px 12px rgba(236, 72, 153, 0.25)",
+    gap: "14px",
+    boxShadow: `0 4px 16px rgba(0, 0, 0, 0.1)`,
   }),
 
   infoBadge: (isMobile: boolean) => ({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: "8px",
-    padding: isMobile ? "6px 12px" : "8px 14px",
-    fontSize: isMobile ? "14px" : "16px",
+    borderRadius: "10px",
+    padding: isMobile ? "8px 14px" : "10px 16px",
+    fontSize: isMobile ? "15px" : "17px",
     fontWeight: 700,
     display: "inline-block",
     width: "fit-content",
     border: "1px solid rgba(255, 255, 255, 0.3)",
   }),
 
+  sectionTitle: (isMobile: boolean) => ({
+    fontSize: isMobile ? "18px" : "20px",
+    fontWeight: 700,
+    color: "#111827",
+    marginBottom: 16,
+  }),
+
   scheduleCard: (isMobile: boolean) => ({
     display: "flex",
     alignItems: "center",
     gap: isMobile ? "12px" : "16px",
-    padding: isMobile ? "14px 16px" : "16px 20px",
+    padding: isMobile ? "14px 16px" : "18px 22px",
     background: "#FFFFFF",
     borderRadius: "12px",
-    border: "1px solid #D1D5DB",
+    border: "1px solid #E5E7EB",
     cursor: "pointer",
-    transition: "all 0.3s",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+    transition: "all 0.3s ease",
+    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
   }),
 
   bookIconWrapper: (isMobile: boolean) => ({
-    width: isMobile ? "40px" : "44px",
-    height: isMobile ? "40px" : "44px",
-    borderRadius: 10,
+    width: isMobile ? "44px" : "48px",
+    height: isMobile ? "44px" : "48px",
+    borderRadius: 12,
     background: "linear-gradient(135deg, #2563EB 0%, #1E40AF 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)",
+    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
   }),
 
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: "#F3F4F6",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    transition: "all 0.2s",
+    transition: "all 0.3s",
     border: "1px solid #E5E7EB",
   },
 };
@@ -353,19 +322,19 @@ export default function DashboardWalliKelas({
       onLogout={onLogout}
     >
       <div style={styles.mainContainer(isMobile)}>
-        {/* Top Grid: User Info, Date/Time, Teaching Stats, Student Stats */}
+        {/* Top Grid: 4 Column Layout */}
         <div style={styles.topGrid(isMobile)}>
-          {/* 1. User Info Card */}
+          {/* 1. User Info Card (Spans 2 on desktop) */}
           <div style={styles.userCard(isMobile)}>
             <div style={styles.decorativeCircle} />
             <div style={styles.userIcon(isMobile)}>
               <svg
-                width={isMobile ? "24" : "32"}
-                height={isMobile ? "24" : "32"}
+                width={isMobile ? "28" : "32"}
+                height={isMobile ? "28" : "32"}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#FFFFFF"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -377,55 +346,34 @@ export default function DashboardWalliKelas({
               <span style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 700, color: "#FFFFFF" }}>
                 {user.name}
               </span>
+              <span style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.9)" }}>
+                Wali Kelas
+              </span>
             </div>
           </div>
 
           {/* 2. Date & Time Card */}
           <div style={styles.dateTimeCard(isMobile)}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ opacity: 0.8 }}>
-                <CalendarIconSVG />
-              </div>
-              <span style={{ fontSize: "16px", fontWeight: "600" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Calendar size={24} strokeWidth={1.5} />
+              <span style={{ fontSize: "14px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
                 {currentDateStr || "Memuat..."}
               </span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ opacity: 0.8 }}>
-                <ClockIconSVG />
-              </div>
-              <span style={{ fontSize: "20px", fontWeight: "700", letterSpacing: "1px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Clock size={24} strokeWidth={1.5} />
+              <span style={{ fontSize: "20px", fontWeight: "700", letterSpacing: "0.5px", color: "#FFFFFF" }}>
                 {currentTimeStr || "00:00:00"}
               </span>
             </div>
-
-            <div style={{
-              marginTop: "4px",
-              paddingTop: "12px",
-              borderTop: "1px solid rgba(255,255,255,0.1)",
-              fontSize: "14px",
-              fontWeight: "500",
-              opacity: 0.9,
-            }}>
-              Semester Genap
-            </div>
           </div>
 
-          {/* 3. Total Wali Kelas Info Card */}
-          <div style={styles.infoCard(isMobile)}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <img 
-                src={BookIcon} 
-                alt="Book" 
-                style={{ 
-                  width: 20, 
-                  height: 20, 
-                  opacity: 0.9,
-                  filter: "brightness(0) invert(1)"
-                }} 
-              />
-              <span style={{ fontSize: "16px", fontWeight: "600" }}>
+          {/* 3. Kelas Asuh Card */}
+          <div style={styles.infoCard(isMobile, "linear-gradient(135deg, #10B981 0%, #059669 100%)")}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <BookOpen size={20} />
+              <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
                 Kelas Asuh
               </span>
             </div>
@@ -434,103 +382,98 @@ export default function DashboardWalliKelas({
             </div>
           </div>
 
-          {/* 4. Total Siswa Anda Card */}
-          <div style={styles.infoCard(isMobile)}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "16px", fontWeight: "600" }}>
-                  Total Siswa
+          {/* 4. Total Siswa Card */}
+          <div style={styles.infoCard(isMobile, "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)")}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Users size={20} />
+              <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
+                Total Siswa
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={styles.infoBadge(isMobile)}>
-                  40
-                </div>
-                <div style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.15)",
-                  borderRadius: "50%",
-                  width: 32,
-                  height: 32,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s"
-                }}
-                onClick={handleEyeClick}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)"}
-                >
-                   <img 
-                     src={EyeIcon} 
-                     alt="View" 
-                     style={{ 
-                       width: 18, 
-                       height: 18,
-                       filter: "brightness(0) invert(1)"
-                     }} 
-                   />
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+              <div style={styles.infoBadge(isMobile)}>
+                40
+              </div>
+              <div style={{
+                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                borderRadius: "10px",
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                border: "1px solid rgba(255,255,255,0.3)"
+              }}
+              onClick={handleEyeClick}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+              >
+                <Eye size={20} color="white" strokeWidth={2} />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Schedule Section */}
-        <div style={{ marginTop: 24 }}>
+        <div>
+          <h3 style={styles.sectionTitle(isMobile)}>Jadwal Kelas Anda</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {DUMMY_SCHEDULE.map((item) => (
+              <div 
+                key={item.id} 
+                style={styles.scheduleCard(isMobile)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.12)";
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.backgroundColor = "#F9FAFB";
+                  e.currentTarget.style.borderColor = "#BFDBFE";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0, 0, 0, 0.05)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                  e.currentTarget.style.borderColor = "#E5E7EB";
+                }}
+              >
+                <div style={styles.bookIconWrapper(isMobile)}>
+                  <BookOpen size={isMobile ? 20 : 24} color="white" strokeWidth={2} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "16px", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
+                    {item.subject}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>
+                    {item.className} • {item.jam}
+                  </div>
+                </div>
+
+                {/* Action Icon (QR) */}
                 <div 
-                  key={item.id} 
-                  style={{ ...styles.scheduleCard(isMobile), marginBottom: 16 }}
+                  onClick={(e) => handleQRClick(e, item)}
+                  style={styles.actionButton}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.15)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.backgroundColor = "#F9FAFB";
-                    e.currentTarget.style.borderColor = "#9CA3AF";
+                    e.currentTarget.style.backgroundColor = "#DBEAFE";
+                    e.currentTarget.style.transform = "scale(1.1)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.backgroundColor = "#FFFFFF";
-                    e.currentTarget.style.borderColor = "#D1D5DB";
+                    e.currentTarget.style.backgroundColor = "#F3F4F6";
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                    <div style={styles.bookIconWrapper(isMobile)}>
-                        <img 
-                          src={BookIcon} 
-                          alt="Mapel" 
-                          style={{ 
-                            width: isMobile ? "18px" : "20px",
-                            height: isMobile ? "18px" : "20px",
-                            filter: "brightness(0) invert(1)" 
-                          }} 
-                        />
-                    </div>
-
-                    <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "16px", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
-                            {item.subject}
-                        </div>
-                        <div style={{ fontSize: "14px", color: "#4B5563", fontWeight: 500 }}>
-                            {item.className}
-                        </div>
-                    </div>
-
-                    {/* Action Icon (QR Only) */}
-                    <div 
-                      onClick={(e) => handleQRClick(e, item)}
-                      style={styles.actionButton}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#E5E7EB";
-                        e.currentTarget.style.transform = "scale(1.05)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#F3F4F6";
-                        e.currentTarget.style.transform = "scale(1)";
-                      }}
-                    >
-                        <img src={QRCodeIcon} alt="Scan" style={{ width: 18, height: 18 }} />
-                    </div>
+                  <QrCode size={20} color="#2563EB" />
                 </div>
+              </div>
             ))}
+          </div>
         </div>
         
         {/* Modals */}

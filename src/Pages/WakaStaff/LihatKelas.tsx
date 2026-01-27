@@ -1,4 +1,3 @@
-// src/Pages/WakaStaff/LihatKelas.tsx
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import DummyJadwal from "../../assets/Icon/DummyJadwal.png";
 
@@ -26,69 +25,132 @@ export default function LihatKelas({
       user={user}
       onLogout={onLogout}
     >
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderRadius: 16,
-          padding: 24,
-          boxShadow: "0 12px 24px rgba(15, 23, 42, 0.08)",
-        }}
-      >
-        {/* ===============================
-            PILL / KOLOM KELAS (TETAP)
-        =============================== */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {/* Box Informasi Kelas */}
         <div
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            backgroundColor: "#0B2A4A",
-            color: "#FFFFFF",
-            padding: "10px 16px",
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: 14,
-            marginBottom: 20,
-          }}
-        >
-          <span style={{ fontSize: 16 }}>🏫</span>
-          {kelas}
-        </div>
-
-        {/* ===============================
-            TABEL / CONTAINER JADWAL
-        =============================== */}
-        <div
-          style={{
-            width: "100%",
-            border: "1px solid #E5E7EB",
+            background: "#0B2948",
             borderRadius: 12,
-            overflow: "hidden",
-            backgroundColor: "#F8FAFC",
+            padding: "20px 24px",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
-          {/* ===============================
-              GAMBAR JADWAL
-          =============================== */}
           <div
             style={{
-              padding: 16,
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              background: "rgba(255, 255, 255, 0.1)",
               display: "flex",
-              justifyContent: "center",
               alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <img
-              src={DummyJadwal}
-              alt="Jadwal Kelas"
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 21H21M5 21V7L13 2L21 7V21M5 21H9M21 21H17M9 21V13H15V21M9 21H15"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                color: "#FFFFFF",
+                fontSize: "18px",
+                fontWeight: 700,
+                marginBottom: 4,
+              }}
+            >
+              {kelas}
+            </div>
+            <div
+              style={{
+                color: "rgba(255, 255, 255, 0.8)",
+                fontSize: "14px",
+                fontWeight: 500,
+              }}
+            >
+              Jadwal kelas
+            </div>
+          </div>
+        </div>
+
+        {/* Jadwal sebagai Gambar */}
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 12,
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: 16, borderBottom: "1px solid #E2E8F0" }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "#0F172A" }}>
+              Jadwal Kelas
+            </div>
+            <div style={{ marginTop: 6, fontSize: 13, color: "#64748B" }}>
+              Jadwal ditampilkan sebagai gambar (PNG/JPG/JPEG).
+            </div>
+          </div>
+
+          <div style={{ padding: 16 }}>
+            <div
               style={{
                 width: "100%",
-                maxWidth: 850, // 🔽 DIPERKECIL (sebelumnya 1100)
-                height: "auto",
-                borderRadius: 8,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.06)", // 🔽 disesuaikan
+                overflowX: "auto",
+                borderRadius: 10,
+                border: "1px solid #E2E8F0",
+                background: "#F8FAFC",
               }}
-            />
+            >
+              <img
+                src={DummyJadwal}
+                alt="Jadwal Kelas"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: 1200,
+                  margin: "0 auto",
+                }}
+              />
+            </div>
+
+            <div style={{ marginTop: 12, textAlign: "right" }}>
+              <a
+                href={DummyJadwal}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-block",
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid #E2E8F0",
+                  background: "#FFFFFF",
+                  color: "#0F172A",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  textDecoration: "none",
+                }}
+              >
+                Buka jadwal (tab baru)
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import GuruLayout from '../../component/Guru/GuruLayout';
 import { StatusBadge } from '../../component/Shared/StatusBadge';
-import EditIcon from '../../assets/Icon/Edit.png';
+import { Edit } from 'lucide-react';
 
 interface KehadiranSiswaGuruProps {
   user: { name: string; role: string };

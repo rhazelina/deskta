@@ -1,9 +1,23 @@
-import { useMemo, useState, useEffect } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import SiswaLayout from "../../component/Siswa/SiswaLayout";
 // import openBook from "../../assets/Icon/open-book.png";
 import { Modal } from "../../component/Shared/Modal";
 import JadwalSiswa from "./JadwalSiswa.tsx";
 import AbsensiSiswa from "./AbsensiSiswa";
+import {
+  Bell,
+  Megaphone,
+  Clock,
+  GraduationCap,
+  Target,
+  BookOpen,
+  BookOpenCheck,
+  BarChart3,
+  PieChart,
+  ArrowRight,
+  TrendingUp,
+  AlarmClock,
+} from "lucide-react";
 
 type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
 
@@ -144,7 +158,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   fontSize: "20px",
                   color: "#0EA5E9"
                 }}>
-                  🔔
+                  <Bell size={22} />
                 </div>
                 <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 700, color: "#001F3E" }}>
                   Notifikasi
@@ -169,7 +183,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   fontSize: "24px",
                   color: "#6B7280"
                 }}>
-                  📢
+                  <Megaphone size={24} />
                 </div>
                 <p style={{ 
                   fontSize: "16px", 
@@ -265,7 +279,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       fontSize: "20px",
                       fontWeight: "bold"
                     }}>
-                      🕒
+                      <Clock size={22} />
                     </div>
                   </div>
                 </div>
@@ -309,7 +323,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     fontSize: "28px",
                     color: "white"
                   }}>
-                    👨‍🎓
+                    <GraduationCap size={28} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ 
@@ -339,7 +353,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       color: "white",
                       fontWeight: "600"
                     }}>
-                      <span>🎯</span>
+                      <Target size={14} />
                       <span>Siswa Aktif</span>
                     </div>
                   </div>
@@ -382,7 +396,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                         justifyContent: "center",
                         fontSize: "18px"
                       }}>
-                        📚
+                        <BookOpen size={18} color="#92400E" />
                       </div>
                       <h3 style={{ 
                         margin: 0, 
@@ -469,7 +483,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     }}
                   >
                     <span>Lihat Semua</span>
-                    <span>→</span>
+                    <span><ArrowRight size={16} /></span>
                   </button>
                 </div>
                 <div style={{
@@ -518,7 +532,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                           justifyContent: "center",
                           fontSize: "20px"
                         }}>
-                          📖
+                          <BookOpenCheck size={20} color="#1D4ED8" />
                         </div>
                         <div style={{ flex: 1 }}>
                           <h4 style={{ 
@@ -552,7 +566,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                           color: "#6B7280",
                           fontWeight: "500" 
                         }}>
-                          🕐
+                          <Clock size={14} />
                         </span>
                         <span style={{ 
                           fontSize: "14px", 
@@ -607,7 +621,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       justifyContent: "center",
                       fontSize: "18px"
                     }}>
-                      📈
+                      <TrendingUp size={18} color="#92400E" />
                     </div>
                     <h3 style={{ 
                       margin: 0, 
@@ -654,7 +668,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       justifyContent: "center",
                       fontSize: "18px"
                     }}>
-                      📊
+                      <BarChart3 size={18} color="#1D4ED8" />
                     </div>
                     <h3 style={{ 
                       margin: 0, 
@@ -700,9 +714,9 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   e.currentTarget.style.boxShadow = "0 4px 20px rgba(30, 64, 175, 0.2)";
                 }}
               >
-                <span>📊</span>
+                <span><PieChart size={18} color="#B91C1C" /></span>
                 <span>Lihat Detail Kehadiran</span>
-                <span style={{ fontSize: "20px" }}>→</span>
+                <ArrowRight size={18} />
               </button>
             </div>
 
@@ -1066,7 +1080,7 @@ function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
               justifyContent: "center",
               fontSize: "20px"
             }}>
-              📚
+              <BookOpen size={18} color="#92400E" />
             </div>
             <h2 style={{ fontSize: "20px", fontWeight: "bold", margin: 0 }}>
               {data.mapel}
@@ -1182,7 +1196,7 @@ function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
               e.currentTarget.style.backgroundColor = "#3B82F6";
             }}
           >
-            ⏰ Set Pengingat
+            <AlarmClock size={16} /> Set Pengingat
           </button>
         </div>
       </div>
@@ -2219,3 +2233,5 @@ function TimePill({ label }: { label: string }) {
 //     </div>
 //   );
 // }
+
+

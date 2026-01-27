@@ -1,6 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { User, SquarePen } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
+import { FormModal } from "../../component/Shared/FormModal";
+import { Select } from "../../component/Shared/Select";
 
 type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa";
 
@@ -29,39 +31,78 @@ export default function DetailKehadiranGuru({
   onBack = () => {},
 }: DetailKehadiranGuruProps) {
   // contoh data (silakan ganti dari API)
-  const rows: RowKehadiran[] = useMemo(
-    () => [
-      {
-        no: 2,
-        tanggal: "25-05-2025",
-        jam: "1-4",
-        mapel: "Matematika",
-        kelas: "XII Mekatronika 2",
-        status: "Hadir",
-      },
-      {
-        no: 2,
-        tanggal: "24-05-2025",
-        jam: "5-8",
-        mapel: "Matematika",
-        kelas: "XII Mekatronika 2",
-        status: "Hadir",
-      },
-      {
-        no: 2,
-        tanggal: "25-05-2025",
-        jam: "9-10",
-        mapel: "Matematika",
-        kelas: "XII Mekatronika 2",
-        status: "Izin",
-      },
-    ],
-    []
-  );
+  const [rows, setRows] = useState<RowKehadiran[]>([
+    {
+      no: 2,
+      tanggal: "25-05-2025",
+      jam: "1-4",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Hadir",
+    },
+    {
+      no: 2,
+      tanggal: "24-05-2025",
+      jam: "5-8",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Hadir",
+    },
+    {
+      no: 2,
+      tanggal: "25-05-2025",
+      jam: "9-10",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Izin",
+    },
+  ]);
 
   const guruInfo = {
     name: "Ewit Erniyah S.pd",
     phone: "0918415784",
+  };
+
+  const statusOptions = useMemo(
+    () => [
+      { label: "Hadir", value: "Hadir" },
+      { label: "Sakit", value: "Sakit" },
+      { label: "Izin", value: "Izin" },
+      { label: "Tidak Hadir", value: "Alfa" },
+    ],
+    []
+  );
+
+  const [editingRow, setEditingRow] = useState<RowKehadiran | null>(null);
+  const [editStatus, setEditStatus] = useState<StatusKehadiran>("Hadir");
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleOpenEdit = (row: RowKehadiran) => {
+    setEditingRow(row);
+    setEditStatus(row.status);
+    setIsEditOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditOpen(false);
+    setEditingRow(null);
+    setIsSubmitting(false);
+  };
+
+  const handleSubmitEdit = () => {
+    if (!editingRow) return;
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setRows((prev) =>
+        prev.map((r) =>
+          r === editingRow ? { ...r, status: editStatus } : r
+        )
+      );
+      setIsSubmitting(false);
+      setIsEditOpen(false);
+      setEditingRow(null);
+    }, 300);
   };
 
   const statusStyle = (status: StatusKehadiran): React.CSSProperties => {
@@ -235,10 +276,7 @@ export default function DetailKehadiranGuru({
                 <button
                   type="button"
                   aria-label="Edit"
-                  onClick={() => {
-                    // TODO: buka modal edit / route edit
-                    // console.log("edit", r);
-                  }}
+                  onClick={() => handleOpenEdit(r)}
                   style={{
                     width: 44,
                     height: 44,
@@ -258,6 +296,27 @@ export default function DetailKehadiranGuru({
         </div>
         </div>
       </div>
+
+      <FormModal
+        isOpen={isEditOpen}
+        onClose={handleCloseEdit}
+        title="Edit Kehadiran"
+        onSubmit={handleSubmitEdit}
+        submitLabel="Simpan"
+        isSubmitting={isSubmitting}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>
+            Pilih Kehadiran
+          </div>
+          <Select
+            value={editStatus}
+            onChange={(val) => setEditStatus(val as StatusKehadiran)}
+            options={statusOptions}
+            placeholder="Hadir/Sakit/Izin/Tdk Hadir"
+          />
+        </div>
+      </FormModal>
     </StaffLayout>
   );
 }

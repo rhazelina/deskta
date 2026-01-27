@@ -5,10 +5,7 @@ import { SearchBox } from '../../component/Shared/Search';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { TambahSiswaForm } from '../../component/Shared/Form/SiswaForm';
-import ActionIcon from '../../assets/Icon/Icon3.png';
-import EditIcon from '../../assets/Icon/Edit.png';
-import DeleteIcon from '../../assets/Icon/Delete.png';
-import EyeIcon from '../../assets/Icon/Eye.png';
+import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 
 /* ===================== INTERFACE ===================== */
 interface User {
@@ -266,7 +263,7 @@ export default function SiswaAdmin({
             onClick={() => setOpenActionId(openActionId === row.id ? null : row.id)}
             style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <img src={ActionIcon} width={22} />
+            <MoreVertical size={22} strokeWidth={1.5} />
           </button>
 
           {openActionId === row.id && (
@@ -312,7 +309,7 @@ export default function SiswaAdmin({
                   (e.currentTarget as HTMLButtonElement).style.color = '#0F172A';
                 }}
               >
-                <img src={EditIcon} width={16} style={{ filter: 'brightness(0.6)' }} /> 
+                <Edit size={16} color="#64748B" strokeWidth={2} />
                 Edit
               </button>
               <button 
@@ -342,7 +339,7 @@ export default function SiswaAdmin({
                   (e.currentTarget as HTMLButtonElement).style.color = '#0F172A';
                 }}
               >
-                <img src={DeleteIcon} width={16} style={{ filter: 'brightness(0.6)' }} /> 
+                <Trash2 size={16} color="#64748B" strokeWidth={2} />
                 Hapus
               </button>
               <button 
@@ -371,7 +368,7 @@ export default function SiswaAdmin({
                   (e.currentTarget as HTMLButtonElement).style.color = '#0F172A';
                 }}
               >
-                <img src={EyeIcon} width={16} style={{ filter: 'brightness(0.6)' }} /> 
+                <Eye size={16} color="#64748B" strokeWidth={2} />
                 Lihat
               </button>
             </div>

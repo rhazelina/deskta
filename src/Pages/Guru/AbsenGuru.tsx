@@ -1,8 +1,6 @@
   import { useState, useEffect, useRef } from 'react';
 import GuruLayout from '../../component/Guru/GuruLayout';
-import QRCodeIcon from '../../assets/Icon/qr_code.png';
-import RefreshIcon from '../../assets/Icon/refresh.png';
-import DummyQRIcon from '../../assets/Icon/dumyqr.png';
+import { QrCode, RotateCcw } from 'lucide-react';
 
 // ==================== INTERFACES ====================
 interface ScanAbsenGuruProps {
@@ -229,19 +227,20 @@ export default function ScanAbsenGuru({
                 background: 'white',
                 borderRadius: '20px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                border: '1px solid #F3F4F6'
+                border: '1px solid #F3F4F6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
-                <img 
-                  src={DummyQRIcon} 
-                  alt="QR Code" 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'contain',
+                <QrCode
+                  size={200}
+                  color={isScanning ? '#1F2937' : '#D1D5DB'}
+                  strokeWidth={2}
+                  style={{
                     opacity: isScanning ? 1 : 0.3,
                     transition: 'all 0.3s',
                     filter: isScanning ? 'none' : 'blur(4px)'
-                  }} 
+                  }}
                 />
                 {!isScanning && (
                   <div style={{
@@ -287,7 +286,7 @@ export default function ScanAbsenGuru({
                     boxShadow: '0 4px 0 #E5E7EB',
                   }}
                 >
-                  <img src={RefreshIcon} alt="" style={{ width: 16, marginRight: 8 }} />
+                  <RotateCcw size={16} style={{ marginRight: 8 }} strokeWidth={2} />
                   Refresh QR Code
                 </button>
               </div>
@@ -372,7 +371,7 @@ export default function ScanAbsenGuru({
                   flexDirection: 'column',
                   gap: '12px'
                 }}>
-                  <img src={QRCodeIcon} alt="" style={{ width: 48, opacity: 0.2 }} />
+                  <QrCode size={48} color="#D1D5DB" strokeWidth={1} style={{ opacity: 0.2 }} />
                   <p>Belum ada data masuk</p>
                 </div>
               ) : (

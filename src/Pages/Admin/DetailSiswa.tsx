@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
 import { EditSiswaForm } from '../../component/Shared/EditSiswa';
-import EditIcon from '../../assets/Icon/Edit.png';
+import { Edit } from 'lucide-react';
 
 interface User {
   role: string;
@@ -150,15 +150,7 @@ export default function DetailSiswa({
           }}
           title="Edit"
         >
-          <img
-            src={EditIcon}
-            alt="Edit"
-            style={{
-              width: '18px',
-              height: '18px',
-              objectFit: 'contain',
-            }}
-          />
+          <Edit size={18} strokeWidth={2} color="#1F2937" />
         </button>
       </div>
     </div>

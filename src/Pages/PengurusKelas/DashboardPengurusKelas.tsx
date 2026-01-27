@@ -1,12 +1,19 @@
-import { useMemo, useState, useEffect } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import PengurusKelasLayout from "../../component/PengurusKelas/PengurusKelasLayout";
 import DaftarMapel from "./DaftarMapel";
+import TidakHadirPenguruskelas from "./TidakHadirPenguruskelas";
 import openBook from "../../assets/Icon/open-book.png";
 import INO from "../../assets/Icon/INO.png";
 import RASI from "../../assets/Icon/RASI.png";
 import { Modal } from "../../component/Shared/Modal";
 
-type PageType = "dashboard" | "jadwal" | "laporan" | "profil"; // Sesuaikan dengan menu Pengurus Kelas
+type PageType =
+  | "dashboard"
+  | "daftar-mapel"
+  | "absensi"
+  | "jadwal"
+  | "laporan"
+  | "profil"; // Sesuaikan dengan menu Pengurus Kelas
 
 interface ScheduleItem {
   id: string;
@@ -42,7 +49,7 @@ export default function DashboardPengurusKelas({
   user,
   onLogout,
 }: DashboardPengurusKelasProps) {
-  const [currentPage, setCurrentPage] = useState<string>("dashboard");
+  const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [isMapelModalOpen, setIsMapelModalOpen] = useState(false);
@@ -96,7 +103,19 @@ export default function DashboardPengurusKelas({
   );
 
   const handleMenuClick = (page: string) => {
-    setCurrentPage(page);
+    const allowedPages: PageType[] = [
+      "dashboard",
+      "daftar-mapel",
+      "absensi",
+      "jadwal",
+      "laporan",
+      "profil",
+    ];
+    if (allowedPages.includes(page as PageType)) {
+      setCurrentPage(page as PageType);
+      return;
+    }
+    setCurrentPage("dashboard");
   };
 
   // Dummy user info
@@ -107,7 +126,13 @@ export default function DashboardPengurusKelas({
 
   return (
     <PengurusKelasLayout
-      pageTitle={currentPage === "daftar-mapel" ? "Daftar Mapel" : "Dashboard"}
+      pageTitle={
+        currentPage === "daftar-mapel"
+          ? "Daftar Mapel"
+          : currentPage === "absensi"
+          ? "Daftar Ketidakhadiran"
+          : "Dashboard"
+      }
       currentPage={currentPage}
       onMenuClick={handleMenuClick}
       user={user}
@@ -115,6 +140,8 @@ export default function DashboardPengurusKelas({
     >
       {currentPage === "daftar-mapel" ? (
         <DaftarMapel />
+      ) : currentPage === "absensi" ? (
+        <TidakHadirPenguruskelas />
       ) : (
         <>
           <div
@@ -499,6 +526,22 @@ function MonthlyBarChart({
       Math.max(item.hadir, item.izin, item.sakit, item.alpha)
     )
   );
+  const hasData = data.length > 0 && maxValue > 0;
+
+  if (!hasData) {
+    return (
+      <div
+        style={{
+          padding: "24px",
+          textAlign: "center",
+          color: "#64748B",
+          fontWeight: 600,
+        }}
+      >
+        Belum ada data
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -667,6 +710,35 @@ function WeeklyDonutChart({
     };
   };
 
+  if (total <= 0) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "12px",
+          padding: "24px",
+          color: "#64748B",
+          fontWeight: 600,
+        }}
+      >
+        <svg width="180" height="180" style={{ display: "block" }}>
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={radius}
+            fill="#F1F5F9"
+            stroke="#E2E8F0"
+            strokeWidth="2"
+          />
+          <circle cx={centerX} cy={centerY} r={radius * 0.5} fill="#FFFFFF" />
+        </svg>
+        Belum ada data
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -816,7 +888,7 @@ function MapelListModal({
 
         <div style={{ padding: "24px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {schedules.map((item, index) => (
+            {schedules.map((item) => (
               <div
                 key={item.id}
                 style={{
@@ -887,3 +959,4 @@ function MapelListModal({
     </Modal>
   );
 }
+

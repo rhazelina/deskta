@@ -1,6 +1,6 @@
 import SiswaLayout from "../../component/Siswa/SiswaLayout";
-// import JadwalImg from "../../assets/jadwal/jadwal-x-mekatronika-1.jpg"; // <-- ganti sesuai file kamu
-import JadwalImg from "../../assets/Background/DataAdd.png";
+
+import JadwalImg from "../../assets/Icon/DummyJadwal.png";
 
 type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi";
 

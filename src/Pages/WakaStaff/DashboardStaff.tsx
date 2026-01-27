@@ -79,7 +79,8 @@ const cardStyle: React.CSSProperties = {
   backgroundColor: "#FFFFFF",
   borderRadius: "16px",
   padding: "20px",
-  boxShadow: "0 12px 24px rgba(15, 23, 42, 0.08)",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.08)",
+  border: "1px solid #E5E7EB",
 };
 
 export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) {
@@ -208,36 +209,16 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
             user={user}
             onLogout={handleLogout}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              {/* Grafik Kehadiran */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "28px", backgroundColor: "#F9FAFB", padding: "4px" }}>
+              {/* Top Section: History & Statistics */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
                   gap: "24px",
                 }}
               >
-                <div style={cardStyle}>
-                  <SectionHeader title="Grafik Kehadiran" subtitle="Rekap mingguan" />
-                  <WeeklyBarGraph />
-                </div>
-                <div style={cardStyle}>
-                  <SectionHeader
-                    title="Grafik Kehadiran Bulanan"
-                    subtitle="Periode Jan - Jun"
-                  />
-                  <MonthlyLineChart />
-                </div>
-              </div>
-
-              {/* Riwayat & Statistik */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-                  gap: "24px",
-                }}
-              >
+                {/* Riwayat Kehadiran Card */}
                 <div style={cardStyle}>
                   <SectionHeader
                     title="Riwayat Kehadiran"
@@ -248,6 +229,8 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                     end={historyInfo.end}
                   />
                 </div>
+
+                {/* Statistik Kehadiran Card */}
                 <div style={cardStyle}>
                   <SectionHeader
                     title="Statistik Kehadiran"
@@ -256,8 +239,8 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))",
-                      gap: "8px",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))",
+                      gap: "12px",
                     }}
                   >
                     {statCards.map((item) => (
@@ -269,23 +252,37 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                           padding: "16px",
                           textAlign: "center",
                           backgroundColor: "#F8FAFC",
+                          transition: "all 0.2s ease",
+                          cursor: "default",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F0F9FF";
+                          e.currentTarget.style.borderColor = "#93C5FD";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F8FAFC";
+                          e.currentTarget.style.borderColor = "#E5E7EB";
+                          e.currentTarget.style.transform = "translateY(0)";
                         }}
                       >
                         <p
                           style={{
                             margin: 0,
-                            fontSize: "13px",
-                            color: "#64748B",
+                            fontSize: "12px",
+                            color: "#6B7280",
+                            fontWeight: 600,
+                            marginBottom: "6px",
                           }}
                         >
                           {item.label}
                         </p>
                         <p
                           style={{
-                            margin: "8px 0 0",
-                            fontSize: "24px",
+                            margin: "0",
+                            fontSize: "22px",
                             fontWeight: 700,
-                            color: "#0F172A",
+                            color: "#1F2937",
                           }}
                         >
                           {item.value}
@@ -293,6 +290,30 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Grafik Section */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gap: "24px",
+                }}
+              >
+                {/* Weekly Chart */}
+                <div style={cardStyle}>
+                  <SectionHeader title="Grafik Kehadiran Mingguan" subtitle="Rekap per hari" />
+                  <WeeklyBarGraph />
+                </div>
+
+                {/* Monthly Chart */}
+                <div style={cardStyle}>
+                  <SectionHeader
+                    title="Grafik Kehadiran Bulanan"
+                    subtitle="Periode Jan - Jun"
+                  />
+                  <MonthlyLineChart />
                 </div>
               </div>
             </div>
@@ -306,19 +327,20 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div style={{ marginBottom: "16px" }}>
+    <div style={{ marginBottom: "20px" }}>
       <h2
         style={{
           margin: 0,
-          fontSize: "20px",
+          fontSize: "18px",
           fontWeight: 700,
-          color: "#0F172A",
+          color: "#111827",
+          letterSpacing: "-0.5px",
         }}
       >
         {title}
       </h2>
       {subtitle && (
-        <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#64748B" }}>
+        <p style={{ margin: "6px 0 0", fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>
           {subtitle}
         </p>
       )}
@@ -331,14 +353,15 @@ function LegendDot({ color, label }: { color: string; label: string }) {
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <span
         style={{
-          width: "12px",
-          height: "12px",
+          width: "10px",
+          height: "10px",
           borderRadius: "999px",
           backgroundColor: color,
           display: "inline-block",
+          flexShrink: 0,
         }}
       />
-      <span style={{ fontSize: "13px", color: "#475569" }}>{label}</span>
+      <span style={{ fontSize: "12px", color: "#4B5563", fontWeight: 500 }}>{label}</span>
     </div>
   );
 }
@@ -539,17 +562,26 @@ function TimeRange({ label, value }: { label: string; value: string }) {
       style={{
         flex: 1,
         minWidth: "160px",
-        border: "1px solid #E2E8F0",
-        borderRadius: "12px",
-        padding: "12px 16px",
+        border: "1px solid #E5E7EB",
+        borderRadius: "10px",
+        padding: "14px 16px",
         display: "flex",
         flexDirection: "column",
-        gap: "4px",
-        backgroundColor: "#FFFFFF",
+        gap: "6px",
+        backgroundColor: "#F9FAFB",
+        transition: "all 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#3B82F6";
+        e.currentTarget.style.backgroundColor = "#F0F9FF";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#E5E7EB";
+        e.currentTarget.style.backgroundColor = "#F9FAFB";
       }}
     >
-      <span style={{ fontSize: "12px", color: "#94A3B8" }}>{label}</span>
-      <strong style={{ fontSize: "18px", color: "#0F172A" }}>{value}</strong>
+      <span style={{ fontSize: "11px", color: "#6B7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</span>
+      <strong style={{ fontSize: "18px", color: "#111827", fontWeight: 700 }}>{value}</strong>
     </div>
   );
 }
@@ -560,21 +592,23 @@ function ComingSoon({ title }: { title: string }) {
       style={{
         backgroundColor: "white",
         borderRadius: "12px",
-        padding: "32px",
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+        padding: "48px 32px",
+        border: "2px dashed #E5E7EB",
         textAlign: "center",
       }}
     >
+      <div style={{ fontSize: "48px", marginBottom: "16px" }}>🚀</div>
       <h2
         style={{
-          fontSize: "22px",
+          fontSize: "20px",
           marginBottom: "8px",
-          color: "#1F2937",
+          color: "#111827",
+          fontWeight: 700,
         }}
       >
         {title}
       </h2>
-      <p style={{ color: "#6B7280" }}>Konten masih dalam pengembangan.</p>
+      <p style={{ color: "#6B7280", fontSize: "14px", margin: 0 }}>Konten masih dalam pengembangan.</p>
     </div>
   );
 }

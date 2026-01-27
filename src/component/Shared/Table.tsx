@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
-import EditIcon from "../../assets/Icon/Edit.png";
-import TrashIcon from "../../assets/Icon/Trash.png";
-import EyeIcon from "../../assets/Icon/Eye.png";
+import { Edit, Trash2, Eye } from "lucide-react";
 
 interface Column {
   key: string;
@@ -183,15 +181,7 @@ export function Table({
                         }}
                         title="Edit"
                       >
-                        <img
-                          src={EditIcon}
-                          alt="Edit"
-                          style={{
-                            width: "18px",
-                            height: "18px",
-                            objectFit: "contain",
-                          }}
-                        />
+                        <Edit size={18} strokeWidth={2} color="#1F2937" />
                       </button>
                     )}
                     {onDelete && (
@@ -208,15 +198,7 @@ export function Table({
                         }}
                         title="Delete"
                       >
-                        <img
-                          src={TrashIcon}
-                          alt="Delete"
-                          style={{
-                            width: "18px",
-                            height: "18px",
-                            objectFit: "contain",
-                          }}
-                        />
+                        <Trash2 size={18} strokeWidth={2} color="#1F2937" />
                       </button>
                     )}
                     {onView && (
@@ -233,15 +215,7 @@ export function Table({
                         }}
                         title="View"
                       >
-                        <img
-                          src={EyeIcon}
-                          alt="View"
-                          style={{
-                            width: "18px",
-                            height: "18px",
-                            objectFit: "contain",
-                          }}
-                        />
+                        <Eye size={18} strokeWidth={2} color="#1F2937" />
                       </button>
                     )}
                   </td>

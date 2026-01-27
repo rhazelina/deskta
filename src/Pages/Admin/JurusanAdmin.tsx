@@ -7,9 +7,7 @@ import { Table } from "../../component/Shared/Table";
 // import { TambahJurusanForm } from "../../component/Shared/Form/JurusanForm";
 import AWANKIRI from "../../assets/Icon/AWANKIRI.png";
 import AwanBawahkanan from "../../assets/Icon/AwanBawahkanan.png";
-import ActionIcon from "../../assets/Icon/Icon3.png";
-import EditIcon from "../../assets/Icon/Edit.png";
-import DeleteIcon from "../../assets/Icon/Delete.png";
+import { MoreVertical, Edit, Trash2 } from "lucide-react";
 
 interface User {
   role: string;
@@ -67,7 +65,7 @@ export default function JurusanAdmin({
               cursor: "pointer",
             }}
           >
-            <img src={ActionIcon} alt="aksi" width={20} />
+            <MoreVertical size={20} strokeWidth={1.5} />
           </button>
 
           {openActionId === row.id && (
@@ -93,13 +91,13 @@ export default function JurusanAdmin({
                 }}
                 style={{ ...actionBtnStyle, color: "#0F172A" }}
               >
-                <img src={EditIcon} width={18} /> Edit
+                <Edit size={18} strokeWidth={2} /> Edit
               </button>
               <button
                 onClick={() => handleDelete(row)}
                 style={{ ...actionBtnStyle, color: "#B91C1C" }}
               >
-                <img src={DeleteIcon} width={18} /> Hapus
+                <Trash2 size={18} strokeWidth={2} /> Hapus
               </button>
             </div>
           )}

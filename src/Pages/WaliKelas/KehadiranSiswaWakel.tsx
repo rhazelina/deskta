@@ -5,16 +5,28 @@ import { Button } from '../../component/Shared/Button';
 import { FormModal } from '../../component/Shared/FormModal';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
-import calendarIcon from '../../assets/Icon/calender.png';
+import { Calendar, BookOpen, FileText, ClipboardList, ClipboardPlus, ArrowLeft } from 'lucide-react';
 
-type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'alpha' | 'pulang';
+type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'tanpa-keterangan' | 'pulang';
 
 interface KehadiranRow {
   id: string;
   nisn: string;
   namaSiswa: string;
   mataPelajaran: string;
+  tanggal: string;
   status: StatusType;
+}
+
+interface Dispensasi {
+  id: string;
+  nisn: string;
+  namaSiswa: string;
+  alasan: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
 }
 
 interface KehadiranSiswaWakelProps {
@@ -33,15 +45,20 @@ export function KehadiranSiswaWakel({
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedMapel, setSelectedMapel] = useState('all');
+
+  const kelasInfo = {
+    namaKelas: 'X Mekatronika 1',
+  };
 
   const [rows, setRows] = useState<KehadiranRow[]>([
-    { id: '1', nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', mataPelajaran: 'Matematika', status: 'hadir' },
-    { id: '2', nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', mataPelajaran: 'Matematika', status: 'hadir' },
-    { id: '3', nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', mataPelajaran: 'Matematika', status: 'izin' },
-    { id: '4', nisn: '1348576395', namaSiswa: 'Budi Santoso', mataPelajaran: 'Matematika', status: 'sakit' },
-    { id: '5', nisn: '1348576396', namaSiswa: 'Dewi Sartika', mataPelajaran: 'Matematika', status: 'tidak-hadir' },
-    { id: '6', nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', mataPelajaran: 'Matematika', status: 'alpha' },
-    { id: '7', nisn: '1348576398', namaSiswa: 'Budi Raharjo', mataPelajaran: '-', status: 'pulang' },
+    { id: '1', nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', mataPelajaran: 'Matematika', tanggal: '2026-01-25', status: 'hadir' },
+    { id: '2', nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', mataPelajaran: 'Matematika', tanggal: '2026-01-25', status: 'hadir' },
+    { id: '3', nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', mataPelajaran: 'Matematika', tanggal: '2026-01-26', status: 'izin' },
+    { id: '4', nisn: '1348576395', namaSiswa: 'Budi Santoso', mataPelajaran: 'Matematika', tanggal: '2026-01-26', status: 'sakit' },
+    { id: '5', nisn: '1348576396', namaSiswa: 'Dewi Sartika', mataPelajaran: 'Matematika', tanggal: '2026-01-27', status: 'tidak-hadir' },
+    { id: '6', nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', mataPelajaran: 'Matematika', tanggal: '2026-01-27', status: 'tanpa-keterangan' },
+    { id: '7', nisn: '1348576398', namaSiswa: 'Budi Raharjo', mataPelajaran: '-', tanggal: '2026-01-27', status: 'pulang' },
   ]);
 
   useEffect(() => {
@@ -50,9 +67,40 @@ export function KehadiranSiswaWakel({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const totalIzin = rows.filter((r) => r.status === 'izin').length;
-  const totalSakit = rows.filter((r) => r.status === 'sakit').length;
-  const totalAlpha = rows.filter((r) => r.status === 'alpha' || r.status === 'tidak-hadir').length;
+  const mapelOptions = useMemo(() => {
+    const mapelSet = new Set(
+      rows.map((r) => r.mataPelajaran).filter((v) => v && v !== '-')
+    );
+    return [
+      { label: 'Semua Mapel', value: 'all' },
+      ...Array.from(mapelSet).map((mapel) => ({
+        label: mapel,
+        value: mapel,
+      })),
+    ];
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    if (!startDate || !endDate) return rows;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return rows;
+    const startTime = Math.min(start.getTime(), end.getTime());
+    const endTime = Math.max(start.getTime(), end.getTime());
+    return rows.filter((r) => {
+      const rowDate = new Date(r.tanggal);
+      if (Number.isNaN(rowDate.getTime())) return false;
+      const time = rowDate.getTime();
+      const matchDate = time >= startTime && time <= endTime;
+      const matchMapel =
+        selectedMapel === 'all' || r.mataPelajaran === selectedMapel;
+      return matchDate && matchMapel;
+    });
+  }, [rows, startDate, endDate, selectedMapel]);
+
+  const totalIzin = filteredRows.filter((r) => r.status === 'izin').length;
+  const totalSakit = filteredRows.filter((r) => r.status === 'sakit').length;
+  const totalTanpaKeterangan = filteredRows.filter((r) => r.status === 'tanpa-keterangan' || r.status === 'tidak-hadir').length;
 
   const columns = useMemo(() => [
     { key: 'nisn', label: 'NISN' },
@@ -64,7 +112,7 @@ export function KehadiranSiswaWakel({
       render: (value: StatusType) => {
         // Filter out 'pulang' status for StatusBadge
         const displayStatus = value === 'pulang' ? 'hadir' : value;
-        return <StatusBadge status={displayStatus as 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'alpha'} />;
+        return <StatusBadge status={displayStatus as 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'tanpa-keterangan'} />;
       },
     },
   ], []);
@@ -75,11 +123,26 @@ export function KehadiranSiswaWakel({
   const [editStatus, setEditStatus] = useState<StatusType>('hadir');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Rekap Modal State
+  const [isRekapOpen, setIsRekapOpen] = useState(false);
+
+  // Dispensasi Modal State
+  const [isDispensasiOpen, setIsDispensasiOpen] = useState(false);
+  const [dispensasiList, setDispensasiList] = useState<Dispensasi[]>([]);
+  const [dispensasiData, setDispensasiData] = useState({
+    nisn: '',
+    namaSiswa: '',
+    alasan: '',
+    tanggalMulai: '',
+    tanggalSelesai: '',
+  });
+  const [isDispensasiListOpen, setIsDispensasiListOpen] = useState(false);
+
   const statusOptions = [
     { label: 'Hadir', value: 'hadir' as StatusType },
     { label: 'Sakit', value: 'sakit' as StatusType },
     { label: 'Izin', value: 'izin' as StatusType },
-    { label: 'Alpha', value: 'alpha' as StatusType },
+    { label: 'Tanpa Keterangan', value: 'tanpa-keterangan' as StatusType },
     { label: 'Pulang', value: 'pulang' as StatusType },
   ];
 
@@ -113,12 +176,12 @@ export function KehadiranSiswaWakel({
 
   // fitur otewe
   const handleViewRekap = () => {
-    alert('Lihat rekap kehadiran (belum diimplementasikan)');
+    setIsRekapOpen(true);
   };
 
    // fitur otewe
   const handleBuatDispensasi = () => {
-    alert('Buat dispensasi (belum diimplementasikan)');
+    setIsDispensasiOpen(true);
   };
   
   
@@ -128,6 +191,89 @@ export function KehadiranSiswaWakel({
 
   const handleTableEdit = (row: KehadiranRow) => {
     handleOpenEdit(row);
+  };
+
+  const handleCloseRekap = () => {
+    setIsRekapOpen(false);
+  };
+
+  const handleCloseDispensasi = () => {
+    setIsDispensasiOpen(false);
+    setDispensasiData({
+      nisn: '',
+      namaSiswa: '',
+      alasan: '',
+      tanggalMulai: '',
+      tanggalSelesai: '',
+    });
+  };
+
+  const handleSubmitDispensasi = () => {
+    if (!dispensasiData.nisn || !dispensasiData.alasan || !dispensasiData.tanggalMulai) {
+      alert('⚠️ Mohon isi semua field yang diperlukan');
+      return;
+    }
+    const newDispensasi: Dispensasi = {
+      id: Date.now().toString(),
+      nisn: dispensasiData.nisn,
+      namaSiswa: dispensasiData.namaSiswa,
+      alasan: dispensasiData.alasan,
+      tanggalMulai: dispensasiData.tanggalMulai,
+      tanggalSelesai: dispensasiData.tanggalSelesai || dispensasiData.tanggalMulai,
+      status: 'pending',
+      createdAt: new Date().toLocaleDateString('id-ID'),
+    };
+    
+    setTimeout(() => {
+      setDispensasiList([...dispensasiList, newDispensasi]);
+      alert(`✅ Dispensasi untuk ${dispensasiData.namaSiswa} berhasil dibuat!\n\nAlasan: ${dispensasiData.alasan}\nPeriode: ${dispensasiData.tanggalMulai} - ${dispensasiData.tanggalSelesai || dispensasiData.tanggalMulai}`);
+      handleCloseDispensasi();
+    }, 300);
+  };
+
+  const handleDeleteDispensasi = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus dispensasi ini?')) {
+      setDispensasiList(dispensasiList.filter((d) => d.id !== id));
+      alert('✅ Dispensasi berhasil dihapus');
+    }
+  };
+
+  const handleUpdateDispensasiStatus = (id: string, status: Dispensasi['status']) => {
+    setDispensasiList((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, status } : d))
+    );
+  };
+
+  const handleExportRekap = () => {
+    const hadir = filteredRows.filter((r) => r.status === 'hadir').length;
+    const sakit = filteredRows.filter((r) => r.status === 'sakit').length;
+    const izin = filteredRows.filter((r) => r.status === 'izin').length;
+    const tanpaKeterangan = filteredRows.filter((r) => r.status === 'tanpa-keterangan' || r.status === 'tidak-hadir').length;
+    
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'REKAP KEHADIRAN SISWA\n';
+    csvContent += `Periode: ${startDate} - ${endDate}\n\n`;
+    csvContent += 'RINGKASAN,\n';
+    csvContent += `Hadir,${hadir}\n`;
+    csvContent += `Sakit,${sakit}\n`;
+    csvContent += `Izin,${izin}\n`;
+    csvContent += `Tanpa Keterangan,${tanpaKeterangan}\n`;
+    csvContent += `Total Siswa,${filteredRows.length}\n\n`;
+    csvContent += 'DETAIL KEHADIRAN\n';
+    csvContent += 'Tanggal,NISN,Nama Siswa,Mata Pelajaran,Status\n';
+    
+    filteredRows.forEach((row) => {
+      csvContent += `${row.tanggal},${row.nisn},"${row.namaSiswa}",${row.mataPelajaran},${row.status}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Rekap_Kehadiran_${startDate}_${endDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    alert('✅ Rekap kehadiran berhasil diunduh');
   };
 
   const styles = {
@@ -247,11 +393,7 @@ export function KehadiranSiswaWakel({
                 border: '1px solid #E5E7EB',
               }}
             >
-              <img
-                src={calendarIcon}
-                alt="Calendar"
-                style={{ width: 18, height: 18 }}
-              />
+              <Calendar size={18} color="#1F2937" strokeWidth={1.5} />
               <input
                 type="date"
                 value={startDate}
@@ -290,11 +432,7 @@ export function KehadiranSiswaWakel({
                 border: '1px solid #E5E7EB',
               }}
             >
-              <img
-                src={calendarIcon}
-                alt="Calendar"
-                style={{ width: 18, height: 18 }}
-              />
+              <Calendar size={18} color="#1F2937" strokeWidth={1.5} />
               <input
                 type="date"
                 value={endDate}
@@ -347,7 +485,7 @@ export function KehadiranSiswaWakel({
                     color: '#111827',
                   }}
                 >
-                  {rows.filter((r) => r.status === 'pulang').length}
+                  {filteredRows.filter((r) => r.status === 'pulang').length}
                 </span>
               </div>
 
@@ -424,7 +562,7 @@ export function KehadiranSiswaWakel({
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
                   padding: '8px 14px',
-                  minWidth: '80px',
+                  minWidth: '100px',
                 }}
               >
                 <span
@@ -434,7 +572,7 @@ export function KehadiranSiswaWakel({
                     color: '#6B7280',
                   }}
                 >
-                  Alpha
+                  Tanpa Ket.
                 </span>
                 <span
                   style={{
@@ -443,7 +581,7 @@ export function KehadiranSiswaWakel({
                     color: '#111827',
                   }}
                 >
-                  {totalAlpha}
+                  {totalTanpaKeterangan}
                 </span>
               </div>
             </div>
@@ -451,20 +589,77 @@ export function KehadiranSiswaWakel({
 
           {/* Bar atas: tombol aksi */}
           <div style={styles.topBar}>
-            <div style={styles.leftActions}></div>
+            <div style={styles.leftActions}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 12px',
+                  borderRadius: 12,
+                  backgroundColor: '#0B2A55',
+                  color: '#FFFFFF',
+                  minWidth: isMobile ? '100%' : '320px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <BookOpen size={18} color="#FFFFFF" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>
+                    {kelasInfo.namaKelas}
+                  </span>
+                  <span style={{ fontSize: 12, opacity: 0.9 }}>
+                    Pilih Mapel
+                  </span>
+                </div>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <Select
+                    value={selectedMapel}
+                    onChange={(val) => setSelectedMapel(val)}
+                    options={mapelOptions}
+                    placeholder="Pilih mapel"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Tombol aksi kanan */}
             <div style={styles.rightActions}>
-              <Button label="Lihat Rekap" onClick={handleViewRekap} />
+              <Button
+                label="Lihat Rekap"
+                onClick={handleViewRekap}
+                icon={<FileText size={16} />}
+              />
+              {dispensasiList.length > 0 && (
+                <Button
+                  label={`Daftar Dispensasi (${dispensasiList.length})`}
+                  onClick={() => setIsDispensasiListOpen(true)}
+                  icon={<ClipboardList size={16} />}
+                />
+              )}
               <Button
                 label="Buat Dispensasi"
                 variant="secondary"
                 onClick={handleBuatDispensasi}
+                icon={<ClipboardPlus size={16} />}
               />
                <Button
                   label="Kembali"
                   variant="secondary"
                   onClick={handleBack}
+                  icon={<ArrowLeft size={16} />}
                 />
             </div>
           </div>
@@ -472,7 +667,7 @@ export function KehadiranSiswaWakel({
           {/* Tabel kehadiran */}
           <Table
             columns={columns}
-            data={rows}
+            data={filteredRows}
             onEdit={handleTableEdit}
             keyField="id"
             emptyMessage="Belum ada data kehadiran siswa."
@@ -509,6 +704,393 @@ export function KehadiranSiswaWakel({
               placeholder="Pilih status kehadiran"
             />
           </div>
+        </div>
+      </FormModal>
+
+      {/* Modal Rekap Kehadiran */}
+      <FormModal
+        isOpen={isRekapOpen}
+        onClose={handleCloseRekap}
+        title="Rekap Kehadiran"
+        showSubmitButton={false}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Summary Statistics */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+            <div style={{ padding: '12px', backgroundColor: '#ECFDF5', borderRadius: '8px', border: '1px solid #10B981' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#047857' }}>Hadir</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#10B981' }}>
+                {filteredRows.filter((r) => r.status === 'hadir').length}
+              </p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#FFFBEB', borderRadius: '8px', border: '1px solid #F59E0B' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#B45309' }}>Izin</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#F59E0B' }}>
+                {totalIzin}
+              </p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#EFF6FF', borderRadius: '8px', border: '1px solid #3B82F6' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#1E40AF' }}>Sakit</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#3B82F6' }}>
+                {totalSakit}
+              </p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#FEF2F2', borderRadius: '8px', border: '1px solid #EF4444' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#B91C1C' }}>Tanpa Keterangan</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#EF4444' }}>
+                {totalTanpaKeterangan}
+              </p>
+            </div>
+          </div>
+
+          {/* Total */}
+          <div style={{ padding: '12px', backgroundColor: '#F3F4F6', borderRadius: '8px' }}>
+            <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>Total Siswa</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 700, color: '#111827' }}>
+              {filteredRows.length}
+            </p>
+          </div>
+
+          {/* Attendance Details Table */}
+          <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
+                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>NISN</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Nama</th>
+                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row) => (
+                  <tr key={row.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <td style={{ padding: '8px 4px', color: '#111827' }}>{row.nisn}</td>
+                    <td style={{ padding: '8px 4px', color: '#111827' }}>{row.namaSiswa}</td>
+                    <td style={{ padding: '8px 4px', color: '#111827', fontWeight: 500 }}>{row.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Period Info */}
+          <div style={{ padding: '12px', backgroundColor: '#F0F9FF', borderRadius: '8px', fontSize: '12px', color: '#1E40AF' }}>
+            <p style={{ margin: 0 }}>📅 Periode: <strong>{startDate}</strong> - <strong>{endDate}</strong></p>
+          </div>
+
+          {/* Export Button */}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={handleExportRekap}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: '#10B981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10B981'}
+            >
+              📥 Export CSV
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: '#3B82F6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '14px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+            >
+              🖨️ Print
+            </button>
+          </div>
+        </div>
+      </FormModal>
+
+      {/* Modal Buat Dispensasi */}
+      <FormModal
+        isOpen={isDispensasiOpen}
+        onClose={handleCloseDispensasi}
+        title="Buat Dispensasi"
+        onSubmit={handleSubmitDispensasi}
+        submitLabel="Buat Dispensasi"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Pilih Siswa */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Pilih Siswa
+            </p>
+            <Select
+              value={dispensasiData.nisn}
+              onChange={(val) => {
+                const selectedStudent = rows.find((r) => r.nisn === val);
+                setDispensasiData((prev) => ({
+                  ...prev,
+                  nisn: val,
+                  namaSiswa: selectedStudent?.namaSiswa || '',
+                }));
+              }}
+              options={rows.map((r) => ({
+                label: `${r.namaSiswa} (${r.nisn})`,
+                value: r.nisn,
+              }))}
+              placeholder="Pilih siswa"
+            />
+          </div>
+
+          {/* Alasan Dispensasi */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Alasan Dispensasi
+            </p>
+            <textarea
+              value={dispensasiData.alasan}
+              onChange={(e) =>
+                setDispensasiData((prev) => ({
+                  ...prev,
+                  alasan: e.target.value,
+                }))
+              }
+              placeholder="Masukkan alasan dispensasi (sakit, izin, keluarga, dll)"
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                minHeight: '80px',
+              }}
+            />
+          </div>
+
+          {/* Tanggal Mulai */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Tanggal Mulai
+            </p>
+            <input
+              type="date"
+              value={dispensasiData.tanggalMulai}
+              onChange={(e) =>
+                setDispensasiData((prev) => ({
+                  ...prev,
+                  tanggalMulai: e.target.value,
+                }))
+              }
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '6px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          {/* Tanggal Selesai */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Tanggal Selesai (opsional)
+            </p>
+            <input
+              type="date"
+              value={dispensasiData.tanggalSelesai}
+              onChange={(e) =>
+                setDispensasiData((prev) => ({
+                  ...prev,
+                  tanggalSelesai: e.target.value,
+                }))
+              }
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '6px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        </div>
+      </FormModal>
+
+      {/* Modal Daftar Dispensasi */}
+      <FormModal
+        isOpen={isDispensasiListOpen}
+        onClose={() => setIsDispensasiListOpen(false)}
+        title="Daftar Dispensasi"
+        showSubmitButton={false}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {dispensasiList.length === 0 ? (
+            <div style={{ 
+              padding: '30px 20px', 
+              textAlign: 'center', 
+              backgroundColor: '#F3F4F6', 
+              borderRadius: '8px' 
+            }}>
+              <p style={{ margin: 0, color: '#6B7280', fontSize: '14px' }}>
+                📝 Belum ada dispensasi yang dibuat
+              </p>
+            </div>
+          ) : (
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {dispensasiList.map((dispensasi) => (
+                <div
+                  key={dispensasi.id}
+                  style={{
+                    padding: '14px',
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: '8px',
+                    border: '1px solid #E5E7EB',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                        {dispensasi.namaSiswa} ({dispensasi.nisn})
+                      </p>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
+                        <strong>Alasan:</strong> {dispensasi.alasan}
+                      </p>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
+                        <strong>Periode:</strong> {dispensasi.tanggalMulai} - {dispensasi.tanggalSelesai}
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            backgroundColor: 
+                              dispensasi.status === 'approved' ? '#ECFDF5' :
+                              dispensasi.status === 'rejected' ? '#FEE2E2' : '#FFFBEB',
+                            color:
+                              dispensasi.status === 'approved' ? '#047857' :
+                              dispensasi.status === 'rejected' ? '#991B1B' : '#B45309',
+                          }}
+                        >
+                          {dispensasi.status === 'pending' ? '⏳ Menunggu' : 
+                           dispensasi.status === 'approved' ? '✅ Disetujui' : '❌ Ditolak'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                          {dispensasi.createdAt}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'approved')}
+                        disabled={dispensasi.status !== 'pending'}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: dispensasi.status === 'pending' ? '#ECFDF5' : '#F3F4F6',
+                          color: '#047857',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        Setujui
+                      </button>
+                      <button
+                        onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'rejected')}
+                        disabled={dispensasi.status !== 'pending'}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: dispensasi.status === 'pending' ? '#FEE2E2' : '#F3F4F6',
+                          color: '#991B1B',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        Tolak
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDispensasi(dispensasi.id)}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: '#FEE2E2',
+                          color: '#991B1B',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
+            Total dispensasi: <strong>{dispensasiList.length}</strong>
+          </p>
         </div>
       </FormModal>
     </WalikelasLayout>

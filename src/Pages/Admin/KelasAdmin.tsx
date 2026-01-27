@@ -5,9 +5,7 @@ import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { TambahKelasForm } from '../../component/Shared/Form/KelasForm';
 
-import ActionIcon from '../../assets/Icon/Icon3.png';
-import EditIcon from '../../assets/Icon/Edit.png';
-import DeleteIcon from '../../assets/Icon/Delete.png';
+import { MoreVertical, Edit, Trash2 } from 'lucide-react';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
 
@@ -119,7 +117,7 @@ export default function KelasAdmin({
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
             }}
           >
-            <img src={ActionIcon} width={22} style={{ filter: 'brightness(0.7)' }} />
+            <MoreVertical size={22} strokeWidth={1.5} color="#64748B" />
           </button>
 
           {openActionId === row.id && (
@@ -169,7 +167,7 @@ export default function KelasAdmin({
                   (e.currentTarget as HTMLButtonElement).style.color = '#0F172A';
                 }}
               >
-                <span style={{ fontSize: '16px' }}>✎</span>
+                <Edit size={16} strokeWidth={2} />
                 Edit
               </button>
 
@@ -199,7 +197,7 @@ export default function KelasAdmin({
                   (e.currentTarget as HTMLButtonElement).style.color = '#0F172A';
                 }}
               >
-                <span style={{ fontSize: '16px' }}>🗑</span>
+                <Trash2 size={16} strokeWidth={2} />
                 Hapus
               </button>
             </div>

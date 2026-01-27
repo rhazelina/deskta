@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { Table } from "../../component/Shared/Table";
-import EyeIcon from "../../assets/Icon/Eye.png";
+import { Eye } from "lucide-react";
 
 type StatusType =
   | "hadir"
@@ -156,7 +156,7 @@ export default function KehadiranGuru({
                 cursor: "pointer",
               }}
             >
-              <img src={EyeIcon} style={{ width: 20, height: 20 }} />
+              <Eye size={20} color="#1F2937" strokeWidth={2} />
             </button>
           </div>
         ),

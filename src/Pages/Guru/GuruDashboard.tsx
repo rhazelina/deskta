@@ -5,52 +5,12 @@ import DetailJadwalGuru from "./DetailJadwalGuru";
 import AbsenGuru from "./AbsenGuru";
 import InputAbsenGuru from "./InputAbsenGuru";
 import KehadiranSiswaGuru from "./KehadiranSiswaGuru";
-import BookIcon from "../../assets/Icon/open-book.png";
-import EyeIcon from "../../assets/Icon/Eye.png";
-import QRCodeIcon from "../../assets/Icon/qr_code.png";
+import { Calendar, Clock, BookOpen, Eye, QrCode } from "lucide-react";
 import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
 import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
 import { AbsenGuruModal } from "../../component/Shared/Form/AbsenGuruModal";
 
-// Icon Components
-function CalendarIconSVG() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
-
-function ClockIconSVG() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
 
 // ==================== INTERFACES ====================
 interface DashboardGuruProps {
@@ -89,8 +49,6 @@ const PAGE_TITLES: Record<GuruPage, string> = {
 
 const BREAKPOINTS = {
   mobile: 768,
-  tablet: 1024,
-  desktop: 1400,
 };
 
 // Dummy data - Nanti diganti dengan API call
@@ -429,14 +387,6 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
     setActiveModal("metode");
   };
 
-  const handleMulaiScan = () => {
-    // Pastikan ada schedule yang dipilih
-    if (!selectedSchedule && DUMMY_SCHEDULE.length > 0) {
-      setSelectedSchedule(DUMMY_SCHEDULE[0]);
-    }
-    setActiveModal("schedule");
-  };
-
   const handlePilihQR = () => {
     setActiveModal("schedule");
   };
@@ -637,7 +587,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <div style={{ opacity: 0.8 }}>
-                      <CalendarIconSVG />
+                      <Calendar size={24} strokeWidth={1.5} />
                     </div>
                     <span style={{ fontSize: "16px", fontWeight: "600" }}>
                       {currentDateStr || "Memuat..."}
@@ -646,7 +596,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
 
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <div style={{ opacity: 0.8 }}>
-                      <ClockIconSVG />
+                      <Clock size={24} strokeWidth={1.5} />
                     </div>
                     <span
                       style={{
@@ -684,15 +634,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                     }}
                   >
                     <div style={styles.iconWrapper}>
-                      <img
-                        src={BookIcon}
-                        alt="Book"
-                        style={{ 
-                          width: 20, 
-                          height: 20,
-                          filter: "brightness(0) invert(1)"
-                        }}
-                      />
+                      <BookOpen size={20} color="white" strokeWidth={2} />
                     </div>
                     <div
                       style={{
@@ -747,11 +689,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    <img 
-                      src={QRCodeIcon} 
-                      alt="QR" 
-                      style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)' }} 
-                    />
+                    <QrCode size={20} color="white" strokeWidth={2} />
                   </div>
                   <span>Absen Kehadiran Guru</span>
                 </button>
@@ -766,6 +704,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                   <div
                     key={schedule.id}
                     style={styles.scheduleCard(isMobile)}
+                    onClick={() => handleScheduleClick(schedule)}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.boxShadow =
                         "0 6px 14px rgba(0, 0, 0, 0.15)";
@@ -783,16 +722,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                   >
                     {/* Icon Buku */}
                     <div style={styles.bookIconWrapper(isMobile)}>
-                      <img
-                        src={BookIcon}
-                        alt="Book"
-                        style={{
-                          width: isMobile ? "18px" : "20px",
-                          height: isMobile ? "18px" : "20px",
-                          objectFit: "contain",
-                          filter: "brightness(0) invert(1)",
-                        }}
-                      />
+                      <BookOpen size={isMobile ? 18 : 20} color="white" strokeWidth={2} />
                     </div>
 
                     {/* Mata Pelajaran & Kelas */}
@@ -846,11 +776,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                           e.currentTarget.style.transform = "scale(1)";
                         }}
                       >
-                        <img
-                          src={EyeIcon}
-                          alt="View"
-                          style={{ width: 18, height: 18 }}
-                        />
+                        <Eye size={18} color="#1F2937" strokeWidth={2} />
                       </div>
 
                       {/* QR Icon */}
@@ -866,11 +792,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                           e.currentTarget.style.transform = "scale(1)";
                         }}
                       >
-                        <img
-                          src={QRCodeIcon}
-                          alt="QR Code"
-                          style={{ width: 18, height: 18 }}
-                        />
+                        <QrCode size={18} color="#1F2937" strokeWidth={2} />
                       </div>
                     </div>
                   </div>

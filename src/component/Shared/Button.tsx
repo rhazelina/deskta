@@ -2,6 +2,8 @@ import React from "react";
 
 interface ButtonProps {
   label: string;
+  icon?: React.ReactNode;
+  iconPosition?: "left" | "right";
   onClick?: () => void;
   variant?: "primary" | "secondary" | "danger";
   size?: "sm" | "md" | "lg";
@@ -12,6 +14,8 @@ interface ButtonProps {
 
 export function Button({
   label,
+  icon,
+  iconPosition = "left",
   onClick,
   variant = "primary",
   size = "md",
@@ -56,6 +60,9 @@ export function Button({
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         transition: "all 0.2s ease",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
         ...Object.fromEntries(className.split(" ").map((c) => [c, true])),
       }}
       onMouseEnter={(e) => {
@@ -69,7 +76,13 @@ export function Button({
         }
       }}
     >
+      {icon && iconPosition === "left" && (
+        <span style={{ display: "inline-flex" }}>{icon}</span>
+      )}
       {label}
+      {icon && iconPosition === "right" && (
+        <span style={{ display: "inline-flex" }}>{icon}</span>
+      )}
     </button>
   );
 }

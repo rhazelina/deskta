@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Modal } from '../Modal';
 // import BookIcon from '../../../assets/Icon/book.png';
 import EditIcon from '../../../assets/Icon/Edit.png';
@@ -45,8 +45,7 @@ export function TidakBisaMengajar({
   const handleFileChange = (
     file: File | null,
     setFile: (file: File | null) => void,
-    setPreview: (preview: string | null) => void,
-    index: number
+    setPreview: (preview: string | null) => void
   ) => {
     if (file) {
       setFile(file);
@@ -67,7 +66,7 @@ export function TidakBisaMengajar({
     setPreview: (preview: string | null) => void
   ) => {
     const file = e.target.files?.[0] || null;
-    handleFileChange(file, setFile, setPreview, 0);
+    handleFileChange(file, setFile, setPreview);
   };
 
   const handleRemoveFile = (
@@ -79,6 +78,17 @@ export function TidakBisaMengajar({
     setPreview(null);
     if (inputRef.current) {
       inputRef.current.value = '';
+    }
+  };
+
+  const resetForm = () => {
+    setAlasan('');
+    setKeterangan('');
+    setFoto1(null);
+    setPreview1(null);
+    setErrors({});
+    if (fileInput1Ref.current) {
+      fileInput1Ref.current.value = '';
     }
   };
 
@@ -103,22 +113,25 @@ export function TidakBisaMengajar({
     }
 
     // Reset form
-    setAlasan('');
-    setKeterangan('');
-    setFoto1(null);
-    setPreview1(null);
-    setErrors({});
+    resetForm();
     onClose();
   };
 
   const handleClose = () => {
-    setAlasan('');
-    setKeterangan('');
-    setFoto1(null);
-    setPreview1(null);
-    setErrors({});
+    resetForm();
     onClose();
   };
+
+  const handlePilihMetodeClick = () => {
+    handleClose();
+    onPilihMetode?.();
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
@@ -447,7 +460,7 @@ export function TidakBisaMengajar({
           {onPilihMetode && (
             <button
               type="button"
-              onClick={() => onPilihMetode && onPilihMetode()}
+              onClick={handlePilihMetodeClick}
               style={{
                 width: '100%',
                 padding: '12px 24px',

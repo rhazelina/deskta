@@ -7,10 +7,7 @@ import { Table } from '../../component/Shared/Table';
 import { TambahGuruForm } from '../../component/Shared/Form/TambahGuruForm';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
-import ActionIcon from '../../assets/Icon/Icon3.png';
-import EditIcon from '../../assets/Icon/Edit.png';
-import DeleteIcon from '../../assets/Icon/Delete.png';
-import EyeIcon from '../../assets/Icon/Eye.png';
+import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 
 interface User {
   role: string;
@@ -164,11 +161,7 @@ export default function GuruAdmin({
             }}
             title="Aksi"
           >
-            <img
-              src={ActionIcon}
-              alt="Aksi"
-              style={{ width: 22, height: 22, objectFit: 'contain' }}
-            />
+            <MoreVertical size={22} strokeWidth={1.5} />
           </button>
 
           {openActionId === row.id && (
@@ -206,11 +199,7 @@ export default function GuruAdmin({
                   color: '#111827',
                 }}
               >
-                <img
-                  src={EditIcon}
-                  alt="Edit"
-                  style={{ width: 18, height: 18, objectFit: 'contain' }}
-                />
+                <Edit size={18} strokeWidth={2} color="#64748B" />
                 <span>Edit</span>
               </button>
               <button
@@ -233,11 +222,7 @@ export default function GuruAdmin({
                   borderTop: '1px solid #E5E7EB',
                 }}
               >
-                <img
-                  src={DeleteIcon}
-                  alt="Hapus"
-                  style={{ width: 18, height: 18, objectFit: 'contain' }}
-                />
+                <Trash2 size={18} strokeWidth={2} color="#64748B" />
                 <span>Hapus</span>
               </button>
               <button
@@ -260,11 +245,7 @@ export default function GuruAdmin({
                   borderTop: '1px solid #E5E7EB',
                 }}
               >
-                <img
-                  src={EyeIcon}
-                  alt="Lihat"
-                  style={{ width: 18, height: 18, objectFit: 'contain' }}
-                />
+                <Eye size={18} strokeWidth={2} color="#64748B" />
                 <span>Lihat</span>
               </button>
             </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import SearchIcon from "../../assets/Icon/search.png";
+import { Search } from "lucide-react";
 
 interface SearchBoxProps {
   placeholder?: string;
@@ -26,15 +26,7 @@ export function SearchBox({
         width: "70%",
       }}
     >
-      <img
-        src={SearchIcon}
-        alt="Search"
-        style={{
-          width: "16px",
-          height: "16px",
-          objectFit: "contain",
-        }}
-      />{" "}
+      <Search size={16} color="#6B7280" strokeWidth={2} />
       <input
         type="text"
         placeholder={placeholder}
