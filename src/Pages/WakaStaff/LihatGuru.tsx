@@ -9,6 +9,7 @@ interface Props {
   onMenuClick: (page: string) => void;
   namaGuru?: string;
   noIdentitas?: string;
+  onBack?: () => void;
 }
 
 export default function LihatGuru({
@@ -18,6 +19,7 @@ export default function LihatGuru({
   onMenuClick,
   namaGuru = "Ewit Erniyah S.pd",
   noIdentitas = "0918415784",
+  onBack,
 }: Props) {
   return (
     <StaffLayout
@@ -28,6 +30,24 @@ export default function LihatGuru({
       onLogout={onLogout}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              alignSelf: "flex-start",
+              padding: "10px 16px",
+              borderRadius: 8,
+              border: "1px solid #E2E8F0",
+              backgroundColor: "#FFFFFF",
+              color: "#0F172A",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {"\u2190"} Kembali
+          </button>
+        )}
         {/* Box Informasi Guru */}
         <div
           style={{

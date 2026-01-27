@@ -8,6 +8,7 @@ interface Props {
   onMenuClick: (page: string) => void;
   kelas?: string;
   jurusan?: string;
+  onBack?: () => void;
 }
 
 export default function LihatKelas({
@@ -16,6 +17,7 @@ export default function LihatKelas({
   currentPage,
   onMenuClick,
   kelas = "X Mekatronika 1",
+  onBack,
 }: Props) {
   return (
     <StaffLayout
@@ -26,6 +28,24 @@ export default function LihatKelas({
       onLogout={onLogout}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              alignSelf: "flex-start",
+              padding: "10px 16px",
+              borderRadius: 8,
+              border: "1px solid #E2E8F0",
+              backgroundColor: "#FFFFFF",
+              color: "#0F172A",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {"\u2190"} Kembali
+          </button>
+        )}
         {/* Box Informasi Kelas */}
         <div
           style={{

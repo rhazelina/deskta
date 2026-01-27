@@ -1,4 +1,4 @@
-// src/Pages/WakaStaff/DetailSiswaStaff.tsx
+﻿// src/Pages/WakaStaff/DetailSiswaStaff.tsx
 import { useEffect, useMemo, useState } from "react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { FilterItem } from "../../component/Shared/FilterBar";
@@ -8,7 +8,7 @@ import { FormModal } from "../../component/Shared/FormModal";
 import { Select } from "../../component/Shared/Select";
 import { Table } from "../../component/Shared/Table";
 
-type StatusType =
+type DetailStatusType =
   | "hadir"
   | "terlambat"
   | "tidak-hadir"
@@ -21,7 +21,7 @@ interface KehadiranRow {
   nisn: string;
   namaSiswa: string;
   mataPelajaran: string;
-  status: StatusType;
+  status: DetailStatusType;
 }
 
 interface DetailSiswaStaffProps {
@@ -50,7 +50,7 @@ export default function DetailSiswaStaff({
   onBack,
 }: DetailSiswaStaffProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [selectedTanggal, setSelectedTanggal] = useState(
+  const [selectedTanggal] = useState(
     new Date().toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "2-digit",
@@ -98,13 +98,19 @@ export default function DetailSiswaStaff({
     { key: "nisn", label: "NISN" },
     { key: "namaSiswa", label: "Nama Siswa" },
     { key: "mataPelajaran", label: "Mata Pelajaran" },
-    { key: "status", label: "Status", render: (value: StatusType) => <StatusBadge status={value} /> },
+    {
+      key: "status",
+      label: "Status",
+      render: (value: DetailStatusType) => (
+        <StatusBadge status={value === "alpha" ? "tidak-hadir" : value} />
+      ),
+    },
   ], []);
 
   // Modal edit
   const [editingRow, setEditingRow] = useState<KehadiranRow | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editStatus, setEditStatus] = useState<StatusType>("hadir");
+  const [editStatus, setEditStatus] = useState<DetailStatusType>("hadir");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions = [
@@ -135,7 +141,7 @@ export default function DetailSiswaStaff({
       setIsSubmitting(false);
       setIsEditOpen(false);
       setEditingRow(null);
-      alert("✅ Status kehadiran berhasil diperbarui!");
+      alert("Status kehadiran berhasil diperbarui!");
     }, 300);
   };
 
@@ -213,3 +219,4 @@ function SummaryCard({ label, value, color }: { label: string; value: string; co
     </div>
   );
 }
+

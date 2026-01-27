@@ -218,7 +218,9 @@ export default function KehadiranSiswaGuru({
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                  <StatusBadge status={item.status} />
+                  <StatusBadge
+                    status={item.status === 'alpha' ? 'tidak-hadir' : item.status}
+                  />
                 </div>
               </div>
             ))}
@@ -252,7 +254,11 @@ export default function KehadiranSiswaGuru({
                     <td style={{ ...styles.td, fontFamily: 'monospace', color: '#4B5563' }}>{item.nisn}</td>
                     <td style={{ ...styles.td, fontWeight: '600', color: '#1F2937' }}>{item.nama}</td>
                     <td style={styles.td}>{item.waktuScan}</td>
-                    <td style={styles.td}><StatusBadge status={item.status} /></td>
+                    <td style={styles.td}>
+                      <StatusBadge
+                        status={item.status === 'alpha' ? 'tidak-hadir' : item.status}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

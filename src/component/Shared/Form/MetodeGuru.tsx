@@ -29,7 +29,7 @@ export function MetodeGuru({
   const [dispSelesai, setDispSelesai] = useState<string>("");
   const [dispKeterangan, setDispKeterangan] = useState("");
   const [dispBukti, setDispBukti] = useState<File | null>(null);
-  const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : null;
+  const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : undefined;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -331,7 +331,9 @@ export function MetodeGuru({
                       />
                     )}
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{selectedFile.name}</span>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                    {selectedFile?.name ?? ""}
+                  </span>
                   <span style={{ fontSize: '12px', color: '#2563EB', fontWeight: '500' }}>Klik untuk ganti file</span>
                 </div>
               ) : (
