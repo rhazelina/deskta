@@ -49,8 +49,9 @@ const MENU_ITEMS_SISWA: MenuItem[] = [
 const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
   { id: "daftar-mapel", label: "Daftar Mapel", icon: <BookOpen size={20} /> },
+  { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   { id: "absensi", label: "Daftar Ketidakhadiran", icon: <Users size={20} /> },
-  { id: "laporan", label: "Laporan Kelas", icon: <Users size={20} /> },
+  // { id: "laporan", label: "Laporan Kelas", icon: <Users size={20} /> },
 ];
 
 const MENU_ITEMS_WALIKELAS: MenuItem[] = [

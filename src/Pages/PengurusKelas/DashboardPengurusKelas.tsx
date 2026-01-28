@@ -2,6 +2,7 @@
 import PengurusKelasLayout from "../../component/PengurusKelas/PengurusKelasLayout";
 import DaftarMapel from "./DaftarMapel";
 import TidakHadirPenguruskelas from "./TidakHadirPenguruskelas";
+import JadwalPengurus from "./JadwalPengurus";
 import openBook from "../../assets/Icon/open-book.png";
 import INO from "../../assets/Icon/INO.png";
 import RASI from "../../assets/Icon/RASI.png";
@@ -11,7 +12,7 @@ type PageType =
   | "dashboard"
   | "daftar-mapel"
   | "absensi"
-  | "jadwal"
+  | "jadwal-anda"
   | "laporan"
   | "profil"; // Sesuaikan dengan menu Pengurus Kelas
 
@@ -107,7 +108,7 @@ export default function DashboardPengurusKelas({
       "dashboard",
       "daftar-mapel",
       "absensi",
-      "jadwal",
+      "jadwal-anda",
       "laporan",
       "profil",
     ];
@@ -131,6 +132,8 @@ export default function DashboardPengurusKelas({
           ? "Daftar Mapel"
           : currentPage === "absensi"
           ? "Daftar Ketidakhadiran"
+          : currentPage === "jadwal-anda"
+          ? "Jadwal Anda"
           : "Dashboard"
       }
       currentPage={currentPage}
@@ -142,6 +145,13 @@ export default function DashboardPengurusKelas({
         <DaftarMapel />
       ) : currentPage === "absensi" ? (
         <TidakHadirPenguruskelas />
+      ) : currentPage === "jadwal-anda" ? (
+        <JadwalPengurus
+          user={user}
+          currentPage={currentPage}
+          onMenuClick={handleMenuClick}
+          onLogout={onLogout}
+        />
       ) : (
         <>
           <div
