@@ -63,8 +63,8 @@ export function Button({
         display: "inline-flex",
         alignItems: "center",
         gap: "8px",
-        ...Object.fromEntries(className.split(" ").map((c) => [c, true])),
       }}
+      className={className}
       onMouseEnter={(e) => {
         if (!disabled) {
           (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";

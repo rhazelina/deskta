@@ -94,8 +94,8 @@ export function TambahGuruForm({
     if (!mataPelajaran.trim()) newErrors.mataPelajaran = 'Mata pelajaran wajib diisi';
     if (!role) newErrors.role = 'Role wajib dipilih';
 
-    if (!password.trim()) newErrors.password = 'Password wajib diisi';
-    else if (password.length < 6) newErrors.password = 'Password minimal 6 karakter';
+    if (!password.trim()) newErrors.password = 'Kata sandi wajib diisi';
+    else if (password.length < 6) newErrors.password = 'Kata sandi minimal 6 karakter';
 
     if (!noTelp.trim()) newErrors.noTelp = 'No. telepon wajib diisi';
     else if (!/^\d+$/.test(noTelp)) newErrors.noTelp = 'No. telepon hanya boleh angka';
@@ -129,6 +129,7 @@ export function TambahGuruForm({
   };
 
   const handleKodeGuruChange = (value: string) => {
+    console.log('handleKodeGuruChange called with:', value);
     if (/^\d*$/.test(value) && value.length <= 10) {
       setKodeGuru(value);
       if (errors.kodeGuru) setErrors({ ...errors, kodeGuru: undefined });
@@ -138,7 +139,7 @@ export function TambahGuruForm({
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     width: '100%',
     padding: '12px 14px',
-    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'}`,
+    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'} `,
     borderRadius: '10px',
     fontSize: '14px',
     outline: 'none',
@@ -236,10 +237,8 @@ export function TambahGuruForm({
 
         <div>
           <label htmlFor="mataPelajaran" style={labelStyle}>Mata Pelajaran</label>
-          <input
+          <select
             id="mataPelajaran"
-            type="text"
-            placeholder="Masukkan mata pelajaran"
             value={mataPelajaran}
             onChange={(e) => {
               setMataPelajaran(e.target.value);
@@ -247,10 +246,66 @@ export function TambahGuruForm({
             }}
             style={inputStyle(!!errors.mataPelajaran)}
             disabled={isSubmitting}
-          />
+          >
+            <option value="">Pilih Mata Pelajaran</option>
+            <option value="Matematika">Matematika</option>
+            <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+            <option value="Bahasa Inggris">Bahasa Inggris</option>
+            <option value="Fisika">Fisika</option>
+            <option value="Kimia">Kimia</option>
+            <option value="Biologi">Biologi</option>
+            <option value="Sejarah">Sejarah</option>
+            <option value="Geografi">Geografi</option>
+            <option value="Ekonomi">Ekonomi</option>
+            <option value="Sosiologi">Sosiologi</option>
+            <option value="Seni Budaya">Seni Budaya</option>
+            <option value="Penjasorkes">Penjasorkes</option>
+            <option value="PKn">PKn</option>
+            <option value="Agama">Agama</option>
+            <option value="Informatika">Informatika</option>
+            <option value="IPAS">IPAS</option>
+            <option value="Dasar Program Keahlian">Dasar Program Keahlian</option>
+          </select>
           {errors.mataPelajaran && <p style={errorStyle}>{errors.mataPelajaran}</p>}
         </div>
 
+        <div>
+          <label htmlFor="password" style={labelStyle}>Kata Sandi</label>
+          <input
+            id="password"
+            type="text"
+            placeholder="Masukkan kata sandi"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.password) setErrors({ ...errors, password: undefined });
+            }}
+            style={inputStyle(!!errors.password)}
+            disabled={isSubmitting}
+          />
+          {errors.password && <p style={errorStyle}>{errors.password}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="noTelp" style={labelStyle}>No Telepon</label>
+          <input
+            id="noTelp"
+            type="text"
+            placeholder="Masukkan nomor telepon"
+            value={noTelp}
+            onChange={(e) => {
+              // Allow only numbers
+              if (/^\d*$/.test(e.target.value)) {
+                setNoTelp(e.target.value);
+                if (errors.noTelp) setErrors({ ...errors, noTelp: undefined });
+              }
+            }}
+            style={inputStyle(!!errors.noTelp)}
+            disabled={isSubmitting}
+            maxLength={13}
+          />
+          {errors.noTelp && <p style={errorStyle}>{errors.noTelp}</p>}
+        </div>
       </div>
     </FormModal>
   );

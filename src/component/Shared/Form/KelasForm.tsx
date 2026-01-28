@@ -20,6 +20,7 @@ interface KelasFormProps {
   jurusanList: { id: string; nama: string }[];
   kelasList?: { id: string; nama: string }[];
   waliKelasList?: { id: string; nama: string }[];
+  takenWaliKelasIds?: string[];
 }
 
 export function TambahKelasForm({
@@ -31,6 +32,7 @@ export function TambahKelasForm({
   jurusanList,
   kelasList = [],
   waliKelasList = [],
+  takenWaliKelasIds = [],
 }: KelasFormProps) {
   const [jurusanId, setJurusanId] = useState("");
   const [kelasId, setKelasId] = useState("");
@@ -123,10 +125,10 @@ export function TambahKelasForm({
             {(kelasList.length > 0
               ? kelasList
               : [
-                  { id: "10", nama: "10" },
-                  { id: "11", nama: "11" },
-                  { id: "12", nama: "12" },
-                ]
+                { id: "10", nama: "10" },
+                { id: "11", nama: "11" },
+                { id: "12", nama: "12" },
+              ]
             ).map((item) => (
               <option key={item.id} value={item.nama}>
                 {item.nama}
@@ -168,11 +170,13 @@ export function TambahKelasForm({
               style={inputStyle}
             >
               <option value="">Pilih wali kelas</option>
-              {waliKelasList.map((item) => (
-                <option key={item.id} value={item.nama}>
-                  {item.nama}
-                </option>
-              ))}
+              {waliKelasList
+                .filter(t => !takenWaliKelasIds.includes(t.id) || t.id === initialData?.waliKelasId)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.nama}
+                  </option>
+                ))}
             </select>
           ) : (
             <input

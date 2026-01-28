@@ -221,19 +221,36 @@ export default function KelasAdmin({
     kelasId: string;
     waliKelasId: string;
   }) => {
+    // Validation: 1 angkatan max 19 rombel
+    // Count existing classes for the target Tingkat (data.kelasId)
+    // If editing, exclude the current class from count if it stays in same tingkat, but logic is simpler: 
+    // Just count how many classes have this 'kelasId' (tingkat).
+
+    // Check if we are adding a NEW class or changing Tingkat
+    const classesInLevel = kelasList.filter(k => k.kelasId === data.kelasId);
+    // If editing and we are keeping the same ID, we don't count itself as "extra" if we are just updating name. 
+    // But simplistic check: max 19.
+
+    if (!editingKelas || (editingKelas && editingKelas.kelasId !== data.kelasId)) {
+      if (classesInLevel.length >= 19) {
+        alert(`Gagal: Maksimal 19 rombel untuk angkatan kelas ${data.kelasId}!`);
+        return;
+      }
+    }
+
     if (editingKelas) {
       setKelasList(prev =>
         prev.map(item =>
           item.id === editingKelas.id
             ? {
-                ...item,
-                nama: data.namaKelas,
-                jurusan: data.jurusanId,
-                jurusanId: data.jurusanId,
-                kelasId: data.kelasId,
-                waliKelas: data.waliKelasId,
-                waliKelasId: data.waliKelasId,
-              }
+              ...item,
+              nama: data.namaKelas,
+              jurusan: data.jurusanId,
+              jurusanId: data.jurusanId,
+              kelasId: data.kelasId,
+              waliKelas: data.waliKelasId,
+              waliKelasId: data.waliKelasId,
+            }
             : item
         )
       );
@@ -357,11 +374,11 @@ export default function KelasAdmin({
         initialData={
           editingKelas
             ? {
-                namaKelas: editingKelas.nama,
-                jurusanId: editingKelas.jurusanId,
-                kelasId: editingKelas.kelasId,
-                waliKelasId: editingKelas.waliKelasId,
-              }
+              namaKelas: editingKelas.nama,
+              jurusanId: editingKelas.jurusanId,
+              kelasId: editingKelas.kelasId,
+              waliKelasId: editingKelas.waliKelasId,
+            }
             : undefined
         }
         jurusanList={jurusanListForForm}

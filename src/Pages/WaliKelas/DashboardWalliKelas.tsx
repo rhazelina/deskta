@@ -14,7 +14,7 @@ interface DashboardWalliKelasProps {
 }
 
 type WalikelasPage =
-  | "dashboard"
+  | "Beranda"
   | "jadwal-anda"
   | "notifikasi"
   | "input-manual"
@@ -29,7 +29,7 @@ interface ScheduleItem {
 }
 
 const PAGE_TITLES: Record<WalikelasPage, string> = {
-  dashboard: "Dashboard",
+  Beranda: "Dashboard",
   "jadwal-anda": "Jadwal Anda",
   notifikasi: "Notifikasi",
   "input-manual": "Input Manual",
@@ -40,6 +40,7 @@ const BREAKPOINTS = {
   mobile: 768,
 };
 
+// dummy schedule
 const DUMMY_SCHEDULE: ScheduleItem[] = [
   {
     id: "1",
@@ -207,7 +208,7 @@ export default function DashboardWalliKelas({
   user,
   onLogout,
 }: DashboardWalliKelasProps) {
-  const [currentPage, setCurrentPage] = useState<WalikelasPage>("dashboard");
+  const [currentPage, setCurrentPage] = useState<WalikelasPage>("Beranda");
   const [currentDateStr, setCurrentDateStr] = useState("");
   const [currentTimeStr, setCurrentTimeStr] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -346,9 +347,7 @@ export default function DashboardWalliKelas({
               <span style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 700, color: "#FFFFFF" }}>
                 {user.name}
               </span>
-              <span style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.9)" }}>
-                Wali Kelas
-              </span>
+              {/* REMOVED SUBTITLE AS REQUESTED */}
             </div>
           </div>
 
@@ -374,7 +373,7 @@ export default function DashboardWalliKelas({
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <BookOpen size={20} />
               <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
-                Kelas Asuh
+                Wali Kelas
               </span>
             </div>
             <div style={styles.infoBadge(isMobile)}>
@@ -406,15 +405,15 @@ export default function DashboardWalliKelas({
                 transition: "all 0.2s",
                 border: "1px solid rgba(255,255,255,0.3)"
               }}
-              onClick={handleEyeClick}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
+                onClick={handleEyeClick}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.transform = "scale(1.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
               >
                 <Eye size={20} color="white" strokeWidth={2} />
               </div>
@@ -427,8 +426,8 @@ export default function DashboardWalliKelas({
           <h3 style={styles.sectionTitle(isMobile)}>Jadwal Kelas Anda</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {DUMMY_SCHEDULE.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 style={styles.scheduleCard(isMobile)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.12)";
@@ -457,7 +456,7 @@ export default function DashboardWalliKelas({
                 </div>
 
                 {/* Action Icon (QR) */}
-                <div 
+                <div
                   onClick={(e) => handleQRClick(e, item)}
                   style={styles.actionButton}
                   onMouseEnter={(e) => {
@@ -475,7 +474,7 @@ export default function DashboardWalliKelas({
             ))}
           </div>
         </div>
-        
+
         {/* Modals */}
         {activeModal === "metode" && (
           <MetodeGuru
@@ -494,12 +493,12 @@ export default function DashboardWalliKelas({
             data={
               selectedSchedule
                 ? {
-                    subject: selectedSchedule.subject,
-                    className: selectedSchedule.className,
-                    jurusan: selectedSchedule.jurusan,
-                    jam: selectedSchedule.jam,
-                    statusGuru: "Hadir",
-                  }
+                  subject: selectedSchedule.subject,
+                  className: selectedSchedule.className,
+                  jurusan: selectedSchedule.jurusan,
+                  jam: selectedSchedule.jam,
+                  statusGuru: "Hadir",
+                }
                 : { subject: "", className: "" }
             }
             onMulaiAbsen={handleMulaiAbsen}
@@ -514,11 +513,11 @@ export default function DashboardWalliKelas({
             data={
               selectedSchedule
                 ? {
-                    subject: selectedSchedule.subject,
-                    className: selectedSchedule.className,
-                    jurusan: selectedSchedule.jurusan,
-                    jam: selectedSchedule.jam,
-                  }
+                  subject: selectedSchedule.subject,
+                  className: selectedSchedule.className,
+                  jurusan: selectedSchedule.jurusan,
+                  jam: selectedSchedule.jam,
+                }
                 : { subject: "", className: "" }
             }
             onSubmit={handleSubmitTidakBisaMengajar}

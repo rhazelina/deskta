@@ -18,6 +18,27 @@ import {
   TrendingUp,
   AlarmClock,
 } from "lucide-react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from "chart.js";
+import { Bar, Doughnut } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
 
@@ -185,15 +206,15 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                 }}>
                   <Megaphone size={24} />
                 </div>
-                <p style={{ 
-                  fontSize: "16px", 
+                <p style={{
+                  fontSize: "16px",
                   color: "#6B7280",
                   margin: "0 0 8px 0"
                 }}>
                   Tidak ada notifikasi baru
                 </p>
-                <p style={{ 
-                  fontSize: "14px", 
+                <p style={{
+                  fontSize: "14px",
                   color: "#9CA3AF",
                   margin: 0
                 }}>
@@ -207,7 +228,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
       default:
         return (
           <SiswaLayout
-            pageTitle="Dashboard"
+            pageTitle="Beranda"
             currentPage={currentPage}
             onMenuClick={handleMenuClick}
             user={user}
@@ -233,16 +254,16 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
                   <div>
-                    <h2 style={{ 
-                      fontSize: "24px", 
-                      fontWeight: "700", 
+                    <h2 style={{
+                      fontSize: "24px",
+                      fontWeight: "700",
                       color: "#001F3E",
                       margin: "0 0 8px 0"
                     }}>
                       Selamat Belajar, {userInfo.name}!
                     </h2>
-                    <p style={{ 
-                      fontSize: "16px", 
+                    <p style={{
+                      fontSize: "16px",
                       color: "#6B7280",
                       margin: 0,
                       maxWidth: "600px"
@@ -250,9 +271,9 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       Pantau jadwal, kehadiran, dan statistik belajar Anda hari ini
                     </p>
                   </div>
-                  <div style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
                     gap: "16px",
                     padding: "12px 20px",
                     backgroundColor: "#F0F9FF",
@@ -304,14 +325,14 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   transition: "all 0.3s ease",
                   cursor: "pointer",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(30, 64, 175, 0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(30, 64, 175, 0.2)";
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(30, 64, 175, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(30, 64, 175, 0.2)";
+                  }}>
                   <div style={{
                     width: "64px",
                     height: "64px",
@@ -326,7 +347,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     <GraduationCap size={28} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ 
+                    <div style={{
                       fontWeight: 700,
                       fontSize: "18px",
                       color: "white",
@@ -334,7 +355,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     }}>
                       {userInfo.name}
                     </div>
-                    <div style={{ 
+                    <div style={{
                       fontWeight: 500,
                       fontSize: "14px",
                       color: "rgba(255, 255, 255, 0.85)",
@@ -371,18 +392,18 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   justifyContent: "space-between",
                   transition: "all 0.3s ease",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
-                }}>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
+                  }}>
                   <div>
-                    <div style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
                       gap: "12px",
                       marginBottom: "16px"
                     }}>
@@ -398,17 +419,17 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       }}>
                         <BookOpen size={18} color="#92400E" />
                       </div>
-                      <h3 style={{ 
-                        margin: 0, 
-                        fontSize: "18px", 
-                        fontWeight: "600", 
-                        color: "#001F3E" 
+                      <h3 style={{
+                        margin: 0,
+                        fontSize: "18px",
+                        fontWeight: "600",
+                        color: "#001F3E"
                       }}>
                         Ringkasan Hari Ini
                       </h3>
                     </div>
-                    <div style={{ 
-                      fontSize: "14px", 
+                    <div style={{
+                      fontSize: "14px",
                       color: "#6B7280",
                       marginBottom: "20px"
                     }}>
@@ -425,10 +446,10 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     border: "1px solid #E5E7EB"
                   }}>
                     <TimePill label="07:00" />
-                    <span style={{ 
-                      fontWeight: "600", 
+                    <span style={{
+                      fontWeight: "600",
                       color: "#6B7280",
-                      fontSize: "14px" 
+                      fontSize: "14px"
                     }}>—</span>
                     <TimePill label="15:00" />
                   </div>
@@ -443,17 +464,17 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                 boxShadow: "0 4px 20px rgba(0, 31, 62, 0.08)",
                 border: "1px solid #E5E7EB",
               }}>
-                <div style={{ 
-                  display: "flex", 
-                  justifyContent: "space-between", 
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
                   marginBottom: "24px"
                 }}>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: "20px", 
-                    fontWeight: "600", 
-                    color: "#001F3E" 
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: "20px",
+                    fontWeight: "600",
+                    color: "#001F3E"
                   }}>
                     Jadwal Hari Ini
                   </h3>
@@ -516,11 +537,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      <div style={{ 
-                        display: "flex", 
-                        alignItems: "flex-start", 
+                      <div style={{
+                        display: "flex",
+                        alignItems: "flex-start",
                         gap: "16px",
-                        marginBottom: "16px" 
+                        marginBottom: "16px"
                       }}>
                         <div style={{
                           width: "48px",
@@ -535,18 +556,18 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                           <BookOpenCheck size={20} color="#1D4ED8" />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <h4 style={{ 
-                            margin: "0 0 6px 0", 
-                            fontSize: "17px", 
-                            fontWeight: "600", 
-                            color: "#001F3E" 
+                          <h4 style={{
+                            margin: "0 0 6px 0",
+                            fontSize: "17px",
+                            fontWeight: "600",
+                            color: "#001F3E"
                           }}>
                             {schedule.mapel}
                           </h4>
-                          <p style={{ 
-                            margin: "0", 
-                            fontSize: "14px", 
-                            color: "#6B7280" 
+                          <p style={{
+                            margin: "0",
+                            fontSize: "14px",
+                            color: "#6B7280"
                           }}>
                             {schedule.guru}
                           </p>
@@ -561,17 +582,17 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                         borderRadius: "8px",
                         border: "1px solid #E5E7EB"
                       }}>
-                        <span style={{ 
-                          fontSize: "14px", 
+                        <span style={{
+                          fontSize: "14px",
                           color: "#6B7280",
-                          fontWeight: "500" 
+                          fontWeight: "500"
                         }}>
                           <Clock size={14} />
                         </span>
-                        <span style={{ 
-                          fontSize: "14px", 
-                          fontWeight: "600", 
-                          color: "#111827" 
+                        <span style={{
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "#111827"
                         }}>
                           {schedule.start} - {schedule.end}
                         </span>
@@ -597,17 +618,17 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   border: "1px solid #E5E7EB",
                   transition: "all 0.3s ease",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
-                }}>
-                  <div style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
+                  }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
                     gap: "12px",
                     marginBottom: "20px"
                   }}>
@@ -623,11 +644,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     }}>
                       <TrendingUp size={18} color="#92400E" />
                     </div>
-                    <h3 style={{ 
-                      margin: 0, 
-                      fontSize: "18px", 
-                      fontWeight: "600", 
-                      color: "#001F3E" 
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: "18px",
+                      fontWeight: "600",
+                      color: "#001F3E"
                     }}>
                       Tren Kehadiran Bulanan
                     </h3>
@@ -644,17 +665,17 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   border: "1px solid #E5E7EB",
                   transition: "all 0.3s ease",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
-                }}>
-                  <div style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 62, 0.08)";
+                  }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
                     gap: "12px",
                     marginBottom: "20px"
                   }}>
@@ -670,11 +691,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     }}>
                       <BarChart3 size={18} color="#1D4ED8" />
                     </div>
-                    <h3 style={{ 
-                      margin: 0, 
-                      fontSize: "18px", 
-                      fontWeight: "600", 
-                      color: "#001F3E" 
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: "18px",
+                      fontWeight: "600",
+                      color: "#001F3E"
                     }}>
                       Statistik Minggu Ini
                     </h3>
@@ -743,119 +764,97 @@ function MonthlyBarChart({
 }: {
   data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number }>;
 }) {
-  const maxValue = Math.max(
-    ...data.map((item) => Math.max(item.hadir, item.izin, item.sakit, item.alpha))
-  );
+  const chartData = {
+    labels: data.map((d) => d.month),
+    datasets: [
+      {
+        label: "Hadir",
+        data: data.map((d) => d.hadir),
+        backgroundColor: "#10B981",
+        borderRadius: 4,
+      },
+      {
+        label: "Izin",
+        data: data.map((d) => d.izin),
+        backgroundColor: "#F59E0B",
+        borderRadius: 4,
+      },
+      {
+        label: "Sakit",
+        data: data.map((d) => d.sakit),
+        backgroundColor: "#3B82F6",
+        borderRadius: 4,
+      },
+      {
+        label: "Alpha",
+        data: data.map((d) => d.alpha),
+        backgroundColor: "#EF4444",
+        borderRadius: 4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 8,
+          padding: 20,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+          },
+        },
+      },
+      tooltip: {
+        backgroundColor: "#1F2937",
+        padding: 12,
+        titleFont: { size: 13, family: "'Inter', sans-serif" },
+        bodyFont: { size: 12, family: "'Inter', sans-serif" },
+        cornerRadius: 8,
+        displayColors: true,
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 11,
+          },
+        },
+      },
+      y: {
+        grid: {
+          color: "#F3F4F6",
+          drawBorder: false,
+        },
+        border: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 11,
+          },
+          padding: 8,
+        },
+      },
+    },
+    interaction: {
+      mode: "index" as const,
+      intersect: false,
+    },
+  };
 
   return (
-    <div style={{ position: "relative" }}>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          bottom: "40px",
-          width: "30px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          fontSize: "12px",
-          color: "#6B7280",
-          fontWeight: "500",
-        }}
-      >
-        <span>60</span>
-        <span>40</span>
-        <span>20</span>
-        <span>0</span>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          gap: "16px",
-          height: "200px",
-          marginLeft: "40px",
-          marginBottom: "40px",
-          paddingTop: "20px",
-        }}
-      >
-        {data.map((item) => (
-          <div key={item.month} style={{ flex: 1, textAlign: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "flex-end",
-                gap: "4px",
-                height: "160px",
-              }}
-            >
-              <div
-                style={{
-                  width: "20px",
-                  height: `${(item.hadir / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: "#10B981",
-                  transition: "height 0.3s ease",
-                }}
-                title={`Hadir: ${item.hadir}`}
-              />
-              <div
-                style={{
-                  width: "20px",
-                  height: `${(item.izin / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: "#F59E0B",
-                  transition: "height 0.3s ease",
-                }}
-                title={`Izin: ${item.izin}`}
-              />
-              <div
-                style={{
-                  width: "20px",
-                  height: `${(item.sakit / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: "#3B82F6",
-                  transition: "height 0.3s ease",
-                }}
-                title={`Sakit: ${item.sakit}`}
-              />
-              <div
-                style={{
-                  width: "20px",
-                  height: `${(item.alpha / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: "#EF4444",
-                  transition: "height 0.3s ease",
-                }}
-                title={`Alpha: ${item.alpha}`}
-              />
-            </div>
-            <p style={{ margin: "12px 0 0", fontSize: "14px", color: "#4B5563", fontWeight: "500" }}>
-              {item.month}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: "20px",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          marginTop: "20px",
-          paddingTop: "20px",
-          borderTop: "1px solid #E5E7EB"
-        }}
-      >
-        <LegendDot color="#10B981" label="Hadir" />
-        <LegendDot color="#F59E0B" label="Izin" />
-        <LegendDot color="#3B82F6" label="Sakit" />
-        <LegendDot color="#EF4444" label="Alpha" />
-      </div>
+    <div style={{ height: "300px", width: "100%" }}>
+      <Bar data={chartData} options={options} />
     </div>
   );
 }
@@ -866,176 +865,68 @@ function WeeklyDonutChart({
 }: {
   data: { hadir: number; izin: number; sakit: number; alpha: number };
 }) {
-  const total = data.hadir + data.izin + data.sakit + data.alpha;
-  const radius = 80;
-  const centerX = 100;
-  const centerY = 100;
-  let currentAngle = -90;
-
-  const colors = {
-    hadir: "#10B981",
-    izin: "#F59E0B",
-    sakit: "#3B82F6",
-    alpha: "#EF4444",
+  const chartData = {
+    labels: ["Hadir", "Izin", "Sakit", "Alpha"],
+    datasets: [
+      {
+        data: [data.hadir, data.izin, data.sakit, data.alpha],
+        backgroundColor: ["#10B981", "#F59E0B", "#3B82F6", "#EF4444"],
+        borderColor: "#ffffff",
+        borderWidth: 2,
+      },
+    ],
   };
 
-  const segments = [
-    { key: "hadir", value: data.hadir, label: "Hadir", percentage: Math.round((data.hadir / total) * 100) },
-    { key: "izin", value: data.izin, label: "Izin", percentage: Math.round((data.izin / total) * 100) },
-    { key: "sakit", value: data.sakit, label: "Sakit", percentage: Math.round((data.sakit / total) * 100) },
-    { key: "alpha", value: data.alpha, label: "Alpha", percentage: Math.round((data.alpha / total) * 100) },
-  ];
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: "70%",
+    plugins: {
+      legend: {
+        position: "right" as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          padding: 20,
+          font: {
+            size: 13,
+            family: "'Inter', sans-serif",
+          },
+          generateLabels: (chart: any) => {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label: string, i: number) => {
+                const meta = chart.getDatasetMeta(0);
+                const style = meta.controller.getStyle(i);
+                const value = data.datasets[0].data[i];
+                const total = data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
+                const percentage = Math.round((value / total) * 100) + "%";
 
-  const createPath = (startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(centerX, centerY, radius, endAngle);
-    const end = polarToCartesian(centerX, centerY, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-    return [
-      "M",
-      centerX,
-      centerY,
-      "L",
-      start.x,
-      start.y,
-      "A",
-      radius,
-      radius,
-      0,
-      largeArcFlag,
-      0,
-      end.x,
-      end.y,
-      "Z",
-    ].join(" ");
-  };
-
-  const polarToCartesian = (
-    centerX: number,
-    centerY: number,
-    radius: number,
-    angleInDegrees: number
-  ) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians),
-    };
+                return {
+                  text: `${label} (${percentage})`,
+                  fillStyle: style.backgroundColor,
+                  strokeStyle: style.borderColor,
+                  lineWidth: style.borderWidth,
+                  hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
+        },
+      },
+    },
   };
 
   return (
-    <div style={{ display: "flex", gap: "32px", alignItems: "center" }}>
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        <svg width="200" height="200" style={{ display: "block" }}>
-          {segments.map((segment) => {
-            const angle = (segment.value / total) * 360;
-            const startAngle = currentAngle;
-            const endAngle = currentAngle + angle;
-            const path = createPath(startAngle, endAngle);
-            currentAngle = endAngle;
-
-            return (
-              <path
-                key={segment.key}
-                d={path}
-                fill={colors[segment.key as keyof typeof colors]}
-                stroke="#FFFFFF"
-                strokeWidth="3"
-              />
-            );
-          })}
-          <text
-            x="100"
-            y="105"
-            textAnchor="middle"
-            style={{
-              fontSize: "20px",
-              fontWeight: "bold",
-              fill: "#111827",
-            }}
-          >
-            {total}
-          </text>
-          <text
-            x="100"
-            y="125"
-            textAnchor="middle"
-            style={{
-              fontSize: "12px",
-              fill: "#6B7280",
-            }}
-          >
-            Total
-          </text>
-        </svg>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1 }}>
-        {segments.map((segment) => (
-          <div
-            key={segment.key}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 16px",
-              backgroundColor: "#F9FAFB",
-              borderRadius: "10px",
-              border: "1px solid #E5E7EB",
-              transition: "all 0.2s"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#F3F4F6";
-              e.currentTarget.style.transform = "translateX(4px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#F9FAFB";
-              e.currentTarget.style.transform = "translateX(0)";
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span
-                style={{
-                  width: "16px",
-                  height: "16px",
-                  borderRadius: "4px",
-                  backgroundColor: colors[segment.key as keyof typeof colors],
-                }}
-              />
-              <span style={{ fontSize: "14px", color: "#374151", fontWeight: "500" }}>
-                {segment.label}
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "16px", color: "#111827", fontWeight: "600" }}>
-                {segment.percentage}%
-              </span>
-              <span style={{ fontSize: "12px", color: "#9CA3AF", fontWeight: "500" }}>
-                ({segment.value})
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div style={{ height: "250px", width: "100%", display: "flex", justifyContent: "center" }}>
+      <Doughnut data={chartData} options={options} />
     </div>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      <span
-        style={{
-          width: "16px",
-          height: "16px",
-          borderRadius: "4px",
-          backgroundColor: color,
-        }}
-      />
-      <span style={{ fontSize: "14px", color: "#4B5563", fontWeight: "500" }}>{label}</span>
-    </div>
-  );
-}
+
 
 // Modal Component untuk Siswa
 interface JadwalSiswaModalProps {

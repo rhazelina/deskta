@@ -95,20 +95,23 @@ export default function AbsensiSiswa({
   onMenuClick,
   onLogout,
 }: AbsensiSiswaProps) {
-  const [selectedPeriode, setSelectedPeriode] = useState("bulan-ini");
+  const [selectedDate, setSelectedDate] = useState("");
 
-  // Filter data berdasarkan periode (dummy logic)
+  // Filter data berdasarkan tanggal (dummy logic)
   const filteredData = useMemo(() => {
-    // Nanti bisa ditambahkan logic filter berdasarkan periode
+    if (selectedDate) {
+      // Mock filtering by date if needed, or just return all for now as dummy data is limited
+      // return dummyData.filter(d => d.tanggal === selectedDate); // Format might differ
+    }
     return dummyData;
-  }, [selectedPeriode]);
+  }, [selectedDate]);
 
   // Hitung summary
   const summary = useMemo(() => {
     const izin = filteredData.filter((d) => d.status === "izin" || d.status === "izin-sakit").length;
     const sakit = filteredData.filter((d) => d.status === "sakit" || d.status === "izin-sakit").length;
     const alpha = filteredData.filter((d) => d.status === "alpha").length;
-    
+
     return { izin, sakit, alpha };
   }, [filteredData]);
 
@@ -195,13 +198,26 @@ export default function AbsensiSiswa({
         >
           {/* Filter Periode */}
           <div style={{ minWidth: "200px" }}>
-            <Select
-              label="Pilih Periode:"
-              value={selectedPeriode}
-              onChange={setSelectedPeriode}
-              options={periodeOptions}
-              placeholder="Pilih periode"
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>
+                Tanggal:
+              </label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  fontSize: '14px',
+                  outline: 'none',
+                  color: '#1F2937',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
           </div>
 
           {/* Summary Cards */}
@@ -324,8 +340,8 @@ export default function AbsensiSiswa({
         </div>
       </div>
 
-     
-     
+
+
     </SiswaLayout>
   );
 }

@@ -124,7 +124,7 @@ export function EditGuruForm({
     <FormModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Edit Data Guru"
+      title="Ubah Data Guru"
       onSubmit={handleSubmit}
       submitLabel="Simpan"
       isSubmitting={isSubmitting}
@@ -312,9 +312,8 @@ export function EditGuruForm({
             style={{
               width: "100%",
               padding: "10px 12px",
-              border: `1px solid ${
-                errors.waliKelasDari ? "#ef4444" : "#d1d5db"
-              }`,
+              border: `1px solid ${errors.waliKelasDari ? "#ef4444" : "#d1d5db"
+                }`,
               borderRadius: "8px",
               fontSize: "14px",
               outline: "none",
@@ -364,9 +363,8 @@ export function EditGuruForm({
             style={{
               width: "100%",
               padding: "10px 12px",
-              border: `1px solid ${
-                errors.mataPelajaran ? "#ef4444" : "#d1d5db"
-              }`,
+              border: `1px solid ${errors.mataPelajaran ? "#ef4444" : "#d1d5db"
+                }`,
               borderRadius: "8px",
               fontSize: "14px",
               outline: "none",

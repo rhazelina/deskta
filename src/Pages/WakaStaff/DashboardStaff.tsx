@@ -167,7 +167,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
             onBack={() => handleMenuClick("kehadiran-siswa")}
           />
         );
-        
+
       case "kehadiran-guru":
         return (
           <KehadiranGuru
@@ -177,7 +177,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
             }}
           />
         );
-        
+
       case "detail-kehadiran-guru":
         return (
           <DetailKehadiranGuru
@@ -185,7 +185,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
             onBack={() => handleMenuClick("kehadiran-guru")}
           />
         );
-        
+
       case "guru-pengganti":
         return (
           <StaffLayout
@@ -203,7 +203,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
       default:
         return (
           <StaffLayout
-            pageTitle="Dashboard"
+            pageTitle="Beranda"
             currentPage={currentPage}
             onMenuClick={handleMenuClick}
             user={user}

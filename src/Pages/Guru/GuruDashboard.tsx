@@ -19,7 +19,7 @@ interface DashboardGuruProps {
 }
 
 type GuruPage =
-  | "dashboard"
+  | "Beranda"
   | "jadwal"
   | "presensi"
   | "kehadiran"
@@ -38,7 +38,7 @@ interface ScheduleItem {
 }
 
 const PAGE_TITLES: Record<GuruPage, string> = {
-  dashboard: "Dashboard",
+  Beranda: "Beranda",
   jadwal: "Detail Jadwal",
   presensi: "Scan QR",
   kehadiran: "Kehadiran Siswa",
@@ -301,7 +301,7 @@ const styles = {
 // ==================== MAIN COMPONENT ====================
 export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   // ========== STATE ==========
-  const [currentPage, setCurrentPage] = useState<GuruPage>("dashboard");
+  const [currentPage, setCurrentPage] = useState<GuruPage>("Beranda");
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(
     null
   );
@@ -403,8 +403,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   }) => {
     console.log("Data tidak bisa mengajar:", data);
     alert(
-      `Laporan berhasil dikirim!\nAlasan: ${data.alasan}\nKeterangan: ${
-        data.keterangan || "-"
+      `Laporan berhasil dikirim!\nAlasan: ${data.alasan}\nKeterangan: ${data.keterangan || "-"
       }\nFoto: ${data.foto1 ? "Ada" : "Tidak ada"}`
     );
     setActiveModal(null);
@@ -492,7 +491,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
             </div>
           </GuruLayout>
         );
-      case "dashboard":
+      case "Beranda":
       default:
         return (
           <GuruLayout
@@ -813,12 +812,12 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               onClose={() => setActiveModal(null)}
               data={
                 selectedSchedule
-                      ? {
-                          subject: selectedSchedule.subject,
-                          className: selectedSchedule.className,
-                          jurusan: selectedSchedule.jurusan,
-                          jam: selectedSchedule.jam,
-                        }
+                  ? {
+                    subject: selectedSchedule.subject,
+                    className: selectedSchedule.className,
+                    jurusan: selectedSchedule.jurusan,
+                    jam: selectedSchedule.jam,
+                  }
                   : null
               }
               onMulaiAbsen={handleMulaiAbsen}
@@ -838,12 +837,12 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               onClose={() => setActiveModal(null)}
               data={
                 selectedSchedule
-                      ? {
-                          subject: selectedSchedule.subject,
-                          className: selectedSchedule.className,
-                          jurusan: selectedSchedule.jurusan,
-                          jam: selectedSchedule.jam,
-                        }
+                  ? {
+                    subject: selectedSchedule.subject,
+                    className: selectedSchedule.className,
+                    jurusan: selectedSchedule.jurusan,
+                    jam: selectedSchedule.jam,
+                  }
                   : null
               }
               onSubmit={handleSubmitTidakBisaMengajar}

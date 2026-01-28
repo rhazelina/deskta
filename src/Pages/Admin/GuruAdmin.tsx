@@ -7,7 +7,7 @@ import { Table } from '../../component/Shared/Table';
 import { TambahGuruForm } from '../../component/Shared/Form/TambahGuruForm';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Grid } from 'lucide-react';
 
 interface User {
   role: string;
@@ -105,6 +105,7 @@ export default function GuruAdmin({
 }: GuruAdminProps) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedMapel, setSelectedMapel] = useState('');
+  const [isDataGuruDropdownOpen, setIsDataGuruDropdownOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [guruList, setGuruList] = useState<Guru[]>(dummyData);
@@ -293,15 +294,15 @@ export default function GuruAdmin({
       const updatedList = guruList.map((item) =>
         item.id === editingGuru.id
           ? {
-              ...item,
-              kodeGuru: data.kodeGuru,
-              namaGuru: data.namaGuru,
-              mataPelajaran: data.mataPelajaran,
-              role: data.role,
-              password: data.password,
-              noTelp: data.noTelp,
-              waliKelasDari: data.waliKelasDari,
-            }
+            ...item,
+            kodeGuru: data.kodeGuru,
+            namaGuru: data.namaGuru,
+            mataPelajaran: data.mataPelajaran,
+            role: data.role,
+            password: data.password,
+            noTelp: data.noTelp,
+            waliKelasDari: data.waliKelasDari,
+          }
           : item
       );
       setGuruList(updatedList);
@@ -405,8 +406,8 @@ export default function GuruAdmin({
                   </thead>
                   <tbody>
                     ${filteredData
-                      .map(
-                        (item, idx) => `
+              .map(
+                (item, idx) => `
                       <tr>
                         <td>${idx + 1}</td>
                         <td>${item.kodeGuru}</td>
@@ -415,8 +416,8 @@ export default function GuruAdmin({
                         <td>${item.role}</td>
                       </tr>
                     `
-                      )
-                      .join('')}
+              )
+              .join('')}
                   </tbody>
                 </table>
               </body>
@@ -559,95 +560,133 @@ export default function GuruAdmin({
                   justifyContent: 'flex-end',
                 }}
               >
-                <button
-                  onClick={handleImport}
-                  style={{
-                    ...buttonBaseStyle,
-                    border: '1px solid #CBD5E1',
-                    backgroundColor: '#FFFFFF',
-                    color: '#0F172A',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      '#F1F5F9';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      '#FFFFFF';
-                  }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setIsDataGuruDropdownOpen(!isDataGuruDropdownOpen)}
+                    style={{
+                      ...buttonBaseStyle,
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      color: '#0F172A',
+                    }}
                   >
-                    <path d="M12 3v12" />
-                    <path d="m8 11 4 4 4-4" />
-                    <path d="M20 21H4" />
-                  </svg>
-                  Import
-                </button>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Data Guru
+                    <Grid size={16} style={{ marginLeft: 4 }} />
+                  </button>
 
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept=".csv,.xlsx,.xls,.json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      alert(
-                        `File "${file.name}" dipilih. Implementasi parsing bisa ditambahkan.`
-                      );
-                    }
-                  }}
-                />
-
-                <button
-                  onClick={handleExportPDF}
-                  style={{
-                    ...buttonBaseStyle,
-                    border: 'none',
-                    backgroundColor: '#2563EB',
-                    color: 'white',
-                    boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      '#1D4ED8';
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      '0 6px 8px -1px rgba(37, 99, 235, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      '#2563EB';
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                      '0 4px 6px -1px rgba(37, 99, 235, 0.2)';
-                  }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
-                  Ekspor PDF
-                </button>
+                  {isDataGuruDropdownOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: 4,
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 8,
+                        boxShadow:
+                          '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                        overflow: 'hidden',
+                        zIndex: 20,
+                        minWidth: 160,
+                        border: '1px solid #E5E7EB',
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          setIsDataGuruDropdownOpen(false);
+                          handleImport();
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '10px 16px',
+                          border: 'none',
+                          background: 'white',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          color: '#111827',
+                          textAlign: 'left',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 3v12" />
+                          <path d="m8 11 4 4 4-4" />
+                          <path d="M20 21H4" />
+                        </svg>
+                        Import
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsDataGuruDropdownOpen(false);
+                          handleExportPDF();
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '10px 16px',
+                          border: 'none',
+                          background: 'white',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          color: '#111827',
+                          textAlign: 'left',
+                          borderTop: '1px solid #F1F5F9',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="16" y1="13" x2="8" y2="13" />
+                          <line x1="16" y1="17" x2="8" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        Ekspor PDF
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <Button
                   label="Tambahkan Guru"
@@ -679,14 +718,14 @@ export default function GuruAdmin({
         initialData={
           editingGuru
             ? {
-                kodeGuru: editingGuru.kodeGuru,
-                namaGuru: editingGuru.namaGuru,
-                mataPelajaran: editingGuru.mataPelajaran,
-                role: editingGuru.role,
-                password: editingGuru.password || '',
-                noTelp: editingGuru.noTelp || '',
-                waliKelasDari: editingGuru.waliKelasDari || '',
-              }
+              kodeGuru: editingGuru.kodeGuru,
+              namaGuru: editingGuru.namaGuru,
+              mataPelajaran: editingGuru.mataPelajaran,
+              role: editingGuru.role,
+              password: editingGuru.password || '',
+              noTelp: editingGuru.noTelp || '',
+              waliKelasDari: editingGuru.waliKelasDari || '',
+            }
             : undefined
         }
         isEdit={!!editingGuru}

@@ -98,7 +98,7 @@ export default function SiswaAdmin({
       try {
         const text = event.target?.result as string;
         const lines = text.split('\n').filter(line => line.trim());
-        
+
         // Parse CSV header
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const namaSiswaIdx = headers.indexOf('nama siswa');
@@ -115,10 +115,10 @@ export default function SiswaAdmin({
         const newSiswa: Siswa[] = [];
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
-          
+
           const jurusanValue = jurusanIdx !== -1 ? values[jurusanIdx] : '';
           const jurusanId = jurusanOptions.find(j => j.label.toLowerCase() === jurusanValue.toLowerCase())?.value || '';
-          
+
           const newRecord: Siswa = {
             id: String(Math.max(...siswaList.map(s => parseInt(s.id) || 0)) + newSiswa.length + 1),
             namaSiswa: values[namaSiswaIdx],
@@ -234,17 +234,17 @@ export default function SiswaAdmin({
 
   /* ===================== BUTTON STYLE (SAMA DENGAN GURUADMIN) ===================== */
   const buttonBaseStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  padding: '0 20px',
-  borderRadius: '8px',
-  fontWeight: 600,
-  fontSize: '14px',
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-  height: '44px',
-} as const;
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '0 20px',
+    borderRadius: '8px',
+    fontWeight: 600,
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    height: '44px',
+  } as const;
 
 
   /* ===================== TABLE ===================== */
@@ -252,7 +252,7 @@ export default function SiswaAdmin({
     { key: 'namaSiswa', label: 'Nama Siswa' },
     { key: 'nisn', label: 'NISN' },
     { key: 'jurusan', label: 'Konsentrasi Keahlian' },
-    { key: 'kelas', label: 'Kelas' },
+    { key: 'kelas', label: 'Tingkatan Kelas' },
     { key: 'jenisKelamin', label: 'L / P' },
     {
       key: 'aksi',
@@ -282,7 +282,7 @@ export default function SiswaAdmin({
                 border: '1px solid #E2E8F0',
               }}
             >
-              <button 
+              <button
                 onClick={() => { setIsModalOpen(true); }}
                 style={{
                   width: '100%',
@@ -312,8 +312,8 @@ export default function SiswaAdmin({
                 <Edit size={16} color="#64748B" strokeWidth={2} />
                 Edit
               </button>
-              <button 
-                onClick={() => {}}
+              <button
+                onClick={() => { }}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -342,7 +342,7 @@ export default function SiswaAdmin({
                 <Trash2 size={16} color="#64748B" strokeWidth={2} />
                 Hapus
               </button>
-              <button 
+              <button
                 onClick={() => onNavigateToDetail?.(row.id)}
                 style={{
                   width: '100%',
@@ -411,80 +411,89 @@ export default function SiswaAdmin({
             <SearchBox placeholder="Cari siswa..." value={searchValue} onChange={setSearchValue} />
           </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             {/* IMPORT */}
-            <button
-  onClick={handleImport}
-  style={{
-    ...buttonBaseStyle,
-    border: '1px solid #CBD5E1',
-    backgroundColor: '#FFFFFF',
-    color: '#0F172A',
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.backgroundColor = '#F1F5F9';
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.backgroundColor = '#FFFFFF';
-  }}
->
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 3v12" />
-    <path d="m8 11 4 4 4-4" />
-    <path d="M20 21H4" />
-  </svg>
-  Import
-</button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <button
+                onClick={handleImport}
+                style={{
+                  ...buttonBaseStyle,
+                  border: '1px solid #CBD5E1',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F172A',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F1F5F9';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3v12" />
+                  <path d="m8 11 4 4 4-4" />
+                  <path d="M20 21H4" />
+                </svg>
+                Import
+              </button>
+              <a
+                href="/format-siswa.csv"
+                download
+                style={{ fontSize: '12px', color: '#3B82F6', textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Unduh Format
+              </a>
+            </div>
 
 
             {/* EXPORT */}
             <button
-  onClick={handleExportPDF}
-  style={{
-    ...buttonBaseStyle,
-    border: 'none',
-    backgroundColor: '#2563EB',
-    color: 'white',
-    boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.backgroundColor = '#1D4ED8';
-    e.currentTarget.style.boxShadow =
-      '0 6px 8px -1px rgba(37, 99, 235, 0.3)';
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.backgroundColor = '#2563EB';
-    e.currentTarget.style.boxShadow =
-      '0 4px 6px -1px rgba(37, 99, 235, 0.2)';
-  }}
->
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" y1="13" x2="8" y2="13" />
-    <line x1="16" y1="17" x2="8" y2="17" />
-    <polyline points="10 9 9 9 8 9" />
-  </svg>
-  Ekspor PDF
-</button>
+              onClick={handleExportPDF}
+              style={{
+                ...buttonBaseStyle,
+                border: 'none',
+                backgroundColor: '#2563EB',
+                color: 'white',
+                boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1D4ED8';
+                e.currentTarget.style.boxShadow =
+                  '0 6px 8px -1px rgba(37, 99, 235, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563EB';
+                e.currentTarget.style.boxShadow =
+                  '0 4px 6px -1px rgba(37, 99, 235, 0.2)';
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+              Ekspor PDF
+            </button>
 
             <Button label="Tambahkan Siswa" onClick={() => setIsModalOpen(true)} />
 
@@ -535,7 +544,7 @@ export default function SiswaAdmin({
       <TambahSiswaForm
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={() => {}}
+        onSubmit={() => { }}
       />
     </AdminLayout>
   );

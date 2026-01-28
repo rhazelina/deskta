@@ -124,7 +124,7 @@ export function KehadiranSiswaWakel({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Rekap Modal State
-  const [isRekapOpen, setIsRekapOpen] = useState(false);
+  // Rekap Modal State Removed
 
   // Dispensasi Modal State
   const [isDispensasiOpen, setIsDispensasiOpen] = useState(false);
@@ -175,9 +175,7 @@ export function KehadiranSiswaWakel({
   };
 
   // fitur otewe
-  const handleViewRekap = () => {
-    setIsRekapOpen(true);
-  };
+
 
    // fitur otewe
   const handleBuatDispensasi = () => {
@@ -193,9 +191,7 @@ export function KehadiranSiswaWakel({
     handleOpenEdit(row);
   };
 
-  const handleCloseRekap = () => {
-    setIsRekapOpen(false);
-  };
+
 
   const handleCloseDispensasi = () => {
     setIsDispensasiOpen(false);
@@ -638,8 +634,8 @@ export function KehadiranSiswaWakel({
             {/* Tombol aksi kanan */}
             <div style={styles.rightActions}>
               <Button
-                label="Lihat Rekap"
-                onClick={handleViewRekap}
+                label="Export CSV"
+                onClick={handleExportRekap}
                 icon={<FileText size={16} />}
               />
               {dispensasiList.length > 0 && (
@@ -707,118 +703,6 @@ export function KehadiranSiswaWakel({
         </div>
       </FormModal>
 
-      {/* Modal Rekap Kehadiran */}
-      <FormModal
-        isOpen={isRekapOpen}
-        onClose={handleCloseRekap}
-        title="Rekap Kehadiran"
-        showSubmitButton={false}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Summary Statistics */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            <div style={{ padding: '12px', backgroundColor: '#ECFDF5', borderRadius: '8px', border: '1px solid #10B981' }}>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#047857' }}>Hadir</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#10B981' }}>
-                {filteredRows.filter((r) => r.status === 'hadir').length}
-              </p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#FFFBEB', borderRadius: '8px', border: '1px solid #F59E0B' }}>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#B45309' }}>Izin</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#F59E0B' }}>
-                {totalIzin}
-              </p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#EFF6FF', borderRadius: '8px', border: '1px solid #3B82F6' }}>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#1E40AF' }}>Sakit</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#3B82F6' }}>
-                {totalSakit}
-              </p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#FEF2F2', borderRadius: '8px', border: '1px solid #EF4444' }}>
-              <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#B91C1C' }}>Tanpa Keterangan</p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 700, color: '#EF4444' }}>
-                {totalTanpaKeterangan}
-              </p>
-            </div>
-          </div>
-
-          {/* Total */}
-          <div style={{ padding: '12px', backgroundColor: '#F3F4F6', borderRadius: '8px' }}>
-            <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#6B7280' }}>Total Siswa</p>
-            <p style={{ margin: '4px 0 0 0', fontSize: '20px', fontWeight: 700, color: '#111827' }}>
-              {filteredRows.length}
-            </p>
-          </div>
-
-          {/* Attendance Details Table */}
-          <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
-                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>NISN</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Nama</th>
-                  <th style={{ padding: '8px 4px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((row) => (
-                  <tr key={row.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                    <td style={{ padding: '8px 4px', color: '#111827' }}>{row.nisn}</td>
-                    <td style={{ padding: '8px 4px', color: '#111827' }}>{row.namaSiswa}</td>
-                    <td style={{ padding: '8px 4px', color: '#111827', fontWeight: 500 }}>{row.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Period Info */}
-          <div style={{ padding: '12px', backgroundColor: '#F0F9FF', borderRadius: '8px', fontSize: '12px', color: '#1E40AF' }}>
-            <p style={{ margin: 0 }}>📅 Periode: <strong>{startDate}</strong> - <strong>{endDate}</strong></p>
-          </div>
-
-          {/* Export Button */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button
-              onClick={handleExportRekap}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: '#10B981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: '14px',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10B981'}
-            >
-              📥 Export CSV
-            </button>
-            <button
-              onClick={() => window.print()}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: '#3B82F6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: '14px',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
-            >
-              🖨️ Print
-            </button>
-          </div>
-        </div>
-      </FormModal>
 
       {/* Modal Buat Dispensasi */}
       <FormModal

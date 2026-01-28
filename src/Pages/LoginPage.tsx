@@ -42,7 +42,7 @@ export default function LoginPage({ role, onLogin, onBack }: LoginPageProps) {
     }
 
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       // Check if role exists before calling onLogin
@@ -290,7 +290,7 @@ export default function LoginPage({ role, onLogin, onBack }: LoginPageProps) {
                     fontSize: 14,
                   }}
                 >
-                  Password
+                  Kata Sandi
                 </label>
                 <input
                   type="password"
