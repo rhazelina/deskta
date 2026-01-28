@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import SiswaLayout from "../../component/Siswa/SiswaLayout";
 import { Table } from "../../component/Shared/Table";
-import { Select } from "../../component/Shared/Select";
 import { StatusBadge } from "../../component/Shared/StatusBadge";
 
 type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
@@ -80,13 +79,6 @@ const dummyData: AbsensiRecord[] = [
     namaSiswa: "Sule Prikitiw",
     status: "alpha",
   },
-];
-
-const periodeOptions = [
-  { label: "Bulan ini", value: "bulan-ini" },
-  { label: "Bulan lalu", value: "bulan-lalu" },
-  { label: "Semester ini", value: "semester-ini" },
-  { label: "Tahun ini", value: "tahun-ini" },
 ];
 
 export default function AbsensiSiswa({

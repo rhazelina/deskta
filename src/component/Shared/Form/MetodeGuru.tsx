@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../../Shared/Modal';
 import QRCodeIcon from '../../../assets/Icon/qr_code.png';
 
@@ -16,12 +16,8 @@ export function MetodeGuru({
   onClose,
   onPilihQR,
   onPilihManual,
-  onTidakBisaMengajar,
   onSubmitDispensasi,
 }: MetodeGuruProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showDispensasi, setShowDispensasi] = useState(false);
   const [liveMode, setLiveMode] = useState(true);
 
@@ -33,41 +29,12 @@ export function MetodeGuru({
   const [dispKeterangan, setDispKeterangan] = useState("");
   const [dispBukti, setDispBukti] = useState<File | null>(null);
 
-  const previewUrl = selectedFile ? URL.createObjectURL(selectedFile) : undefined;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleTidakBisaMengajar = () => {
-    if (onTidakBisaMengajar) {
-      onTidakBisaMengajar();
-    }
-  };
 
   const handleClose = () => {
-    setSelectedFile(null);
-    setIsDragging(false);
     onClose();
   };
 
-  const handleContinue = () => {
-    if (!selectedFile) return;
-    onPilihQR();
-    handleClose();
-  };
-
-  const openDispensasi = () => setShowDispensasi(true);
   const closeDispensasi = () => setShowDispensasi(false);
 
   const handleDispBuktiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
