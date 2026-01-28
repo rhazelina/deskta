@@ -293,12 +293,12 @@ export default function LoginPage({ role, onLogin, onBack }: LoginPageProps) {
                   Kata Sandi
                 </label>
                 <input
-                  type="password"
+                  type="Kata Sandi"
                   value={form.password}
                   onChange={(e) =>
                     setForm({ ...form, password: e.target.value })
                   }
-                  placeholder="Masukkan password"
+                  placeholder="Kata Sandi"
                   style={inputStyle}
                   disabled={isLoading || !role}
                   aria-label="Password"

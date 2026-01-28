@@ -41,14 +41,13 @@ const PAGE_TITLES: Record<WakaPage, string> = {
   "detail-kehadiran-guru": "Detail Kehadiran Guru",
 };
 
-// Dummy data (BE bisa ganti dari API)
-const weeklyAttendance = [
-  { day: "Senin", hadir: 42, alpha: 4 },
-  { day: "Selasa", hadir: 38, alpha: 6 },
-  { day: "Rabu", hadir: 45, alpha: 3 },
-  { day: "Kamis", hadir: 40, alpha: 5 },
-  { day: "Jumat", hadir: 44, alpha: 2 },
-  { day: "Sabtu", hadir: 28, alpha: 1 },
+// Dummy data updated for Monthly view (Mon-Fri) with 4 categories
+const dailyAttendanceData = [
+  { day: "Senin", hadir: 42, alpha: 2, izin: 3, sakit: 1 },
+  { day: "Selasa", hadir: 38, alpha: 1, izin: 5, sakit: 2 },
+  { day: "Rabu", hadir: 45, alpha: 0, izin: 2, sakit: 1 },
+  { day: "Kamis", hadir: 40, alpha: 1, izin: 4, sakit: 3 },
+  { day: "Jumat", hadir: 44, alpha: 0, izin: 1, sakit: 1 },
 ];
 
 const monthlyAttendance = [
@@ -303,7 +302,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
               >
                 {/* Weekly Chart */}
                 <div style={cardStyle}>
-                  <SectionHeader title="Grafik Kehadiran Mingguan" subtitle="Rekap per hari" />
+                  <SectionHeader title="Grafik Kehadiran Bulanan" subtitle="Rekap Mingguan (Senin - Jumat)" />
                   <WeeklyBarGraph />
                 </div>
 
@@ -368,8 +367,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function WeeklyBarGraph() {
   const maxValue =
-    weeklyAttendance.reduce(
-      (acc, item) => Math.max(acc, item.hadir, item.alpha),
+    dailyAttendanceData.reduce(
+      (acc, item) => Math.max(acc, item.hadir, item.alpha, item.izin, item.sakit),
       1
     ) || 1;
 
@@ -384,31 +383,51 @@ function WeeklyBarGraph() {
           marginBottom: "32px",
         }}
       >
-        {weeklyAttendance.map((item) => (
+        {dailyAttendanceData.map((item) => (
           <div key={item.day} style={{ flex: 1, textAlign: "center" }}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-end",
-                gap: "8px",
+                gap: "4px",
                 height: "180px",
               }}
             >
               <div
+                title={`Hadir: ${item.hadir}`}
                 style={{
-                  width: "22px",
+                  width: "14px",
                   height: `${(item.hadir / maxValue) * 160}px`,
-                  borderRadius: "8px 8px 0 0",
+                  borderRadius: "4px 4px 0 0",
                   background: "linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%)",
                 }}
               />
               <div
+                title={`Alpha: ${item.alpha}`}
                 style={{
-                  width: "22px",
+                  width: "14px",
                   height: `${(item.alpha / maxValue) * 160}px`,
-                  borderRadius: "8px 8px 0 0",
+                  borderRadius: "4px 4px 0 0",
                   background: "linear-gradient(180deg, #B91C1C 0%, #F87171 100%)",
+                }}
+              />
+              <div
+                title={`Izin: ${item.izin}`}
+                style={{
+                  width: "14px",
+                  height: `${(item.izin / maxValue) * 160}px`,
+                  borderRadius: "4px 4px 0 0",
+                  background: "linear-gradient(180deg, #D97706 0%, #FBBF24 100%)",
+                }}
+              />
+              <div
+                title={`Sakit: ${item.sakit}`}
+                style={{
+                  width: "14px",
+                  height: `${(item.sakit / maxValue) * 160}px`,
+                  borderRadius: "4px 4px 0 0",
+                  background: "linear-gradient(180deg, #059669 0%, #34D399 100%)",
                 }}
               />
             </div>
@@ -427,8 +446,10 @@ function WeeklyBarGraph() {
           flexWrap: "wrap",
         }}
       >
-        <LegendDot color="#3B82F6" label="Jumlah Hadir" />
-        <LegendDot color="#EF4444" label="Alpha" />
+        <LegendDot color="#3B82F6" label="Jumlah Guru Hadir" />
+        <LegendDot color="#FBBF24" label="Jumlah Guru Izin" />
+        <LegendDot color="#34D399" label="Jumlah Guru Sakit" />
+        <LegendDot color="#EF4444" label="Jumlah Guru Alpha" />
       </div>
     </div>
   );
