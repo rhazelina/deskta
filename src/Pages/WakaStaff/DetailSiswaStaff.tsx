@@ -145,8 +145,37 @@ export default function DetailSiswaStaff({
     }, 300);
   };
 
-  const handleViewRekap = () => alert("Lihat rekap kehadiran (belum diimplementasikan)");
-  const handleBuatDispensasi = () => alert("Buat dispensasi (belum diimplementasikan)");
+  const [isRekapOpen, setIsRekapOpen] = useState(false);
+
+  const handleViewRekap = () => setIsRekapOpen(true);
+  const handleCloseRekap = () => setIsRekapOpen(false);
+
+  const handleExportRekap = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "REKAP KEHADIRAN SISWA\n";
+    csvContent += `Tanggal: ${selectedTanggal}\n\n`;
+    csvContent += "RINGKASAN,\n";
+    csvContent += `Hadir,${totalHadir}\n`;
+    csvContent += `Sakit,${totalSakit}\n`;
+    csvContent += `Izin,${totalIzin}\n`;
+    csvContent += `Alpha/Tidak Hadir,${totalAlpha}\n`;
+    csvContent += `Total Siswa,${filteredRows.length}\n\n`;
+    csvContent += "DETAIL KEHADIRAN\n";
+    csvContent += "NISN,Nama Siswa,Mata Pelajaran,Status\n";
+
+    filteredRows.forEach((row) => {
+      csvContent += `${row.nisn},"${row.namaSiswa}",${row.mataPelajaran},${row.status}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Rekap_Kehadiran_${selectedTanggal}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    alert("Rekap kehadiran berhasil diunduh");
+  };
 
   return (
     <StaffLayout pageTitle={`Detail Kehadiran - ${kelasInfo.namaKelas}`} currentPage={currentPage} onMenuClick={onMenuClick} user={user} onLogout={onLogout}>
@@ -167,7 +196,6 @@ export default function DetailSiswaStaff({
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <Button label="Lihat Rekap" onClick={handleViewRekap} />
-            <Button label="Buat Dispensasi" variant="secondary" onClick={handleBuatDispensasi} />
             {onBack && <Button label="Kembali" variant="secondary" onClick={onBack} />}
           </div>
         </div>
@@ -209,6 +237,54 @@ export default function DetailSiswaStaff({
             options={statusOptions}
             placeholder="Pilih status kehadiran"
           />
+        </div>
+      </FormModal>
+
+      <FormModal
+        isOpen={isRekapOpen}
+        onClose={handleCloseRekap}
+        title="Rekap Kehadiran"
+        showSubmitButton={false}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div style={{ fontSize: 14, color: "#374151", fontWeight: 600 }}>
+              Tanggal: {selectedTanggal}
+            </div>
+            <button
+              type="button"
+              onClick={handleExportRekap}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                border: "none",
+                backgroundColor: "#1e40af",
+                color: "white",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              Unduh Rekap
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
+              gap: 12,
+            }}
+          >
+            <SummaryCard label="Hadir" value={totalHadir.toString()} color="#10B981" />
+            <SummaryCard label="Izin" value={totalIzin.toString()} color="#F59E0B" />
+            <SummaryCard label="Sakit" value={totalSakit.toString()} color="#3B82F6" />
+            <SummaryCard label="Alpha" value={totalAlpha.toString()} color="#EF4444" />
+          </div>
+
+          <div style={{ fontSize: 13, color: "#6B7280" }}>
+            Total data: <strong>{filteredRows.length}</strong>
+          </div>
         </div>
       </FormModal>
     </StaffLayout>
