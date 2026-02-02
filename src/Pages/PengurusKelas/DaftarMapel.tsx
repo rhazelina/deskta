@@ -36,9 +36,9 @@ export default function DaftarMapel() {
   };
 
   const qrUrl = selectedMapel
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ABSENSI-${selectedMapel.id}-${new Date()
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ABSENSI-${selectedMapel.id}-${new Date()
         .toISOString()
-        .split("T")[0]}`
+        .split("T")[0]}&format=svg&margin=10&color=2F80ED&bgcolor=ffffff`
     : "";
 
   return (
@@ -166,49 +166,83 @@ export default function DaftarMapel() {
         ))}
       </div>
 
-      {/* Modal QR */}
-      <Modal isOpen={isQrModalOpen} onClose={() => setIsQrModalOpen(false)}>
-        <div style={{ textAlign: "center", padding: 10 }}>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0F172A", marginBottom: 6 }}>
-            QR Code Absensi
-          </h3>
-          <p style={{ color: "#64748B", marginBottom: 18 }}>
-            {selectedMapel?.name} -{" "}
-            {new Date().toLocaleDateString("id-ID", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-
-          <div
-            style={{
-              background: "#fff",
-              padding: 18,
-              borderRadius: 12,
-              border: "2px dashed #CBD5E1",
-              display: "inline-block",
-              marginBottom: 18,
-            }}
-          >
-            {selectedMapel && <img src={qrUrl} alt="QR Code" style={{ width: 250, height: 250, display: "block" }} />}
+      {/* Modal QR - SEDERHANA */}
+      <Modal 
+        isOpen={isQrModalOpen} 
+        onClose={() => setIsQrModalOpen(false)}
+        maxWidth="380px"
+      >
+        <div style={{ padding: "24px" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <h3 style={{ 
+              fontSize: 20, 
+              fontWeight: 800, 
+              color: "#0F172A", 
+              marginBottom: 8
+            }}>
+              KODE QR UNTUK PRESENSI
+            </h3>
+            
+            <div style={{ 
+              fontSize: 14, 
+              color: "#64748B",
+              marginBottom: 4
+            }}>
+              {selectedMapel?.name}
+            </div>
+            
+            <div style={{ 
+              fontSize: 13, 
+              color: "#64748B",
+              fontWeight: 600
+            }}>
+              {new Date().toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </div>
           </div>
 
-          <button
-            onClick={() => setIsQrModalOpen(false)}
-            style={{
-              padding: "10px 26px",
-              background: "#0F172A",
-              color: "#fff",
-              border: "none",
-              borderRadius: 10,
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Tutup
-          </button>
+          {/* QR Code */}
+          <div style={{ 
+            padding: 20,
+            marginBottom: 24,
+            textAlign: "center"
+          }}>
+            {selectedMapel && (
+              <img 
+                src={qrUrl} 
+                alt="QR Code Presensi" 
+                style={{ 
+                  width: 250, 
+                  height: 250, 
+                  display: "block", 
+                  margin: "0 auto"
+                }} 
+              />
+            )}
+          </div>
+
+          {/* Tombol Tutup */}
+          <div style={{ textAlign: "center" }}>
+            <button
+              onClick={() => setIsQrModalOpen(false)}
+              style={{
+                padding: "12px 40px",
+                background: "#0F172A",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontWeight: 800,
+                cursor: "pointer",
+                fontSize: 15
+              }}
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

@@ -10,6 +10,7 @@ interface ButtonProps {
   className?: string;
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
+  style?: React.CSSProperties;
 }
 
 export function Button({
@@ -22,6 +23,7 @@ export function Button({
   className = "",
   disabled = false,
   type = "button",
+  style,
 }: ButtonProps) {
   const baseStyles = {
     primary: {
@@ -63,6 +65,7 @@ export function Button({
         display: "inline-flex",
         alignItems: "center",
         gap: "8px",
+        ...style,
       }}
       className={className}
       onMouseEnter={(e) => {

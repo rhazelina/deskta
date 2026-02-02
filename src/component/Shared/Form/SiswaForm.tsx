@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FormModal } from '../../Shared/FormModal';
+import { FormModal } from '../FormModal';
 
-interface TambahSiswaFormProps {
+interface SiswaFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
@@ -21,7 +21,7 @@ interface TambahSiswaFormProps {
   kelasList?: { id: string; nama: string }[];
 }
 
-export function TambahSiswaForm({
+export function SiswaForm({
   isOpen,
   onClose,
   onSubmit,
@@ -37,7 +37,7 @@ export function TambahSiswaForm({
     { id: '2', nama: 'XII Mekatronika 2' },
     { id: '3', nama: 'XI RPL 1' },
   ],
-}: TambahSiswaFormProps) {
+}: SiswaFormProps) {
   const [namaSiswa, setNamaSiswa] = useState('');
   const [nisn, setNisn] = useState('');
   const [jurusanId, setJurusanId] = useState('');
@@ -50,30 +50,49 @@ export function TambahSiswaForm({
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sinkronkan state dengan initialData (untuk edit / tambah)
+  // Reset form ketika modal dibuka/ditutup
   useEffect(() => {
-    if (initialData) {
+    if (isOpen) {
+      if (initialData && isEdit) {
+        // Mode ubah: isi dengan data yang ada
+        console.log('Mode ubah, mengisi data:', initialData);
+        setNamaSiswa(initialData.namaSiswa || '');
+        setNisn(initialData.nisn || '');
+        setJurusanId(initialData.jurusanId || '');
+        setKelasId(initialData.kelasId || '');
+      } else {
+        // Mode tambah: kosongkan form
+        console.log('Mode tambah, mengosongkan form');
+        setNamaSiswa('');
+        setNisn('');
+        setJurusanId('');
+        setKelasId('');
+      }
+      setErrors({});
+      setIsSubmitting(false);
+    }
+  }, [isOpen, initialData, isEdit]);
+
+  // Sinkronkan state dengan initialData saat berubah (untuk berjaga-jaga)
+  useEffect(() => {
+    if (initialData && isEdit && isOpen) {
+      console.log('Data berubah, update form:', initialData);
       setNamaSiswa(initialData.namaSiswa || '');
       setNisn(initialData.nisn || '');
       setJurusanId(initialData.jurusanId || '');
       setKelasId(initialData.kelasId || '');
-    } else {
-      setNamaSiswa('');
-      setNisn('');
-      setJurusanId('');
-      setKelasId('');
     }
-    setErrors({});
-    setIsSubmitting(false);
-  }, [initialData]);
+  }, [initialData, isEdit, isOpen]);
 
   const handleReset = () => {
-    if (initialData) {
+    if (initialData && isEdit) {
+      // Reset ke data awal (untuk mode ubah)
       setNamaSiswa(initialData.namaSiswa || '');
       setNisn(initialData.nisn || '');
       setJurusanId(initialData.jurusanId || '');
       setKelasId(initialData.kelasId || '');
     } else {
+      // Kosongkan form (untuk mode tambah)
       setNamaSiswa('');
       setNisn('');
       setJurusanId('');
@@ -128,8 +147,12 @@ export function TambahSiswaForm({
         jurusanId,
         kelasId,
       });
-      handleReset();
+      // Jangan reset form di sini karena modal akan ditutup
       setIsSubmitting(false);
+      // Reset form hanya jika bukan mode ubah (agar data tetap untuk preview)
+      if (!isEdit) {
+        handleReset();
+      }
     }, 400);
   };
 
@@ -172,10 +195,12 @@ export function TambahSiswaForm({
     <FormModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEdit ? 'Edit Siswa' : 'Tambah Siswa'}
+      title={isEdit ? 'Ubah Data Siswa' : 'Tambah Siswa'}
       onSubmit={handleSubmit}
-      submitLabel={isEdit ? 'Simpan' : 'Tambahkan'}
+      submitLabel={isEdit ? 'Simpan Perubahan' : 'Tambahkan'}
       isSubmitting={isSubmitting}
+      onReset={isEdit ? handleReset : undefined}
+      resetLabel={isEdit ? 'Reset' : undefined}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {/* Nama Siswa */}
@@ -226,7 +251,7 @@ export function TambahSiswaForm({
         {/* Jurusan */}
         <div>
           <label htmlFor="jurusan" style={labelStyle}>
-            Jurusan
+            Konsentrasi Keahlian
           </label>
           <select
             id="jurusan"
@@ -238,7 +263,7 @@ export function TambahSiswaForm({
             style={inputStyle(!!errors.jurusanId)}
             disabled={isSubmitting}
           >
-            <option value="">Pilih Jurusan</option>
+            <option value="">Pilih Konsentrasi Keahlian</option>
             {jurusanList.map((jurusan) => (
               <option key={jurusan.id} value={jurusan.id}>
                 {jurusan.nama}

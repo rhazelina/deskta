@@ -5,7 +5,7 @@ import { Button } from '../../component/Shared/Button';
 import { FormModal } from '../../component/Shared/FormModal';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
-import { Calendar, BookOpen, FileText, ClipboardList, ClipboardPlus, ArrowLeft } from 'lucide-react';
+import { Calendar, BookOpen, FileText, ClipboardList, ClipboardPlus } from 'lucide-react';
 
 type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'tanpa-keterangan' | 'pulang';
 
@@ -23,10 +23,13 @@ interface Dispensasi {
   nisn: string;
   namaSiswa: string;
   alasan: string;
+  alasanDetail?: string;
   tanggalMulai: string;
   tanggalSelesai: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  file1?: File;
+  file2?: File;
 }
 
 interface KehadiranSiswaWakelProps {
@@ -47,6 +50,7 @@ export function KehadiranSiswaWakel({
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedMapel, setSelectedMapel] = useState('all');
 
+
   const kelasInfo = {
     namaKelas: 'X Mekatronika 1',
   };
@@ -54,11 +58,19 @@ export function KehadiranSiswaWakel({
   const [rows, setRows] = useState<KehadiranRow[]>([
     { id: '1', nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', mataPelajaran: 'Matematika', tanggal: '2026-01-25', status: 'hadir' },
     { id: '2', nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', mataPelajaran: 'Matematika', tanggal: '2026-01-25', status: 'hadir' },
-    { id: '3', nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', mataPelajaran: 'Matematika', tanggal: '2026-01-26', status: 'izin' },
-    { id: '4', nisn: '1348576395', namaSiswa: 'Budi Santoso', mataPelajaran: 'Matematika', tanggal: '2026-01-26', status: 'sakit' },
-    { id: '5', nisn: '1348576396', namaSiswa: 'Dewi Sartika', mataPelajaran: 'Matematika', tanggal: '2026-01-27', status: 'tidak-hadir' },
-    { id: '6', nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', mataPelajaran: 'Matematika', tanggal: '2026-01-27', status: 'tanpa-keterangan' },
-    { id: '7', nisn: '1348576398', namaSiswa: 'Budi Raharjo', mataPelajaran: '-', tanggal: '2026-01-27', status: 'pulang' },
+    { id: '3', nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', mataPelajaran: 'Fisika', tanggal: '2026-01-26', status: 'izin' },
+    { id: '4', nisn: '1348576395', namaSiswa: 'Budi Santoso', mataPelajaran: 'Fisika', tanggal: '2026-01-26', status: 'sakit' },
+    { id: '5', nisn: '1348576396', namaSiswa: 'Dewi Sartika', mataPelajaran: 'Bahasa Indonesia', tanggal: '2026-01-27', status: 'tanpa-keterangan' },
+    { id: '6', nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', mataPelajaran: 'Bahasa Indonesia', tanggal: '2026-01-27', status: 'tanpa-keterangan' },
+    { id: '7', nisn: '1348576398', namaSiswa: 'Fitri Handayani', mataPelajaran: 'Matematika', tanggal: '2026-01-28', status: 'sakit' },
+    { id: '8', nisn: '1348576399', namaSiswa: 'Andi Wijaya', mataPelajaran: 'Fisika', tanggal: '2026-01-28', status: 'hadir' },
+    { id: '9', nisn: '1348576400', namaSiswa: 'Rina Pratiwi', mataPelajaran: 'Matematika', tanggal: '2026-01-29', status: 'izin' },
+    { id: '10', nisn: '1348576401', namaSiswa: 'Joko Susilo', mataPelajaran: 'Bahasa Indonesia', tanggal: '2026-01-29', status: 'hadir' },
+    { id: '11', nisn: '1348576402', namaSiswa: 'Maya Sari', mataPelajaran: 'Matematika', tanggal: '2026-01-30', status: 'hadir' },
+    { id: '12', nisn: '1348576403', namaSiswa: 'Dian Purnama', mataPelajaran: 'Fisika', tanggal: '2026-01-30', status: 'sakit' },
+    { id: '13', nisn: '1348576404', namaSiswa: 'Hendra Gunawan', mataPelajaran: '-', tanggal: '2026-01-30', status: 'pulang' },
+    { id: '14', nisn: '1348576405', namaSiswa: 'Lina Marlina', mataPelajaran: 'Matematika', tanggal: '2026-01-30', status: 'hadir' },
+    { id: '15', nisn: '1348576406', namaSiswa: 'Budi Hartono', mataPelajaran: 'Bahasa Indonesia', tanggal: '2026-01-30', status: 'izin' },
   ]);
 
   useEffect(() => {
@@ -98,6 +110,7 @@ export function KehadiranSiswaWakel({
     });
   }, [rows, startDate, endDate, selectedMapel]);
 
+  const totalPulang = filteredRows.filter((r) => r.status === 'pulang').length;
   const totalIzin = filteredRows.filter((r) => r.status === 'izin').length;
   const totalSakit = filteredRows.filter((r) => r.status === 'sakit').length;
   const totalTanpaKeterangan = filteredRows.filter((r) => r.status === 'tanpa-keterangan' || r.status === 'tidak-hadir').length;
@@ -106,35 +119,33 @@ export function KehadiranSiswaWakel({
     { key: 'nisn', label: 'NISN' },
     { key: 'namaSiswa', label: 'Nama Siswa' },
     { key: 'mataPelajaran', label: 'Mata Pelajaran' },
+    { key: 'tanggal', label: 'Tanggal' },
     {
       key: 'status',
       label: 'Status',
       render: (value: StatusType) => {
-        // Filter out 'pulang' status for StatusBadge
         const displayStatus = value === 'pulang' ? 'hadir' : value;
         return <StatusBadge status={displayStatus as 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'tanpa-keterangan'} />;
       },
     },
   ], []);
 
-  // Modal State
   const [editingRow, setEditingRow] = useState<KehadiranRow | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editStatus, setEditStatus] = useState<StatusType>('hadir');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Rekap Modal State
-  // Rekap Modal State Removed
-
-  // Dispensasi Modal State
-  const [isDispensasiOpen, setIsDispensasiOpen] = useState(false);
+  const [isPerizinanOpen, setIsPerizinanOpen] = useState(false);
   const [dispensasiList, setDispensasiList] = useState<Dispensasi[]>([]);
-  const [dispensasiData, setDispensasiData] = useState({
+  const [perizinanData, setPerizinanData] = useState({
     nisn: '',
     namaSiswa: '',
     alasan: '',
-    tanggalMulai: '',
-    tanggalSelesai: '',
+    mapel: '',
+    namaGuru: '',
+    tanggalBerlaku: '',
+    keterangan: '',
+    file: undefined as File | undefined,
   });
   const [isDispensasiListOpen, setIsDispensasiListOpen] = useState(false);
 
@@ -174,63 +185,61 @@ export function KehadiranSiswaWakel({
     }, 300);
   };
 
-  // fitur otewe
-
-
-   // fitur otewe
-  const handleBuatDispensasi = () => {
-    setIsDispensasiOpen(true);
+  const handleBuatPerizinan = () => {
+    setIsPerizinanOpen(true);
   };
-  
-  
-  const handleBack = () => {
-      onMenuClick("dashboard");
-  }
 
   const handleTableEdit = (row: KehadiranRow) => {
     handleOpenEdit(row);
   };
 
-
-
-  const handleCloseDispensasi = () => {
-    setIsDispensasiOpen(false);
-    setDispensasiData({
+  const handleClosePerizinan = () => {
+    setIsPerizinanOpen(false);
+    setPerizinanData({
       nisn: '',
       namaSiswa: '',
       alasan: '',
-      tanggalMulai: '',
-      tanggalSelesai: '',
+      mapel: '',
+      namaGuru: '',
+      tanggalBerlaku: '',
+      keterangan: '',
+      file: undefined,
     });
   };
 
-  const handleSubmitDispensasi = () => {
-    if (!dispensasiData.nisn || !dispensasiData.alasan || !dispensasiData.tanggalMulai) {
+  const handleSubmitPerizinan = () => {
+    if (!perizinanData.nisn || !perizinanData.alasan || !perizinanData.tanggalBerlaku) {
       alert('⚠️ Mohon isi semua field yang diperlukan');
       return;
     }
+
     const newDispensasi: Dispensasi = {
       id: Date.now().toString(),
-      nisn: dispensasiData.nisn,
-      namaSiswa: dispensasiData.namaSiswa,
-      alasan: dispensasiData.alasan,
-      tanggalMulai: dispensasiData.tanggalMulai,
-      tanggalSelesai: dispensasiData.tanggalSelesai || dispensasiData.tanggalMulai,
+      nisn: perizinanData.nisn,
+      namaSiswa: perizinanData.namaSiswa,
+      alasan: perizinanData.alasan,
+      alasanDetail: perizinanData.keterangan,
+      tanggalMulai: perizinanData.tanggalBerlaku,
+      tanggalSelesai: perizinanData.tanggalBerlaku,
       status: 'pending',
       createdAt: new Date().toLocaleDateString('id-ID'),
+      file1: perizinanData.file,
     };
-    
+
     setTimeout(() => {
       setDispensasiList([...dispensasiList, newDispensasi]);
-      alert(`✅ Dispensasi untuk ${dispensasiData.namaSiswa} berhasil dibuat!\n\nAlasan: ${dispensasiData.alasan}\nPeriode: ${dispensasiData.tanggalMulai} - ${dispensasiData.tanggalSelesai || dispensasiData.tanggalMulai}`);
-      handleCloseDispensasi();
+
+      const fileInfo = perizinanData.file ? `File: ${perizinanData.file.name}` : '';
+
+      alert(`✅ Perizinan untuk ${perizinanData.namaSiswa} berhasil dibuat!\n\nAlasan: ${perizinanData.alasan}\nTanggal: ${perizinanData.tanggalBerlaku}\nMata Pelajaran: ${perizinanData.mapel}\n${fileInfo}`);
+      handleClosePerizinan();
     }, 300);
   };
 
   const handleDeleteDispensasi = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus dispensasi ini?')) {
+    if (window.confirm('Apakah Anda yakin ingin menghapus perizinan ini?')) {
       setDispensasiList(dispensasiList.filter((d) => d.id !== id));
-      alert('✅ Dispensasi berhasil dihapus');
+      alert('✅ Perizinan berhasil dihapus');
     }
   };
 
@@ -240,37 +249,21 @@ export function KehadiranSiswaWakel({
     );
   };
 
-  const handleExportRekap = () => {
-    const hadir = filteredRows.filter((r) => r.status === 'hadir').length;
-    const sakit = filteredRows.filter((r) => r.status === 'sakit').length;
-    const izin = filteredRows.filter((r) => r.status === 'izin').length;
-    const tanpaKeterangan = filteredRows.filter((r) => r.status === 'tanpa-keterangan' || r.status === 'tidak-hadir').length;
-    
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'REKAP KEHADIRAN SISWA\n';
-    csvContent += `Periode: ${startDate} - ${endDate}\n\n`;
-    csvContent += 'RINGKASAN,\n';
-    csvContent += `Hadir,${hadir}\n`;
-    csvContent += `Sakit,${sakit}\n`;
-    csvContent += `Izin,${izin}\n`;
-    csvContent += `Tanpa Keterangan,${tanpaKeterangan}\n`;
-    csvContent += `Total Siswa,${filteredRows.length}\n\n`;
-    csvContent += 'DETAIL KEHADIRAN\n';
-    csvContent += 'Tanggal,NISN,Nama Siswa,Mata Pelajaran,Status\n';
-    
-    filteredRows.forEach((row) => {
-      csvContent += `${row.tanggal},${row.nisn},"${row.namaSiswa}",${row.mataPelajaran},${row.status}\n`;
-    });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Rekap_Kehadiran_${startDate}_${endDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    alert('✅ Rekap kehadiran berhasil diunduh');
-  };
+  const buttonBaseStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    fontWeight: 600,
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    height: '40px',
+    border: 'none',
+  } as const;
 
   const styles = {
     container: {
@@ -303,43 +296,11 @@ export function KehadiranSiswaWakel({
       gap: 12,
       alignItems: 'center',
     },
-    dateInputWrapper: {
-      position: 'relative' as const,
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 10,
-      background: '#F9FAFB',
-      color: '#1F2937',
-      border: '1px solid #E5E7EB',
-      borderRadius: 8,
-      padding: '0 16px',
-      height: '48px',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-      minWidth: '200px',
-    },
-    dateInput: {
-      position: 'absolute' as const,
-      left: 0,
-      top: 0,
-      width: '100%',
-      height: '100%',
-      opacity: 0,
-      cursor: 'pointer',
-      zIndex: 10,
-    },
     rightActions: {
       display: 'flex',
       flexWrap: 'wrap' as const,
-      gap: 8,
+      gap: 12,
       justifyContent: 'flex-end',
-    },
-    summaryGrid: {
-      display: 'grid',
-      gridTemplateColumns: isMobile
-        ? 'repeat(2, minmax(0, 1fr))'
-        : 'repeat(4, minmax(0, 1fr))',
-      gap: 16,
     },
   };
 
@@ -353,232 +314,299 @@ export function KehadiranSiswaWakel({
     >
       <div style={styles.container}>
         <div style={styles.headerWrapper}>
-          {/* Period Filter Bar */}
+          {/* ========== BARIS ATAS: PERIODE SEJAJAR DENGAN 4 CARD STATISTIK ========== */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '16px 20px',
-              backgroundColor: '#1E3A8A',
-              borderRadius: '12px',
+              alignItems: 'stretch',
+              justifyContent: 'space-between',
               flexWrap: 'wrap',
+              gap: '16px',
               marginBottom: '24px',
             }}
           >
-            <span
-              style={{
-                color: '#FFFFFF',
-                fontSize: '14px',
-                fontWeight: '600',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Periode :
-            </span>
-
-            {/* Start Date */}
+            {/* PERIODE TANGGAL (lebih kecil, kiri) */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: '#06254D',
                 borderRadius: '8px',
-                padding: '10px 14px',
-                border: '1px solid #E5E7EB',
+                padding: '14px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                minWidth: isMobile ? '100%' : '300px',
+                flex: 1,
               }}
             >
-              <Calendar size={18} color="#1F2937" strokeWidth={1.5} />
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+              <div
                 style={{
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '10px',
                 }}
-              />
+              >
+                <Calendar size={16} color="#FFFFFF" />
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                  }}
+                >
+                  Periode
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* Start Date */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    border: '1px solid #E5E7EB',
+                    flex: '1',
+                    minWidth: '120px',
+                  }}
+                >
+                  <Calendar size={14} color="#1F2937" strokeWidth={1.5} />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      width: '100%',
+                      backgroundColor: 'transparent',
+                    }}
+                  />
+                </div>
+
+                {/* Separator */}
+                <span
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: '14px',
+                    fontWeight: '300',
+                  }}
+                >
+                  --
+                </span>
+
+                {/* End Date */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    border: '1px solid #E5E7EB',
+                    flex: '1',
+                    minWidth: '120px',
+                  }}
+                >
+                  <Calendar size={14} color="#1F2937" strokeWidth={1.5} />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      width: '100%',
+                      backgroundColor: 'transparent',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Separator */}
-            <span
-              style={{
-                color: '#FFFFFF',
-                fontSize: '18px',
-                fontWeight: '300',
-              }}
-            >
-              --
-            </span>
-
-            {/* End Date */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: '#FFFFFF',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                border: '1px solid #E5E7EB',
-              }}
-            >
-              <Calendar size={18} color="#1F2937" strokeWidth={1.5} />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  cursor: 'pointer',
-                }}
-              />
-            </div>
-
-            {/* Summary Cards in Header */}
+            {/* 4 CARD STATISTIK (kanan) */}
             <div
               style={{
                 display: 'flex',
                 gap: '12px',
-                marginLeft: 'auto',
                 flexWrap: 'wrap',
+                flex: 2,
+                justifyContent: isMobile ? 'center' : 'flex-end',
               }}
             >
+              {/* Card 1: Pulang */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
-                  padding: '8px 14px',
-                  minWidth: '80px',
+                  padding: '12px 16px',
+                  minWidth: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                  border: '1px solid #E5E7EB',
+                  height: '100%',
                 }}
               >
-                <span
+                <div
                   style={{
                     fontSize: '12px',
                     fontWeight: '600',
                     color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: '4px',
                   }}
                 >
                   Pulang
-                </span>
-                <span
+                </div>
+                <div
                   style={{
-                    fontSize: '16px',
+                    fontSize: '20px',
                     fontWeight: '700',
                     color: '#111827',
+                    textAlign: 'center',
                   }}
                 >
-                  {filteredRows.filter((r) => r.status === 'pulang').length}
-                </span>
+                  {totalPulang}
+                </div>
               </div>
 
+              {/* Card 2: Izin */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
-                  padding: '8px 14px',
-                  minWidth: '80px',
+                  padding: '12px 16px',
+                  minWidth: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                  border: '1px solid #E5E7EB',
+                  height: '100%',
                 }}
               >
-                <span
+                <div
                   style={{
                     fontSize: '12px',
                     fontWeight: '600',
                     color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: '4px',
                   }}
                 >
                   Izin
-                </span>
-                <span
+                </div>
+                <div
                   style={{
-                    fontSize: '16px',
+                    fontSize: '20px',
                     fontWeight: '700',
                     color: '#111827',
+                    textAlign: 'center',
                   }}
                 >
                   {totalIzin}
-                </span>
+                </div>
               </div>
 
+              {/* Card 3: Sakit */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
-                  padding: '8px 14px',
-                  minWidth: '80px',
+                  padding: '12px 16px',
+                  minWidth: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                  border: '1px solid #E5E7EB',
+                  height: '100%',
                 }}
               >
-                <span
+                <div
                   style={{
                     fontSize: '12px',
                     fontWeight: '600',
                     color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: '4px',
                   }}
                 >
                   Sakit
-                </span>
-                <span
+                </div>
+                <div
                   style={{
-                    fontSize: '16px',
+                    fontSize: '20px',
                     fontWeight: '700',
                     color: '#111827',
+                    textAlign: 'center',
                   }}
                 >
                   {totalSakit}
-                </span>
+                </div>
               </div>
 
+              {/* Card 4: Tanpa Ket. */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
-                  padding: '8px 14px',
-                  minWidth: '100px',
+                  padding: '12px 16px',
+                  minWidth: '110px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                  border: '1px solid #E5E7EB',
+                  height: '100%',
                 }}
               >
-                <span
+                <div
                   style={{
                     fontSize: '12px',
                     fontWeight: '600',
                     color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: '4px',
                   }}
                 >
                   Tanpa Ket.
-                </span>
-                <span
+                </div>
+                <div
                   style={{
-                    fontSize: '16px',
+                    fontSize: '20px',
                     fontWeight: '700',
                     color: '#111827',
+                    textAlign: 'center',
                   }}
                 >
                   {totalTanpaKeterangan}
-                </span>
+                </div>
               </div>
             </div>
           </div>
@@ -593,7 +621,7 @@ export function KehadiranSiswaWakel({
                   gap: 12,
                   padding: '10px 12px',
                   borderRadius: 12,
-                  backgroundColor: '#0B2A55',
+                  backgroundColor: '#06254D',
                   color: '#FFFFFF',
                   minWidth: isMobile ? '100%' : '320px',
                 }}
@@ -631,13 +659,30 @@ export function KehadiranSiswaWakel({
               </div>
             </div>
 
-            {/* Tombol aksi kanan */}
+            {/* Bagian kanan: Button actions */}
             <div style={styles.rightActions}>
-              <Button
-                label="Export CSV"
-                onClick={handleExportRekap}
-                icon={<FileText size={16} />}
-              />
+              {/* Tombol Lihat Rekap (Navigasi) */}
+              <button
+                onClick={() => onMenuClick('rekap-kehadiran-siswa')}
+                style={{
+                  ...buttonBaseStyle,
+                  backgroundColor: '#2563EB',
+                  color: '#FFFFFF',
+                  minWidth: '100px',
+                  border: '1px solid #2563EB',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1D4ED8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2563EB';
+                }}
+              >
+                <FileText size={16} color="#FFFFFF" />
+                Lihat Rekap
+              </button>
+
+              {/* Tombol-tombol lain */}
               {dispensasiList.length > 0 && (
                 <Button
                   label={`Daftar Dispensasi (${dispensasiList.length})`}
@@ -646,17 +691,11 @@ export function KehadiranSiswaWakel({
                 />
               )}
               <Button
-                label="Buat Dispensasi"
+                label="Input Perizinan"
                 variant="secondary"
-                onClick={handleBuatDispensasi}
+                onClick={handleBuatPerizinan}
                 icon={<ClipboardPlus size={16} />}
               />
-               <Button
-                  label="Kembali"
-                  variant="secondary"
-                  onClick={handleBack}
-                  icon={<ArrowLeft size={16} />}
-                />
             </div>
           </div>
 
@@ -671,7 +710,7 @@ export function KehadiranSiswaWakel({
         </div>
       </div>
 
-      {/* Modal Edit Kehadiran (pakai FormModal + Select) */}
+      {/* Modal Edit Kehadiran */}
       <FormModal
         isOpen={isEditOpen}
         onClose={handleCloseEdit}
@@ -703,16 +742,16 @@ export function KehadiranSiswaWakel({
         </div>
       </FormModal>
 
-
-      {/* Modal Buat Dispensasi */}
+      {/* Modal Input Perizinan - SESUAI GAMBAR */}
       <FormModal
-        isOpen={isDispensasiOpen}
-        onClose={handleCloseDispensasi}
-        title="Buat Dispensasi"
-        onSubmit={handleSubmitDispensasi}
-        submitLabel="Buat Dispensasi"
+        isOpen={isPerizinanOpen}
+        onClose={handleClosePerizinan}
+        title="Input Perizinan"
+        onSubmit={handleSubmitPerizinan}
+        submitLabel="Buat"
+        style={{ maxWidth: '500px' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Pilih Siswa */}
           <div>
             <p
@@ -727,10 +766,10 @@ export function KehadiranSiswaWakel({
               Pilih Siswa
             </p>
             <Select
-              value={dispensasiData.nisn}
+              value={perizinanData.nisn}
               onChange={(val) => {
                 const selectedStudent = rows.find((r) => r.nisn === val);
-                setDispensasiData((prev) => ({
+                setPerizinanData((prev) => ({
                   ...prev,
                   nisn: val,
                   namaSiswa: selectedStudent?.namaSiswa || '',
@@ -744,7 +783,7 @@ export function KehadiranSiswaWakel({
             />
           </div>
 
-          {/* Alasan Dispensasi */}
+          {/* Pilih Alasan */}
           <div>
             <p
               style={{
@@ -755,17 +794,148 @@ export function KehadiranSiswaWakel({
                 color: '#111827',
               }}
             >
-              Alasan Dispensasi
+              Pilih alasan
             </p>
-            <textarea
-              value={dispensasiData.alasan}
-              onChange={(e) =>
-                setDispensasiData((prev) => ({
+            <Select
+              value={perizinanData.alasan}
+              onChange={(val) =>
+                setPerizinanData((prev) => ({
                   ...prev,
-                  alasan: e.target.value,
+                  alasan: val,
                 }))
               }
-              placeholder="Masukkan alasan dispensasi (sakit, izin, keluarga, dll)"
+              options={[
+                { label: 'Izin', value: 'izin' },
+                { label: 'Pulang', value: 'pulang' },
+                { label: 'Dispenser', value: 'dispenser' },
+              ]}
+              placeholder="Izin/Pulang/Dispen"
+            />
+          </div>
+
+          {/* Pilih Mapel */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Pilih mapel
+            </p>
+            <Select
+              value={perizinanData.mapel}
+              onChange={(val) =>
+                setPerizinanData((prev) => ({
+                  ...prev,
+                  mapel: val,
+                }))
+              }
+              options={[
+                { label: 'Matematika (1-4)', value: 'Matematika (1-4)' },
+                { label: 'Fisika (1-4)', value: 'Fisika (1-4)' },
+                { label: 'Bahasa Indonesia (1-4)', value: 'Bahasa Indonesia (1-4)' },
+                { label: 'Bahasa Inggris (1-4)', value: 'Bahasa Inggris (1-4)' },
+                { label: 'Kimia (1-4)', value: 'Kimia (1-4)' },
+              ]}
+              placeholder="Matematika (1-4)"
+            />
+          </div>
+
+          {/* Nama Guru */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Nama Guru
+            </p>
+            <input
+              type="text"
+              value={perizinanData.namaGuru}
+              onChange={(e) =>
+                setPerizinanData((prev) => ({
+                  ...prev,
+                  namaGuru: e.target.value,
+                }))
+              }
+              placeholder="Masukkan nama guru"
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '6px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                backgroundColor: '#FFFFFF',
+              }}
+            />
+          </div>
+
+          {/* Tanggal Berlaku */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Tanggal berlaku
+            </p>
+            <input
+              type="date"
+              value={perizinanData.tanggalBerlaku}
+              onChange={(e) =>
+                setPerizinanData((prev) => ({
+                  ...prev,
+                  tanggalBerlaku: e.target.value,
+                }))
+              }
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '6px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                backgroundColor: '#FFFFFF',
+              }}
+            />
+          </div>
+
+          {/* Keterangan */}
+          <div>
+            <p
+              style={{
+                margin: 0,
+                marginBottom: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#111827',
+              }}
+            >
+              Keterangan
+            </p>
+            <textarea
+              value={perizinanData.keterangan}
+              onChange={(e) =>
+                setPerizinanData((prev) => ({
+                  ...prev,
+                  keterangan: e.target.value,
+                }))
+              }
+              placeholder="Masukan keterangan"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -775,11 +945,12 @@ export function KehadiranSiswaWakel({
                 fontFamily: 'inherit',
                 resize: 'vertical',
                 minHeight: '80px',
+                backgroundColor: '#FFFFFF',
               }}
             />
           </div>
 
-          {/* Tanggal Mulai */}
+          {/* Tambahkan Foto */}
           <div>
             <p
               style={{
@@ -790,595 +961,264 @@ export function KehadiranSiswaWakel({
                 color: '#111827',
               }}
             >
-              Tanggal Mulai
+              Tambahkan foto
             </p>
-            <input
-              type="date"
-              value={dispensasiData.tanggalMulai}
-              onChange={(e) =>
-                setDispensasiData((prev) => ({
-                  ...prev,
-                  tanggalMulai: e.target.value,
-                }))
-              }
+            <button
+              type="button"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*,.pdf,.doc,.docx';
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) {
+                    setPerizinanData((prev) => ({
+                      ...prev,
+                      file: file,
+                    }));
+                  }
+                };
+                input.click();
+              }}
               style={{
                 width: '100%',
-                padding: '10px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
+                padding: '12px',
+                border: '2px dashed #D1D5DB',
+                borderRadius: '8px',
+                backgroundColor: '#F9FAFB',
+                color: '#6B7280',
                 fontSize: '14px',
-                boxSizing: 'border-box',
+                fontWeight: 500,
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.2s ease',
               }}
-            />
-          </div>
-
-          {/* Tanggal Selesai */}
-          <div>
-            <p
-              style={{
-                margin: 0,
-                marginBottom: 8,
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#111827',
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#F3F4F6';
+                e.currentTarget.style.borderColor = '#9CA3AF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#F9FAFB';
+                e.currentTarget.style.borderColor = '#D1D5DB';
               }}
             >
-              Tanggal Selesai (opsional)
-            </p>
-            <input
-              type="date"
-              value={dispensasiData.tanggalSelesai}
-              onChange={(e) =>
-                setDispensasiData((prev) => ({
-                  ...prev,
-                  tanggalSelesai: e.target.value,
-                }))
-              }
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '6px',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-              }}
-            />
+              {perizinanData.file ? `File: ${perizinanData.file.name}` : 'Upload file'}
+            </button>
           </div>
         </div>
       </FormModal>
 
       {/* Modal Daftar Dispensasi */}
-      <FormModal
-        isOpen={isDispensasiListOpen}
-        onClose={() => setIsDispensasiListOpen(false)}
-        title="Daftar Dispensasi"
-        showSubmitButton={false}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {dispensasiList.length === 0 ? (
-            <div style={{ 
-              padding: '30px 20px', 
-              textAlign: 'center', 
-              backgroundColor: '#F3F4F6', 
-              borderRadius: '8px' 
-            }}>
-              <p style={{ margin: 0, color: '#6B7280', fontSize: '14px' }}>
-                📝 Belum ada dispensasi yang dibuat
-              </p>
+      {isDispensasiListOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '90%',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '20px',
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#111827' }}>
+                Daftar Dispensasi
+              </h2>
+              <button
+                onClick={() => setIsDispensasiListOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: '#6B7280',
+                  padding: '4px',
+                  borderRadius: '4px',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F3F4F6'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                ✕
+              </button>
             </div>
-          ) : (
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {dispensasiList.map((dispensasi) => (
-                <div
-                  key={dispensasi.id}
-                  style={{
-                    padding: '14px',
-                    backgroundColor: '#F9FAFB',
-                    borderRadius: '8px',
-                    border: '1px solid #E5E7EB',
-                    marginBottom: '12px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-                        {dispensasi.namaSiswa} ({dispensasi.nisn})
-                      </p>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
-                        <strong>Alasan:</strong> {dispensasi.alasan}
-                      </p>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
-                        <strong>Periode:</strong> {dispensasi.tanggalMulai} - {dispensasi.tanggalSelesai}
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                        <span
-                          style={{
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            backgroundColor: 
-                              dispensasi.status === 'approved' ? '#ECFDF5' :
-                              dispensasi.status === 'rejected' ? '#FEE2E2' : '#FFFBEB',
-                            color:
-                              dispensasi.status === 'approved' ? '#047857' :
-                              dispensasi.status === 'rejected' ? '#991B1B' : '#B45309',
-                          }}
-                        >
-                          {dispensasi.status === 'pending' ? '⏳ Menunggu' : 
-                           dispensasi.status === 'approved' ? '✅ Disetujui' : '❌ Ditolak'}
-                        </span>
-                        <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
-                          {dispensasi.createdAt}
-                        </span>
+
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+              {dispensasiList.length === 0 ? (
+                <div style={{
+                  padding: '30px 20px',
+                  textAlign: 'center',
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: '8px'
+                }}>
+                  <p style={{ margin: 0, color: '#6B7280', fontSize: '14px' }}>
+                    📝 Belum ada dispensasi yang dibuat
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {dispensasiList.map((dispensasi) => (
+                    <div
+                      key={dispensasi.id}
+                      style={{
+                        padding: '14px',
+                        backgroundColor: '#F9FAFB',
+                        borderRadius: '8px',
+                        border: '1px solid #E5E7EB',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                            {dispensasi.namaSiswa} ({dispensasi.nisn})
+                          </p>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
+                            <strong>Alasan:</strong> {dispensasi.alasan}
+                          </p>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
+                            <strong>Detail:</strong> {dispensasi.alasanDetail || '-'}
+                          </p>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6B7280' }}>
+                            <strong>Periode:</strong> {dispensasi.tanggalMulai} - {dispensasi.tanggalSelesai}
+                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                            <span
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                backgroundColor:
+                                  dispensasi.status === 'approved' ? '#ECFDF5' :
+                                    dispensasi.status === 'rejected' ? '#FEE2E2' : '#FFFBEB',
+                                color:
+                                  dispensasi.status === 'approved' ? '#047857' :
+                                    dispensasi.status === 'rejected' ? '#991B1B' : '#B45309',
+                              }}
+                            >
+                              {dispensasi.status === 'pending' ? '⏳ Menunggu' :
+                                dispensasi.status === 'approved' ? '✅ Disetujui' : '❌ Ditolak'}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                              {dispensasi.createdAt}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <button
+                            onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'approved')}
+                            disabled={dispensasi.status !== 'pending'}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: dispensasi.status === 'pending' ? '#ECFDF5' : '#F3F4F6',
+                              color: '#047857',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            Setujui
+                          </button>
+                          <button
+                            onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'rejected')}
+                            disabled={dispensasi.status !== 'pending'}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: dispensasi.status === 'pending' ? '#FEE2E2' : '#F3F4F6',
+                              color: '#991B1B',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            Tolak
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDispensasi(dispensasi.id)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#FEE2E2',
+                              color: '#991B1B',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
+                          >
+                            Hapus
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <button
-                        onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'approved')}
-                        disabled={dispensasi.status !== 'pending'}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: dispensasi.status === 'pending' ? '#ECFDF5' : '#F3F4F6',
-                          color: '#047857',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        Setujui
-                      </button>
-                      <button
-                        onClick={() => handleUpdateDispensasiStatus(dispensasi.id, 'rejected')}
-                        disabled={dispensasi.status !== 'pending'}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: dispensasi.status === 'pending' ? '#FEE2E2' : '#F3F4F6',
-                          color: '#991B1B',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: dispensasi.status === 'pending' ? 'pointer' : 'not-allowed',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        Tolak
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDispensasi(dispensasi.id)}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: '#FEE2E2',
-                          color: '#991B1B',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FEE2E2'}
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-          <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#6B7280' }}>
-            Total dispensasi: <strong>{dispensasiList.length}</strong>
-          </p>
+
+            <div style={{
+              paddingTop: '16px',
+              borderTop: '1px solid #E5E7EB',
+              marginTop: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#6B7280' }}>
+                Total dispensasi: <strong>{dispensasiList.length}</strong>
+              </p>
+              <button
+                onClick={() => setIsDispensasiListOpen(false)}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#06254D',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
         </div>
-      </FormModal>
+      )}
     </WalikelasLayout>
   );
 }
-
-/// ====== LEGACY CODE - DO NOT DELETE ======
-// import { useState, useEffect, useMemo } from 'react';
-// import WalikelasLayout from '../../component/Walikelas/layoutwakel';
-// import { FilterBar, FilterItem } from '../../component/Shared/FilterBar';
-// import { StatusBadge } from '../../component/Shared/StatusBadge';
-// import { Button } from '../../component/Shared/Button';
-// import { FormModal } from '../../component/Shared/FormModal';
-// import { Select } from '../../component/Shared/Select';
-// import { Table } from '../../component/Shared/Table';
-// import calendarIcon from '../../assets/Icon/calender.png';
-// import chalkboardIcon from '../../assets/Icon/Chalkboard.png';
-
-// type StatusType = 'hadir' | 'terlambat' | 'tidak-hadir' | 'sakit' | 'izin' | 'alpha' | 'pulang';
-
-// interface KehadiranRow {
-//   id: string;
-//   nisn: string;
-//   namaSiswa: string;
-//   mataPelajaran: string;
-//   status: StatusType;
-// }
-
-// interface KehadiranSiswaWakelProps {
-//   user: { name: string; role: string };
-//   onLogout: () => void;
-//   currentPage: string;
-//   onMenuClick: (page: string) => void;
-// }
-
-// export default function KehadiranSiswaWakel({
-//   user,
-//   onLogout,
-//   currentPage,
-//   onMenuClick,
-// }: KehadiranSiswaWakelProps) {
-//   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-//   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-//   const formattedDate = useMemo(() => {
-//     return new Date(selectedDate).toLocaleDateString('id-ID', {
-//       weekday: 'long',
-//       day: 'numeric',
-//       month: 'long',
-//       year: 'numeric',
-//     });
-//   }, [selectedDate]);
-
-//   // Info kelas dummy
-//   const kelasInfo = {
-//     namaKelas: 'X Mekatronika 1',
-//     mapel: 'Matematika (1-4)',
-//   };
-
-//   const [rows, setRows] = useState<KehadiranRow[]>([
-//     { id: '1', nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', mataPelajaran: 'Matematika', status: 'hadir' },
-//     { id: '2', nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', mataPelajaran: 'Matematika', status: 'hadir' },
-//     { id: '3', nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', mataPelajaran: 'Matematika', status: 'izin' },
-//     { id: '4', nisn: '1348576395', namaSiswa: 'Budi Santoso', mataPelajaran: 'Matematika', status: 'sakit' },
-//     { id: '5', nisn: '1348576396', namaSiswa: 'Dewi Sartika', mataPelajaran: 'Matematika', status: 'tidak-hadir' },
-//     { id: '6', nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', mataPelajaran: 'Matematika', status: 'alpha' },
-//     { id: '7', nisn: '1348576398', namaSiswa: 'Budi Raharjo', mataPelajaran: '-', status: 'pulang' },
-//   ]);
-
-//   useEffect(() => {
-//     const handleResize = () => setIsMobile(window.innerWidth < 768);
-//     window.addEventListener('resize', handleResize);
-//     return () => window.removeEventListener('resize', handleResize);
-//   }, []);
-
-//   const totalHadir = rows.filter((r) => r.status === 'hadir').length;
-//   const totalIzin = rows.filter((r) => r.status === 'izin').length;
-//   const totalSakit = rows.filter((r) => r.status === 'sakit').length;
-//   const totalAlpha = rows.filter((r) => r.status === 'alpha' || r.status === 'tidak-hadir').length;
-
-//   const columns = useMemo(() => [
-//     { key: 'nisn', label: 'NISN' },
-//     { key: 'namaSiswa', label: 'Nama Siswa' },
-//     { key: 'mataPelajaran', label: 'Mata Pelajaran' },
-//     {
-//       key: 'status',
-//       label: 'Status',
-//       render: (value: StatusType) => <StatusBadge status={value} />,
-//     },
-//   ], []);
-
-//   // Modal State
-//   const [editingRow, setEditingRow] = useState<KehadiranRow | null>(null);
-//   const [isEditOpen, setIsEditOpen] = useState(false);
-//   const [editStatus, setEditStatus] = useState<StatusType>('hadir');
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-
-//   const statusOptions = [
-//     { label: 'Hadir', value: 'hadir' as StatusType },
-//     { label: 'Sakit', value: 'sakit' as StatusType },
-//     { label: 'Izin', value: 'izin' as StatusType },
-//     { label: 'Alpha', value: 'alpha' as StatusType },
-//     { label: 'Pulang', value: 'pulang' as StatusType },
-//   ];
-
-//   const handleOpenEdit = (row: KehadiranRow) => {
-//     setEditingRow(row);
-//     setEditStatus(row.status);
-//     setIsEditOpen(true);
-//   };
-
-//   const handleCloseEdit = () => {
-//     setIsEditOpen(false);
-//     setEditingRow(null);
-//     setIsSubmitting(false);
-//   };
-
-//   const handleSubmitEdit = () => {
-//     if (!editingRow) return;
-//     setIsSubmitting(true);
-//     setTimeout(() => {
-//       setRows((prev) =>
-//         prev.map((r) =>
-//           r.id === editingRow.id ? { ...r, status: editStatus } : r
-//         )
-//       );
-//       setIsSubmitting(false);
-//       setIsEditOpen(false);
-//       setEditingRow(null);
-//       alert('✅ Status kehadiran berhasil diperbarui!');
-//     }, 300);
-//   };
-
-//   const handleViewRekap = () => {
-//     alert('Lihat rekap kehadiran (belum diimplementasikan)');
-//   };
-
-//   const handleBuatDispensasi = () => {
-//     alert('Buat dispensasi (belum diimplementasikan)');
-//   };
-  
-//   const handleBack = () => {
-//       onMenuClick("dashboard");
-//   }
-
-//   const handleTableEdit = (row: KehadiranRow) => {
-//     handleOpenEdit(row);
-//   };
-
-//   const styles = {
-//     container: {
-//       position: 'relative' as const,
-//       minHeight: '100%',
-//       backgroundColor: '#FFFFFF',
-//       borderRadius: '12px',
-//       overflow: 'hidden',
-//       padding: isMobile ? '16px' : '32px',
-//       border: '1px solid #E5E7EB',
-//       boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-//     },
-//     headerWrapper: {
-//       position: 'relative' as const,
-//       zIndex: 1,
-//       display: 'flex',
-//       flexDirection: 'column' as const,
-//       gap: 24,
-//     },
-//     topBar: {
-//       display: 'flex',
-//       flexWrap: 'wrap' as const,
-//       gap: 16,
-//       alignItems: 'center',
-//       justifyContent: 'space-between',
-//     },
-//     leftActions: {
-//       display: 'flex',
-//       flexWrap: 'wrap' as const,
-//       gap: 12,
-//       alignItems: 'center',
-//     },
-//     dateInputWrapper: {
-//       position: 'relative' as const,
-//       display: 'inline-flex',
-//       alignItems: 'center',
-//       gap: 10,
-//       background: '#F9FAFB',
-//       color: '#1F2937',
-//       border: '1px solid #E5E7EB',
-//       borderRadius: 8,
-//       padding: '0 16px',
-//       height: '48px',
-//       cursor: 'pointer',
-//       transition: 'all 0.2s',
-//       minWidth: '200px',
-//     },
-//     dateInput: {
-//       position: 'absolute' as const,
-//       left: 0,
-//       top: 0,
-//       width: '100%',
-//       height: '100%',
-//       opacity: 0,
-//       cursor: 'pointer',
-//       zIndex: 10,
-//     },
-//     rightActions: {
-//       display: 'flex',
-//       flexWrap: 'wrap' as const,
-//       gap: 8,
-//       justifyContent: 'flex-end',
-//     },
-//     summaryGrid: {
-//       display: 'grid',
-//       gridTemplateColumns: isMobile
-//         ? 'repeat(2, minmax(0, 1fr))'
-//         : 'repeat(4, minmax(0, 1fr))',
-//       gap: 16,
-//     },
-//   };
-
-//   return (
-//     <WalikelasLayout
-//       pageTitle="Kehadiran Siswa"
-//       currentPage={currentPage as any}
-//       onMenuClick={onMenuClick}
-//       user={user}
-//       onLogout={onLogout}
-//     >
-//       <div style={styles.container}>
-//         <div style={styles.headerWrapper}>
-//           {/* Bar atas: tanggal + kelas + tombol aksi */}
-//           <div style={styles.topBar}>
-//             <div style={styles.leftActions}>
-//               {/* Custom Date Picker */}
-//               <div style={styles.dateInputWrapper}>
-//                 <img
-//                   src={calendarIcon}
-//                   alt="Calendar"
-//                   style={{ width: 20, height: 20, opacity: 0.8 }}
-//                 />
-//                 <span style={{ fontSize: '14px', fontWeight: 600 }}>
-//                   {formattedDate}
-//                 </span>
-//                 <input
-//                   type="date"
-//                   value={selectedDate}
-//                   onChange={(e) => setSelectedDate(e.target.value)}
-//                   style={styles.dateInput}
-//                 />
-//               </div>
-
-//               {/* Kelas + Mapel */}
-//               <div style={{ display: 'flex', alignItems: 'center' }}>
-//                 <FilterItem
-//                   icon=""
-//                   iconComponent={
-//                     <img
-//                       src={chalkboardIcon}
-//                       alt="Class"
-//                       style={{ width: 24, height: 24, objectFit: 'contain' }}
-//                     />
-//                   }
-//                   label={kelasInfo.namaKelas}
-//                   value={kelasInfo.mapel}
-//                 />
-//               </div>
-//             </div>
-
-//             {/* Tombol aksi kanan */}
-//             <div style={styles.rightActions}>
-//               <Button label="Lihat Rekap" onClick={handleViewRekap} />
-//               <Button
-//                 label="Buat Dispensasi"
-//                 variant="secondary"
-//                 onClick={handleBuatDispensasi}
-//               />
-//                <Button
-//                   label="Kembali"
-//                   variant="secondary"
-//                   onClick={handleBack}
-//                 />
-//             </div>
-//           </div>
-
-//           {/* Kartu ringkasan Hadir / Izin / Sakit / Alpha */}
-//           <div style={styles.summaryGrid}>
-//             <SummaryCard
-//               label="Hadir"
-//               value={totalHadir.toString()}
-//               color="#10B981"
-//               bgColor="#ECFDF5"
-//             />
-//             <SummaryCard
-//               label="Izin"
-//               value={totalIzin.toString()}
-//               color="#F59E0B"
-//               bgColor="#FFFBEB"
-//             />
-//             <SummaryCard
-//               label="Sakit"
-//               value={totalSakit.toString()}
-//               color="#3B82F6"
-//               bgColor="#EFF6FF"
-//             />
-//             <SummaryCard
-//               label="Alpha / Tdk Hadir"
-//               value={totalAlpha.toString()}
-//               color="#EF4444"
-//               bgColor="#FEF2F2"
-//             />
-//           </div>
-
-//           {/* Tabel kehadiran */}
-//           <Table
-//             columns={columns}
-//             data={rows}
-//             onEdit={handleTableEdit}
-//             keyField="id"
-//             emptyMessage="Belum ada data kehadiran siswa."
-//           />
-//         </div>
-//       </div>
-
-//       {/* Modal Edit Kehadiran (pakai FormModal + Select) */}
-//       <FormModal
-//         isOpen={isEditOpen}
-//         onClose={handleCloseEdit}
-//         title="Edit Kehadiran"
-//         onSubmit={handleSubmitEdit}
-//         submitLabel="Simpan"
-//         isSubmitting={isSubmitting}
-//       >
-//         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-//           <div>
-//             <p
-//               style={{
-//                 margin: 0,
-//                 marginBottom: 8,
-//                 fontSize: 14,
-//                 fontWeight: 600,
-//                 color: '#111827',
-//               }}
-//             >
-//               Pilih Kehadiran
-//             </p>
-//             <Select
-//               value={editStatus}
-//               onChange={(val) => setEditStatus(val as StatusType)}
-//               options={statusOptions}
-//               placeholder="Pilih status kehadiran"
-//             />
-//           </div>
-//         </div>
-//       </FormModal>
-//     </WalikelasLayout>
-//   );
-// }
-
-// function SummaryCard({
-//   label,
-//   value,
-//   color,
-//   bgColor,
-// }: {
-//   label: string;
-//   value: string;
-//   color: string;
-//   bgColor?: string;
-// }) {
-//   return (
-//     <div
-//       style={{
-//         backgroundColor: bgColor || '#FFFFFF',
-//         borderRadius: 12,
-//         padding: '16px 20px',
-//         border: `1px solid ${color}30`, 
-//         boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-//         display: 'flex',
-//         flexDirection: 'column',
-//         justifyContent: 'center',
-//       }}
-//     >
-//       <div
-//         style={{
-//           fontSize: 13,
-//           color: '#4B5563',
-//           marginBottom: 4,
-//           fontWeight: 600,
-//           textTransform: 'uppercase',
-//           letterSpacing: '0.5px',
-//         }}
-//       >
-//         {label}
-//       </div>
-//       <div
-//         style={{
-//           fontSize: 24,
-//           fontWeight: 800,
-//           color,
-//           lineHeight: 1.2,
-//         }}
-//       >
-//         {value}
-//       </div>
-//     </div>
-//   );
-// }

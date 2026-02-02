@@ -110,7 +110,7 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
           {/* JUDUL */}
           <h1
             style={{
-              fontSize: 'clamp(36px, 5vw, 60px)',
+              fontSize: 'clamp(35px, 4vw, 40px)',
               fontWeight: 700,
               color: '#ffffff',
               letterSpacing: '2px',
@@ -118,7 +118,7 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
               textShadow: '0 3px 8px rgba(0,0,0,0.3)',
             }}
           >
-            ABSENSI
+            PRESENSI PEMBELAJARAN DIGITAL
           </h1>
 
           <p

@@ -12,21 +12,27 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
   ArcElement,
+  Filler,
 } from "chart.js";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  Filler
 );
 
 type PageType =
@@ -35,7 +41,7 @@ type PageType =
   | "absensi"
   | "jadwal-anda"
   | "laporan"
-  | "profil"; // Sesuaikan dengan menu Pengurus Kelas
+  | "profil";
 
 interface ScheduleItem {
   id: string;
@@ -50,14 +56,14 @@ interface DashboardPengurusKelasProps {
   onLogout: () => void;
 }
 
-// Dummy data untuk statistik
+// Dummy data untuk statistik - DIPERBARUI DENGAN DATA YANG SAMA SEPERTI DI SISWA
 const monthlyTrendData = [
-  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2 },
-  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3 },
-  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2 },
-  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1 },
-  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1 },
-  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1 },
+  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2, dispen: 1 },
+  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3, dispen: 2 },
+  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2, dispen: 1 },
+  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1, dispen: 2 },
+  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1, dispen: 1 },
+  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1, dispen: 2 },
 ];
 
 const weeklyStats = {
@@ -65,6 +71,7 @@ const weeklyStats = {
   izin: 25,
   sakit: 20,
   alpha: 40,
+  dispen: 15,
 };
 
 export default function DashboardPengurusKelas({
@@ -184,7 +191,7 @@ export default function DashboardPengurusKelas({
               flexDirection: "column",
               gap: "24px",
               position: "relative",
-              paddingBottom: "100px", // Space for characters
+              paddingBottom: "100px",
             }}
           >
             {/* Header Cards: User Info, Schedule, Total Mapel */}
@@ -368,7 +375,7 @@ export default function DashboardPengurusKelas({
                 <button
                   onClick={() => setIsMapelModalOpen(true)}
                   style={{
-                    background: "#0F52BA", // Blue color
+                    background: "#0F52BA",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
@@ -422,7 +429,7 @@ export default function DashboardPengurusKelas({
               Statistik Kehadiran
             </div>
 
-            {/* Charts Grid */}
+            {/* Charts Grid - DIPERBARUI DENGAN LINE CHART */}
             <div
               style={{
                 display: "grid",
@@ -432,7 +439,7 @@ export default function DashboardPengurusKelas({
                 zIndex: 2,
               }}
             >
-              {/* Grafik Tren Bulanan */}
+              {/* Grafik Kehadiran Bulanan - LINE CHART BARU */}
               <div
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -444,15 +451,15 @@ export default function DashboardPengurusKelas({
               >
                 <h3
                   style={{
-                    margin: "0 0 8px 0",
+                    margin: "0 0 16px 0",
                     fontSize: "18px",
                     fontWeight: 700,
                     color: "#0F172A",
                   }}
                 >
-                  Statistik
+                  Grafik Kehadiran Bulanan
                 </h3>
-                <MonthlyBarChart data={monthlyTrendData} />
+                <MonthlyLineChart data={monthlyTrendData} />
               </div>
 
               {/* Statistik Minggu Ini */}
@@ -467,13 +474,13 @@ export default function DashboardPengurusKelas({
               >
                 <h3
                   style={{
-                    margin: "0 0 8px 0",
+                    margin: "0 0 16px 0",
                     fontSize: "18px",
                     fontWeight: 700,
                     color: "#0F172A",
                   }}
                 >
-                  Hari Ini
+                  Statistik Minggu Ini
                 </h3>
                 <WeeklyDonutChart data={weeklyStats} />
               </div>
@@ -541,16 +548,11 @@ function TimePill({ label }: { label: string }) {
   );
 }
 
-function MonthlyBarChart({
+// LINE CHART BARU - SAMA SEPERTI DI DASHBOARD SISWA
+function MonthlyLineChart({
   data,
 }: {
-  data: Array<{
-    month: string;
-    hadir: number;
-    izin: number;
-    sakit: number;
-    alpha: number;
-  }>;
+  data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number; dispen: number }>;
 }) {
   const chartData = {
     labels: data.map((d) => d.month),
@@ -558,26 +560,72 @@ function MonthlyBarChart({
       {
         label: "Hadir",
         data: data.map((d) => d.hadir),
-        backgroundColor: "#10B981",
-        borderRadius: 4,
+        borderColor: "#00FF00", // Warna hijau terang untuk Hadir
+        backgroundColor: "rgba(0, 255, 0, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#00FF00",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Izin",
         data: data.map((d) => d.izin),
-        backgroundColor: "#F59E0B",
-        borderRadius: 4,
+        borderColor: "#FFFF00", // Warna kuning untuk Izin
+        backgroundColor: "rgba(255, 255, 0, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#FFFF00",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Sakit",
         data: data.map((d) => d.sakit),
-        backgroundColor: "#3B82F6",
-        borderRadius: 4,
+        borderColor: "#0000FF", // Warna biru untuk Sakit
+        backgroundColor: "rgba(0, 0, 255, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#0000FF",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Alpha",
         data: data.map((d) => d.alpha),
-        backgroundColor: "#EF4444",
-        borderRadius: 4,
+        borderColor: "#FF0000", // Warna merah untuk Alpha/Tidak Hadir
+        backgroundColor: "rgba(255, 0, 0, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#FF0000",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Dispen",
+        data: data.map((d) => d.dispen),
+        borderColor: "#800080", // Warna ungu untuk Dispen/Pulang
+        backgroundColor: "rgba(128, 0, 128, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#800080",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
     ],
   };
@@ -605,6 +653,16 @@ function MonthlyBarChart({
         bodyFont: { size: 12, family: "'Inter', sans-serif" },
         cornerRadius: 8,
         displayColors: true,
+        callbacks: {
+          label: function(context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += context.parsed.y + ' hari';
+            return label;
+          }
+        }
       },
     },
     scales: {
@@ -619,6 +677,7 @@ function MonthlyBarChart({
         },
       },
       y: {
+        beginAtZero: true,
         grid: {
           color: "#F3F4F6",
           drawBorder: false,
@@ -631,6 +690,7 @@ function MonthlyBarChart({
             size: 11,
           },
           padding: 8,
+          stepSize: 10,
         },
       },
     },
@@ -642,22 +702,29 @@ function MonthlyBarChart({
 
   return (
     <div style={{ height: "300px", width: "100%" }}>
-      <Bar data={chartData} options={options} />
+      <Line data={chartData} options={options} />
     </div>
   );
 }
 
+// Weekly Donut Chart Component - DIPERBARUI DENGAN WARNA BARU
 function WeeklyDonutChart({
   data,
 }: {
-  data: { hadir: number; izin: number; sakit: number; alpha: number };
+  data: { hadir: number; izin: number; sakit: number; alpha: number; dispen: number };
 }) {
   const chartData = {
-    labels: ["Total Kehadiran", "Total Izin", "Total Sakit", "Total Alpha"],
+    labels: ["Hadir", "Izin", "Sakit", "Alpha", "Dispen"],
     datasets: [
       {
-        data: [data.hadir, data.izin, data.sakit, data.alpha],
-        backgroundColor: ["#10B981", "#F59E0B", "#3B82F6", "#EF4444"],
+        data: [data.hadir, data.izin, data.sakit, data.alpha, data.dispen],
+        backgroundColor: [
+          "#00FF00", // Hijau terang untuk Hadir
+          "#FFFF00", // Kuning untuk Izin
+          "#0000FF", // Biru untuk Sakit
+          "#FF0000", // Merah untuk Alpha/Tidak Hadir
+          "#800080"  // Ungu untuk Dispen/Pulang
+        ],
         borderColor: "#ffffff",
         borderWidth: 2,
       },
@@ -687,10 +754,10 @@ function WeeklyDonutChart({
                 const style = meta.controller.getStyle(i);
                 const value = data.datasets[0].data[i];
                 const total = data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
-                const percentage = Math.round((value / total) * 100) + "%";
+                const percentage = Math.round((value / total) * 100);
 
                 return {
-                  text: `${label} (${percentage})`,
+                  text: `${label} (${percentage}%)`,
                   fillStyle: style.backgroundColor,
                   strokeStyle: style.borderColor,
                   lineWidth: style.borderWidth,
@@ -846,4 +913,3 @@ function MapelListModal({
     </Modal>
   );
 }
-

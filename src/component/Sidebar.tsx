@@ -1,4 +1,4 @@
-﻿import { Home, BookOpen, Users, GraduationCap, Bell, LogOut, Calendar } from 'lucide-react';
+﻿import { Home, BookOpen, Users, GraduationCap, LogOut, Calendar } from 'lucide-react';
 
 interface SidebarProps {
   currentPage: string;
@@ -24,13 +24,6 @@ const MENU_ITEMS_ADMIN: MenuItem[] = [
   { id: "guru", label: "Data Guru", icon: <GraduationCap size={20} /> },
 ];
 
-// Menu untuk Guru
-const MENU_ITEMS_GURU: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
-  { id: "presensi", label: "Presensi", icon: <Calendar size={20} /> },
-  { id: "kehadiran", label: "Kehadiran Siswa", icon: <Users size={20} /> },
-];
-
 // Waka staff
 const MENU_ITEMS_WAKA: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
@@ -40,24 +33,33 @@ const MENU_ITEMS_WAKA: MenuItem[] = [
   { id: "kehadiran-guru", label: "Kehadiran Guru", icon: <GraduationCap size={20} /> },
 ];
 
+// siswa
 const MENU_ITEMS_SISWA: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
   { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   { id: "absensi", label: "Daftar Ketidakhadiran", icon: <Users size={20} /> },
 ];
 
+//pengurus kelas
 const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
   { id: "daftar-mapel", label: "Daftar Mapel", icon: <BookOpen size={20} /> },
   { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   { id: "absensi", label: "Daftar Ketidakhadiran", icon: <Users size={20} /> },
-  // { id: "laporan", label: "Laporan Kelas", icon: <Users size={20} /> },
 ];
 
+//wali kelas
 const MENU_ITEMS_WALIKELAS: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
   { id: "kehadiran-siswa", label: "Kehadiran Siswa", icon: <Calendar size={20} /> },
-  { id: "notifikasi", label: "Notifikasi", icon: <Bell size={20} /> },
+];
+
+// Menu untuk Guru
+const MENU_ITEMS_GURU: MenuItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  // { id: "presensi", label: "Presensi", icon: <Calendar size={20} /> },
+  { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
+  // { id: "kehadiran", label: "Kehadiran Siswa", icon: <Users size={20} /> },
 ];
 
 export default function Sidebar({

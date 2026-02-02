@@ -1,7 +1,17 @@
+import { useState } from 'react';
+import GuruLayout from '../../component/Guru/GuruLayout.tsx';
+import CalendarIcon from '../../assets/Icon/calender.png';
+import EditIcon from '../../assets/Icon/Edit.png';
+import ChalkboardIcon from '../../assets/Icon/Chalkboard.png';
 
-import { useState, useEffect } from 'react';
-import GuruLayout from '../../component/Guru/GuruLayout';
-import { StatusBadge } from '../../component/Shared/StatusBadge';
+// STATUS COLOR PALETTE - High Contrast for Accessibility
+const STATUS_COLORS = {
+  hadir: '#15803d',   // Green 700 - Strong Green
+  izin: '#ca8a04',    // Yellow 600 - Dark Gold
+  sakit: '#c2410c',   // Orange 700 - Deep Orange (High Contrast)
+  alpha: '#b91c1c',   // Red 700 - Deep Red
+  pulang: '#1d4ed8',  // Blue 700 - Strong Blue
+};
 
 interface KehadiranSiswaGuruProps {
   user: { name: string; role: string };
@@ -10,15 +20,12 @@ interface KehadiranSiswaGuruProps {
   onMenuClick: (page: string) => void;
 }
 
-interface KehadiranSiswa {
+interface SiswaData {
   id: string;
   nisn: string;
   nama: string;
   mapel: string;
-  jam: string;
-  tanggal: string;
-  waktuScan: string;
-  status: 'hadir' | 'sakit' | 'izin' | 'alpha';
+  status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'pulang';
 }
 
 export default function KehadiranSiswaGuru({
@@ -27,70 +34,59 @@ export default function KehadiranSiswaGuru({
   currentPage,
   onMenuClick,
 }: KehadiranSiswaGuruProps) {
-  const [selectedKelas] = useState('XII Mekatronika 2');
-  const [selectedJam, setSelectedJam] = useState('Jam Ke-1');
-  const [selectedMatkul, setSelectedMapel] = useState('Semua');
-  const [selectedTanggal, setSelectedTanggal] = useState(new Date().toISOString().slice(0, 10));
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentDate] = useState('25-01-2025');
+  const [selectedKelas] = useState('X Mekatronika 1');
+  const [selectedMapel] = useState('Matematika (1-4)');
+  const [editingSiswa, setEditingSiswa] = useState<SiswaData | null>(null);
 
-  const JAM_OPTIONS = ['Jam Ke-1','Jam Ke-2','Jam Ke-3','Jam Ke-4'];
-  const MAPEL_OPTIONS = ['Semua','Matematika','Fisika','Bahasa Indonesia'];
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const [kehadiranData] = useState<KehadiranSiswa[]>([
-    { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.00', status: 'hadir' },
-    { id: '2', nisn: '1348576393', nama: 'Ahmad Fauzi', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.05', status: 'hadir' },
-    { id: '3', nisn: '1348576394', nama: 'Siti Nurhaliza', mapel: 'Fisika', jam: 'Jam Ke-2', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'sakit' },
-    { id: '4', nisn: '1348576395', nama: 'Budi Santoso', mapel: 'Fisika', jam: 'Jam Ke-2', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'izin' },
-    { id: '5', nisn: '1348576396', nama: 'Dewi Sartika', mapel: 'Bahasa Indonesia', jam: 'Jam Ke-3', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'alpha' },
-    { id: '6', nisn: '1348576397', nama: 'Rizki Ramadhan', mapel: 'Bahasa Indonesia', jam: 'Jam Ke-3', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'alpha' },
-    { id: '7', nisn: '1348576398', nama: 'Fitri Handayani', mapel: 'Matematika', jam: 'Jam Ke-4', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'sakit' },
+  const [siswaList, setSiswaList] = useState<SiswaData[]>([
+    { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'hadir' },
+    { id: '2', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'hadir' },
+    { id: '3', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'izin' },
+    { id: '4', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'sakit' },
+    { id: '5', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'alpha' },
+    { id: '6', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'alpha' },
+    { id: '7', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'pulang' },
   ]);
 
-  const filteredData = kehadiranData.filter(s => 
-    s.jam === selectedJam &&
-    (selectedMatkul === 'Semua' || s.mapel === selectedMatkul) &&
-    s.tanggal === selectedTanggal
-  );
+  const handleEditClick = (siswa: SiswaData) => {
+    setEditingSiswa(siswa);
+  };
 
-  const StatCard = ({ label, value, color, bgColor, icon }: any) => (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      borderRadius: '16px',
-      padding: '20px',
-      border: '1px solid #E5E7EB',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: color }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginTop: '4px' }}>{value}</div>
-        </div>
-        <div style={{ 
-          padding: '10px', 
-          borderRadius: '12px', 
-          backgroundColor: bgColor, 
-          color: color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          {icon}
-        </div>
+  const handleSaveStatus = (newStatus: SiswaData['status']) => {
+    if (!editingSiswa) return;
+
+    setSiswaList(prevList =>
+      prevList.map(s =>
+        s.id === editingSiswa.id ? { ...s, status: newStatus } : s
+      )
+    );
+    setEditingSiswa(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#10B981';
+    const label = status.charAt(0).toUpperCase() + status.slice(1);
+
+    return (
+      <div style={{
+        backgroundColor: color,
+        color: 'white',
+        padding: '8px 20px',
+        borderRadius: '50px',
+        fontSize: '13px',
+        fontWeight: '700',
+        display: 'inline-block',
+        minWidth: '100px',
+        textAlign: 'center',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        letterSpacing: '0.5px'
+      }}>
+        {label}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <GuruLayout
@@ -100,172 +96,283 @@ export default function KehadiranSiswaGuru({
       user={user}
       onLogout={onLogout}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '32px' }}>
-        
-        {/* Header & Filter Section */}
-        <div style={{ 
-          backgroundColor: '#FFFFFF', 
-          padding: '24px', 
-          borderRadius: '16px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid #E5E7EB',
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'space-between',
-          alignItems: isMobile ? 'flex-start' : 'center',
-          gap: '16px'
-        }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827' }}>Overview Kehadiran</h2>
-            <p style={{ margin: '4px 0 0 0', color: '#6B7280', fontSize: '14px' }}>
-              {selectedKelas} • {new Date(selectedTanggal).toLocaleDateString('id-ID')}
-            </p>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-            <div style={styles.filterBtn}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <input type="date" value={selectedTanggal} onChange={e => setSelectedTanggal(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }} />
-            </div>
-            <div style={styles.filterBtn}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <select value={selectedJam} onChange={e => setSelectedJam(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }}>
-                {JAM_OPTIONS.map(j => <option key={j} value={j}>{j}</option>)}
-              </select>
-            </div>
-            <div style={styles.filterBtn}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6l-2 4h4l-2 4" /></svg>
-              <select value={selectedMatkul} onChange={e => setSelectedMapel(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }}>
-                {MAPEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
+      <div style={{ padding: '0 4px' }}>
 
-        {/* Summary Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '16px',
-        }}>
-          <StatCard 
-            label="Hadir" 
-            value={filteredData.filter((s) => s.status === 'hadir').length} 
-            color="#10B981" 
-            bgColor="#ECFDF5"
-            icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-          />
-          <StatCard 
-            label="Sakit" 
-            value={filteredData.filter((s) => s.status === 'sakit').length} 
-            color="#3B82F6" 
-            bgColor="#EFF6FF"
-            icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-          />
-          <StatCard 
-            label="Izin" 
-            value={filteredData.filter((s) => s.status === 'izin').length} 
-            color="#F59E0B" 
-            bgColor="#FFFBEB"
-            icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-          />
-          <StatCard 
-            label="Alpha" 
-            value={filteredData.filter((s) => s.status === 'alpha').length} 
-            color="#EF4444" 
-            bgColor="#FEF2F2"
-            icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-          />
-        </div>
+        {/* Top Info Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
 
-        {/* Data Display */}
-        {isMobile ? (
-          // Mobile Card List
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {filteredData.map((item) => (
-              <div key={item.id} style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: '16px',
-                padding: '20px',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                border: '1px solid #F3F4F6',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    backgroundColor: '#F3F4F6',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: '700',
-                    color: '#6B7280',
-                    fontSize: '16px'
-                  }}>
-                    {item.nama.substring(0,2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#1F2937' }}>{item.nama}</h4>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', color: '#6B7280', fontFamily: 'monospace' }}>{item.nisn}</span>
-                      <span style={{ fontSize: '12px', color: '#D1D5DB' }}>•</span>
-                      <span style={{ fontSize: '13px', color: '#6B7280' }}>{item.waktuScan}</span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                  <StatusBadge
-                    status={item.status === 'alpha' ? 'tidak-hadir' : item.status}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          // Desktop Table
+          {/* Date Badge */}
           <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-            overflow: 'hidden',
-            border: '1px solid #E5E7EB',
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: '#0F172A',
+            color: 'white',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            width: 'fit-content',
+            fontSize: '14px',
+            fontWeight: '600',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
           }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <img src={CalendarIcon} alt="Date" style={{ width: 18, height: 18, marginRight: 10, filter: 'brightness(0) invert(1)' }} />
+            {currentDate}
+          </div>
+
+          {/* Class Info Card */}
+          <div style={{
+            backgroundColor: '#0F172A',
+            color: 'white',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            width: 'fit-content',
+            minWidth: '250px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Decorative circle */}
+            <div style={{
+              position: 'absolute',
+              left: -10,
+              bottom: -20,
+              width: 60,
+              height: 60,
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '50%'
+            }} />
+
+            <img src={ChalkboardIcon} alt="Class" style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)', zIndex: 1 }} />
+            <div style={{ zIndex: 1 }}>
+              <div style={{ fontSize: '16px', fontWeight: '700' }}>{selectedKelas}</div>
+              <div style={{ fontSize: '13px', opacity: 0.8 }}>{selectedMapel}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          border: '1px solid #E2E8F0'
+        }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead>
-                <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                  <th style={styles.th}>No</th>
-                  <th style={styles.th}>NISN</th>
-                  <th style={styles.th}>Nama Siswa</th>
-                  <th style={styles.th}>Waktu Scan</th>
-                  <th style={styles.th}>Status</th>
+                <tr style={{ backgroundColor: '#1E293B', color: 'white' }}>
+                  <th style={{ ...styles.th, color: 'black' }}>No</th>
+                  <th style={{ ...styles.th, color: 'black' }}>NISN</th>
+                  <th style={{ ...styles.th, color: 'black' }}>Nama Siswa</th>
+                  <th style={{ ...styles.th, color: 'black' }}>Mata Pelajaran</th>
+                  <th style={{ ...styles.th, textAlign: 'center', color: 'black' }}>Status</th>
+                  <th style={{ ...styles.th, textAlign: 'center', color: 'black' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((item, idx) => (
-                  <tr key={item.id} style={{ 
-                    borderBottom: '1px solid #F3F4F6',
-                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA'
+                {siswaList.map((siswa, index) => (
+                  <tr key={index} style={{
+                    borderBottom: '1px solid #E2E8F0',
+                    backgroundColor: index % 2 === 0 ? '#F8FAFC' : 'white'
                   }}>
-                    <td style={styles.td}>{idx + 1}</td>
-                    <td style={{ ...styles.td, fontFamily: 'monospace', color: '#4B5563' }}>{item.nisn}</td>
-                    <td style={{ ...styles.td, fontWeight: '600', color: '#1F2937' }}>{item.nama}</td>
-                    <td style={styles.td}>{item.waktuScan}</td>
-                    <td style={styles.td}>
-                      <StatusBadge
-                        status={item.status === 'alpha' ? 'tidak-hadir' : item.status}
-                      />
+                    <td style={styles.td}>{index + 1}.</td>
+                    <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: '15px' }}>{siswa.nisn}</td>
+                    <td style={{ ...styles.td, fontWeight: '700', color: '#111827' }}>{siswa.nama}</td>
+                    <td style={styles.td}>{siswa.mapel}</td>
+                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                      {getStatusBadge(siswa.status)}
+                    </td>
+                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleEditClick(siswa)}
+                        style={{
+                          background: 'white',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '8px',
+                          padding: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.borderColor = '#3B82F6'}
+                        onMouseOut={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
+                      >
+                        <img src={EditIcon} alt="Edit" style={{ width: 18, height: 18 }} />
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+
       </div>
+
+      {/* Edit Status Modal */}
+      {editingSiswa && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '0', // Remove padding from container to handle sections
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '400px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            overflow: 'hidden' // Ensure children respect border radius
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #F3F4F6',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: 0 }}>
+                Edit Status Kehadiran
+              </h3>
+              <button
+                onClick={() => setEditingSiswa(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#9CA3AF',
+                  fontSize: '24px',
+                  padding: 0,
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px' }}>
+              {/* Nama Siswa Field */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#6B7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Nama Siswa
+                </label>
+                <div style={{
+                  backgroundColor: '#F9FAFB',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E7EB',
+                  color: '#1F2937',
+                  fontSize: '15px',
+                  fontWeight: '600'
+                }}>
+                  {editingSiswa.nama}
+                </div>
+              </div>
+
+              {/* Status Select */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#6B7280', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Status Kehadiran
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={editingSiswa.status}
+                    onChange={(e) => setEditingSiswa({ ...editingSiswa, status: e.target.value as SiswaData['status'] })}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #D1D5DB',
+                      fontSize: '15px',
+                      color: '#1F2937',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      appearance: 'none', // Remove default arrow
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 1rem center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '1.5em 1.5em',
+                      paddingRight: '2.5rem'
+                    }}
+                  >
+                    {Object.keys(STATUS_COLORS).map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div style={{
+              padding: '20px 24px',
+              backgroundColor: '#F9FAFB',
+              borderTop: '1px solid #F3F4F6',
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => setEditingSiswa(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #D1D5DB',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleSaveStatus(editingSiswa.status)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#2563EB',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </GuruLayout>
   );
 }
@@ -274,374 +381,15 @@ const styles = {
   th: {
     padding: '16px',
     textAlign: 'left' as const,
-    fontSize: '12px',
-    fontWeight: '700',
-    color: '#6B7280',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px'
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#374151',
+    letterSpacing: '0.025em'
   },
   td: {
     padding: '16px',
     fontSize: '14px',
-    color: '#374151'
-  },
-  filterBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    backgroundColor: '#F9FAFB',
-    border: '1px solid #E5E7EB',
-    borderRadius: '10px',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#374151',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  },
-  actionBtn: {
-    background: 'white',
-    border: '1px solid #E5E7EB',
-    cursor: 'pointer',
-    padding: '8px',
-    borderRadius: '8px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+    color: '#1F2937',
+    verticalAlign: 'middle'
   }
 };
-
-
-// /* eslint-disable @typescript-eslint/no-unused-vars */
-// legacy code commented out below
-// import { useState, useEffect } from 'react';
-// import GuruLayout from '../../component/Guru/GuruLayout';
-// import { StatusBadge } from '../../component/Shared/StatusBadge';
-// import EditIcon from '../../assets/Icon/Edit.png';
-
-// interface KehadiranSiswaGuruProps {
-//   user: { name: string; role: string };
-//   onLogout: () => void;
-//   currentPage: string;
-//   onMenuClick: (page: string) => void;
-// }
-
-// interface KehadiranSiswa {
-//   id: string;
-//   nisn: string;
-//   nama: string;
-//   mapel: string;
-//   jam: string;
-//   tanggal: string;
-//   waktuScan: string;
-//   status: 'hadir' | 'terlambat' | 'tidak-hadir';
-// }
-
-// export default function KehadiranSiswaGuru({
-//   user,
-//   onLogout,
-//   currentPage,
-//   onMenuClick,
-// }: KehadiranSiswaGuruProps) {
-//   const [selectedKelas, setSelectedKelas] = useState('XII Mekatronika 2');
-//   const [selectedJam, setSelectedJam] = useState('Jam Ke-1');
-//   const [selectedMatkul, setSelectedMapel] = useState('Semua');
-//   const [selectedTanggal, setSelectedTanggal] = useState(new Date().toISOString().slice(0, 10));
-//   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-//   const JAM_OPTIONS = ['Jam Ke-1','Jam Ke-2','Jam Ke-3','Jam Ke-4'];
-//   const MAPEL_OPTIONS = ['Semua','Matematika','Fisika','Bahasa Indonesia'];
-
-//   useEffect(() => {
-//     const handleResize = () => setIsMobile(window.innerWidth < 768);
-//     window.addEventListener('resize', handleResize);
-//     return () => window.removeEventListener('resize', handleResize);
-//   }, []);
-
-//   const [kehadiranData, setKehadiranData] = useState<KehadiranSiswa[]>([
-//     { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.00', status: 'hadir' },
-//     { id: '2', nisn: '1348576393', nama: 'Ahmad Fauzi', mapel: 'Matematika', jam: 'Jam Ke-1', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.05', status: 'hadir' },
-//     { id: '3', nisn: '1348576394', nama: 'Siti Nurhaliza', mapel: 'Fisika', jam: 'Jam Ke-2', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.16', status: 'terlambat' },
-//     { id: '4', nisn: '1348576395', nama: 'Budi Santoso', mapel: 'Fisika', jam: 'Jam Ke-2', tanggal: new Date().toISOString().slice(0,10), waktuScan: '07.20', status: 'terlambat' },
-//     { id: '5', nisn: '1348576396', nama: 'Dewi Sartika', mapel: 'Bahasa Indonesia', jam: 'Jam Ke-3', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'tidak-hadir' },
-//     { id: '6', nisn: '1348576397', nama: 'Rizki Ramadhan', mapel: 'Bahasa Indonesia', jam: 'Jam Ke-3', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'tidak-hadir' },
-//     { id: '7', nisn: '1348576398', nama: 'Fitri Handayani', mapel: 'Matematika', jam: 'Jam Ke-4', tanggal: new Date().toISOString().slice(0,10), waktuScan: '-', status: 'tidak-hadir' },
-//   ]);
-
-//   const handleSetStatus = (id: string, status: KehadiranSiswa['status']) => {
-//     setKehadiranData(prev => prev.map(s => s.id === id ? { ...s, status } : s));
-//   };
-
-//   const filteredData = kehadiranData.filter(s => 
-//     s.jam === selectedJam &&
-//     (selectedMatkul === 'Semua' || s.mapel === selectedMatkul) &&
-//     s.tanggal === selectedTanggal
-//   );
-
-//   const handleEdit = (item: KehadiranSiswa) => {
-//     alert(`Edit absensi: ${item.nama}`);
-//   };
-
-//   const StatCard = ({ label, value, color, bgColor, icon }: any) => (
-//     <div style={{
-//       backgroundColor: '#FFFFFF',
-//       borderRadius: '16px',
-//       padding: '20px',
-//       border: '1px solid #E5E7EB',
-//       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-//       display: 'flex',
-//       flexDirection: 'column',
-//       justifyContent: 'space-between',
-//       position: 'relative',
-//       overflow: 'hidden'
-//     }}>
-//       <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: color }} />
-//       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-//         <div>
-//           <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
-//           <div style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginTop: '4px' }}>{value}</div>
-//         </div>
-//         <div style={{ 
-//           padding: '10px', 
-//           borderRadius: '12px', 
-//           backgroundColor: bgColor, 
-//           color: color,
-//           display: 'flex',
-//           alignItems: 'center',
-//           justifyContent: 'center'
-//         }}>
-//           {icon}
-//         </div>
-//       </div>
-//     </div>
-//   );
-
-//   return (
-//     <GuruLayout
-//       pageTitle="Kehadiran Siswa"
-//       currentPage={currentPage}
-//       onMenuClick={onMenuClick}
-//       user={user}
-//       onLogout={onLogout}
-//     >
-//       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '32px' }}>
-        
-//         {/* Header & Filter Section */}
-//         <div style={{ 
-//           backgroundColor: '#FFFFFF', 
-//           padding: '24px', 
-//           borderRadius: '16px', 
-//           boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-//           border: '1px solid #E5E7EB',
-//           display: 'flex',
-//           flexDirection: isMobile ? 'column' : 'row',
-//           justifyContent: 'space-between',
-//           alignItems: isMobile ? 'flex-start' : 'center',
-//           gap: '16px'
-//         }}>
-//           <div>
-//             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827' }}>Overview Kehadiran</h2>
-//             <p style={{ margin: '4px 0 0 0', color: '#6B7280', fontSize: '14px' }}>
-//               {selectedKelas} • {new Date(selectedTanggal).toLocaleDateString('id-ID')}
-//             </p>
-//           </div>
-          
-//           <div style={{ display: 'flex', gap: '12px', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-//             <div style={styles.filterBtn}>
-//               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-//               <input type="date" value={selectedTanggal} onChange={e => setSelectedTanggal(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }} />
-//             </div>
-//             <div style={styles.filterBtn}>
-//               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-//               <select value={selectedJam} onChange={e => setSelectedJam(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }}>
-//                 {JAM_OPTIONS.map(j => <option key={j} value={j}>{j}</option>)}
-//               </select>
-//             </div>
-//             <div style={styles.filterBtn}>
-//               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ marginRight: '8px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6l-2 4h4l-2 4" /></svg>
-//               <select value={selectedMatkul} onChange={e => setSelectedMapel(e.target.value)} style={{ border: 'none', background: 'transparent', outline: 'none', fontWeight: 600, color: '#374151' }}>
-//                 {MAPEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-//               </select>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Summary Cards */}
-//         <div style={{
-//           display: 'grid',
-//           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-//           gap: '16px',
-//         }}>
-//           <StatCard 
-//             label="Total Siswa" 
-//             value={filteredData.length} 
-//             color="#4F46E5" 
-//             bgColor="#EEF2FF"
-//             icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
-//           />
-//           <StatCard 
-//             label="Hadir" 
-//             value={filteredData.filter((s) => s.status === 'hadir').length} 
-//             color="#10B981" 
-//             bgColor="#ECFDF5"
-//             icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-//           />
-//           <StatCard 
-//             label="Terlambat" 
-//             value={filteredData.filter((s) => s.status === 'terlambat').length} 
-//             color="#F59E0B" 
-//             bgColor="#FFFBEB"
-//             icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-//           />
-//           <StatCard 
-//             label="Tidak Hadir" 
-//             value={filteredData.filter((s) => s.status === 'tidak-hadir').length} 
-//             color="#EF4444" 
-//             bgColor="#FEF2F2"
-//             icon={<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-//           />
-//         </div>
-
-//         {/* Data Display */}
-//         {isMobile ? (
-//           // Mobile Card List
-//           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-//             {filteredData.map((item) => (
-//               <div key={item.id} style={{
-//                 backgroundColor: '#FFFFFF',
-//                 borderRadius: '16px',
-//                 padding: '20px',
-//                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-//                 border: '1px solid #F3F4F6',
-//                 display: 'flex',
-//                 justifyContent: 'space-between',
-//                 alignItems: 'center'
-//               }}>
-//                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-//                   <div style={{
-//                     width: '48px',
-//                     height: '48px',
-//                     borderRadius: '12px',
-//                     backgroundColor: '#F3F4F6',
-//                     display: 'flex',
-//                     alignItems: 'center',
-//                     justifyContent: 'center',
-//                     fontWeight: '700',
-//                     color: '#6B7280',
-//                     fontSize: '16px'
-//                   }}>
-//                     {item.nama.substring(0,2).toUpperCase()}
-//                   </div>
-//                   <div>
-//                     <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#1F2937' }}>{item.nama}</h4>
-//                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-//                       <span style={{ fontSize: '13px', color: '#6B7280', fontFamily: 'monospace' }}>{item.nisn}</span>
-//                       <span style={{ fontSize: '12px', color: '#D1D5DB' }}>•</span>
-//                       <span style={{ fontSize: '13px', color: '#6B7280' }}>{item.waktuScan}</span>
-//                     </div>
-//                   </div>
-//                 </div>
-//                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-//                   <StatusBadge status={item.status} />
-//                   <div style={{ display: 'flex', gap: '6px' }}>
-//                     <button onClick={() => handleSetStatus(item.id, 'hadir')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #A7F3D0', backgroundColor: '#ECFDF5', color: '#065F46', cursor: 'pointer' }}>Hadir</button>
-//                     <button onClick={() => handleSetStatus(item.id, 'terlambat')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #FDE68A', backgroundColor: '#FFFBEB', color: '#92400E', cursor: 'pointer' }}>Lambat</button>
-//                     <button onClick={() => handleSetStatus(item.id, 'tidak-hadir')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #FCA5A5', backgroundColor: '#FEF2F2', color: '#991B1B', cursor: 'pointer' }}>TH</button>
-//                   </div>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         ) : (
-//           // Desktop Table
-//           <div style={{
-//             backgroundColor: '#FFFFFF',
-//             borderRadius: '16px',
-//             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-//             overflow: 'hidden',
-//             border: '1px solid #E5E7EB',
-//           }}>
-//             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-//               <thead>
-//                 <tr style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-//                   <th style={styles.th}>No</th>
-//                   <th style={styles.th}>NISN</th>
-//                   <th style={styles.th}>Nama Siswa</th>
-//                   <th style={styles.th}>Waktu Scan</th>
-//                   <th style={styles.th}>Status</th>
-//                   <th style={{ ...styles.th, textAlign: 'center' }}>Aksi</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {filteredData.map((item, idx) => (
-//                   <tr key={item.id} style={{ 
-//                     borderBottom: '1px solid #F3F4F6',
-//                     backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA'
-//                   }}>
-//                     <td style={styles.td}>{idx + 1}</td>
-//                     <td style={{ ...styles.td, fontFamily: 'monospace', color: '#4B5563' }}>{item.nisn}</td>
-//                     <td style={{ ...styles.td, fontWeight: '600', color: '#1F2937' }}>{item.nama}</td>
-//                     <td style={styles.td}>{item.waktuScan}</td>
-//                     <td style={styles.td}><StatusBadge status={item.status} /></td>
-//                     <td style={{ ...styles.td, textAlign: 'center' }}>
-//                       <div style={{ display: 'inline-flex', gap: '8px' }}>
-//                         <button onClick={() => handleSetStatus(item.id, 'hadir')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #A7F3D0', backgroundColor: '#ECFDF5', color: '#065F46', cursor: 'pointer' }}>Hadir</button>
-//                         <button onClick={() => handleSetStatus(item.id, 'terlambat')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #FDE68A', backgroundColor: '#FFFBEB', color: '#92400E', cursor: 'pointer' }}>Lambat</button>
-//                         <button onClick={() => handleSetStatus(item.id, 'tidak-hadir')} style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #FCA5A5', backgroundColor: '#FEF2F2', color: '#991B1B', cursor: 'pointer' }}>TH</button>
-//                       </div>
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         )}
-//       </div>
-//     </GuruLayout>
-//   );
-// }
-
-// const styles = {
-//   th: {
-//     padding: '16px',
-//     textAlign: 'left' as const,
-//     fontSize: '12px',
-//     fontWeight: '700',
-//     color: '#6B7280',
-//     textTransform: 'uppercase' as const,
-//     letterSpacing: '0.5px'
-//   },
-//   td: {
-//     padding: '16px',
-//     fontSize: '14px',
-//     color: '#374151'
-//   },
-//   filterBtn: {
-//     display: 'flex',
-//     alignItems: 'center',
-//     gap: '8px',
-//     padding: '10px 16px',
-//     backgroundColor: '#F9FAFB',
-//     border: '1px solid #E5E7EB',
-//     borderRadius: '10px',
-//     fontSize: '14px',
-//     fontWeight: '600',
-//     color: '#374151',
-//     cursor: 'pointer',
-//     transition: 'all 0.2s'
-//   },
-//   actionBtn: {
-//     background: 'white',
-//     border: '1px solid #E5E7EB',
-//     cursor: 'pointer',
-//     padding: '8px',
-//     borderRadius: '8px',
-//     display: 'inline-flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     transition: 'all 0.2s',
-//     boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-//   }
-// };

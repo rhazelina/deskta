@@ -3,7 +3,7 @@ import { Edit, Trash2, Eye } from "lucide-react";
 
 interface Column {
   key: string;
-  label: string;
+  label: ReactNode;
   render?: (value: any, row: any) => ReactNode;
 }
 

@@ -1,5 +1,6 @@
 ﻿// src/Pages/WakaStaff/DetailSiswaStaff.tsx
 import { useEffect, useMemo, useState } from "react";
+import { FileText, FileSpreadsheet } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { FilterItem } from "../../component/Shared/FilterBar";
 import { StatusBadge } from "../../component/Shared/StatusBadge";
@@ -39,6 +40,8 @@ const MATA_PELAJARAN_LIST = [
   "Bahasa Inggris",
   "Fisika",
   "Kimia",
+  "MPKK ( Bu Rere )",
+  "MPKK ( Bu Dian )",
 ];
 
 export default function DetailSiswaStaff({
@@ -71,9 +74,12 @@ export default function DetailSiswaStaff({
     { id: "2", nisn: "1348576393", namaSiswa: "Ahmad Fauzi", mataPelajaran: "Matematika", status: "hadir" },
     { id: "3", nisn: "1348576394", namaSiswa: "Siti Nurhaliza", mataPelajaran: "Bahasa Indonesia", status: "izin" },
     { id: "4", nisn: "1348576395", namaSiswa: "Budi Santoso", mataPelajaran: "Bahasa Inggris", status: "sakit" },
-    { id: "5", nisn: "1348576396", namaSiswa: "Dewi Sartika", mataPelajaran: "Matematika", status: "alpha" },
-    { id: "6", nisn: "1348576397", namaSiswa: "Rizki Ramadhan", mataPelajaran: "Fisika", status: "alpha" },
+    { id: "5", nisn: "1348576396", namaSiswa: "Dewi Sartika", mataPelajaran: "Matematika", status: "tidak-hadir" },
+    { id: "6", nisn: "1348576397", namaSiswa: "Rizki Ramadhan", mataPelajaran: "Fisika", status: "tidak-hadir" },
     { id: "7", nisn: "1348576398", namaSiswa: "Wito Suherman Suhermin", mataPelajaran: "Matematika", status: "tidak-hadir" },
+    { id: "8", nisn: "1348576399", namaSiswa: "Zizee miari", mataPelajaran: "MPKK ( Bu Rere )", status: "hadir" },
+    { id: "9", nisn: "1348576400", namaSiswa: "Fafa amata", mataPelajaran: "MPKK ( Bu Dian )", status: "hadir" },
+
   ]);
 
   useEffect(() => {
@@ -100,11 +106,19 @@ export default function DetailSiswaStaff({
     { key: "mataPelajaran", label: "Mata Pelajaran" },
     {
       key: "status",
-      label: "Status",
+      label: (
+        <div style={{ textAlign: "center" }}>
+          Status
+        </div>
+      ),
       render: (value: DetailStatusType) => (
-        <StatusBadge status={value === "alpha" ? "tidak-hadir" : value} />
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <StatusBadge status={value === "alpha" ? "tidak-hadir" : value} />
+        </div>
       ),
     },
+
+
   ], []);
 
   // Modal edit
@@ -118,7 +132,6 @@ export default function DetailSiswaStaff({
     { label: "Sakit", value: "sakit" },
     { label: "Izin", value: "izin" },
     { label: "Tidak Hadir", value: "tidak-hadir" },
-    { label: "Alpha", value: "alpha" },
   ];
 
   const handleOpenEdit = (row: KehadiranRow) => {
@@ -145,10 +158,7 @@ export default function DetailSiswaStaff({
     }, 300);
   };
 
-  const [isRekapOpen, setIsRekapOpen] = useState(false);
 
-  const handleViewRekap = () => setIsRekapOpen(true);
-  const handleCloseRekap = () => setIsRekapOpen(false);
 
   const handleExportRekap = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -180,7 +190,7 @@ export default function DetailSiswaStaff({
   return (
     <StaffLayout pageTitle={`Detail Kehadiran - ${kelasInfo.namaKelas}`} currentPage={currentPage} onMenuClick={onMenuClick} user={user} onLogout={onLogout}>
       <div style={{ position: "relative", minHeight: "100%", backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden", padding: isMobile ? 16 : 32, border: "1px solid #E5E7EB", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-        
+
         {/* Bar atas: tanggal + tombol */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
@@ -195,7 +205,21 @@ export default function DetailSiswaStaff({
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <Button label="Lihat Rekap" onClick={handleViewRekap} />
+            <Button
+              label="Export PDF"
+              icon={<FileText size={16} />}
+              onClick={() => {
+                alert("Export PDF functionality to be implemented");
+              }}
+              style={{ backgroundColor: "#EF4444", borderColor: "#EF4444" }}
+            />
+            <Button
+              label="Export Excel"
+              icon={<FileSpreadsheet size={16} />}
+              onClick={handleExportRekap}
+              style={{ backgroundColor: "#10B981", borderColor: "#10B981" }}
+            />
+
             {onBack && <Button label="Kembali" variant="secondary" onClick={onBack} />}
           </div>
         </div>
@@ -214,7 +238,7 @@ export default function DetailSiswaStaff({
           <SummaryCard label="Hadir" value={totalHadir.toString()} color="#10B981" />
           <SummaryCard label="Izin" value={totalIzin.toString()} color="#F59E0B" />
           <SummaryCard label="Sakit" value={totalSakit.toString()} color="#3B82F6" />
-          <SummaryCard label="Alpha" value={totalAlpha.toString()} color="#EF4444" />
+          <SummaryCard label="Tidak Hadir" value={totalAlpha.toString()} color="#EF4444" />
         </div>
 
         {/* Table */}
@@ -228,7 +252,7 @@ export default function DetailSiswaStaff({
       </div>
 
       {/* Modal Edit */}
-      <FormModal isOpen={isEditOpen} onClose={handleCloseEdit} title="Edit Kehadiran" onSubmit={handleSubmitEdit} submitLabel="Simpan" isSubmitting={isSubmitting}>
+      <FormModal isOpen={isEditOpen} onClose={handleCloseEdit} title="Ubah Kehadiran" onSubmit={handleSubmitEdit} submitLabel="Simpan" isSubmitting={isSubmitting}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <p style={{ margin: 0, marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Pilih Kehadiran</p>
           <Select
@@ -237,54 +261,6 @@ export default function DetailSiswaStaff({
             options={statusOptions}
             placeholder="Pilih status kehadiran"
           />
-        </div>
-      </FormModal>
-
-      <FormModal
-        isOpen={isRekapOpen}
-        onClose={handleCloseRekap}
-        title="Rekap Kehadiran"
-        showSubmitButton={false}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div style={{ fontSize: 14, color: "#374151", fontWeight: 600 }}>
-              Tanggal: {selectedTanggal}
-            </div>
-            <button
-              type="button"
-              onClick={handleExportRekap}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "none",
-                backgroundColor: "#1e40af",
-                color: "white",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: 13,
-              }}
-            >
-              Unduh Rekap
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
-              gap: 12,
-            }}
-          >
-            <SummaryCard label="Hadir" value={totalHadir.toString()} color="#10B981" />
-            <SummaryCard label="Izin" value={totalIzin.toString()} color="#F59E0B" />
-            <SummaryCard label="Sakit" value={totalSakit.toString()} color="#3B82F6" />
-            <SummaryCard label="Alpha" value={totalAlpha.toString()} color="#EF4444" />
-          </div>
-
-          <div style={{ fontSize: 13, color: "#6B7280" }}>
-            Total data: <strong>{filteredRows.length}</strong>
-          </div>
         </div>
       </FormModal>
     </StaffLayout>

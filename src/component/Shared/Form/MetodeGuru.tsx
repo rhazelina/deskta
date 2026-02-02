@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal } from '../../Shared/Modal';
+import { Modal } from '../Modal';
 import QRCodeIcon from '../../../assets/Icon/qr_code.png';
 
 interface MetodeGuruProps {

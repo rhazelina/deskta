@@ -11,6 +11,7 @@ interface FormModalProps {
   isSubmitting?: boolean;
   titleStyle?: React.CSSProperties;
   showSubmitButton?: boolean;
+  style?: React.CSSProperties;
 }
 
 export function FormModal({
@@ -23,6 +24,7 @@ export function FormModal({
   isSubmitting = false,
   titleStyle = {},
   showSubmitButton = true,
+  style,
 }: FormModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +40,7 @@ export function FormModal({
           border: "3px solid #1e40af",
           borderRadius: "16px",
           overflow: "hidden",
+          ...style,
         }}
       >
         {/* Header */}

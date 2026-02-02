@@ -1,8 +1,7 @@
 ﻿import { useState } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
-import { Button } from '../../component/Shared/Button';
 import { EditGuruForm } from '../../component/Shared/EditGuru';
-import { Edit, User as UserIcon } from 'lucide-react';
+import { Edit, User as UserIcon, ArrowLeft } from 'lucide-react';
 
 interface User {
   role: string;
@@ -13,11 +12,10 @@ interface Guru {
   id: string;
   nama: string;
   nip: string;
-  role: string;
-  password: string;
+  jenisKelamin: string;
+  peran: string;
   noTelp: string;
-  waliKelasDari: string;
-  mataPelajaran: string;
+  password: string;
 }
 
 interface DetailGuruProps {
@@ -26,19 +24,18 @@ interface DetailGuruProps {
   currentPage: string;
   onMenuClick: (page: string) => void;
   guruId: string;
-  onNavigateToRiwayat?: (guruId: string) => void;
+  onUpdateGuru?: (updatedGuru: Guru) => void;
 }
 
-// Dummy data guru (nanti diganti dengan fetch dari API)
-const dummyGuruData: Guru = {
+// Dummy data guru
+const defaultGuruData: Guru = {
   id: '1',
   nama: 'Ewit Erniyah S.pd',
   nip: '0918415784',
-  role: 'Wali Kelas',
-  password: 'ABC123',
+  jenisKelamin: 'Perempuan',
+  peran: 'Wali Kelas',
   noTelp: '08218374859',
-  waliKelasDari: 'XII RPL 2',
-  mataPelajaran: 'MTK,B.Ing',
+  password: 'ABC123',
 };
 
 export default function DetailGuru({
@@ -47,49 +44,62 @@ export default function DetailGuru({
   currentPage,
   onMenuClick,
   guruId: _guruId,
-  onNavigateToRiwayat,
+  onUpdateGuru,
 }: DetailGuruProps) {
-  const [guruData, setGuruData] = useState<Guru>(dummyGuruData);
+  const [guruData, setGuruData] = useState<Guru>(defaultGuruData);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [dataUpdated, setDataUpdated] = useState(false);
 
   // Handler untuk submit edit
   const handleEditSubmit = (data: {
-    role: string;
-    password: string;
+    jenisKelamin: string;
+    peran: string;
     noTelp: string;
-    waliKelasDari: string;
-    mataPelajaran: string;
+    password: string;
   }) => {
-    setGuruData({
+    const updatedGuru = {
       ...guruData,
-      role: data.role,
-      password: data.password,
+      jenisKelamin: data.jenisKelamin,
+      peran: data.peran,
       noTelp: data.noTelp,
-      waliKelasDari: data.waliKelasDari,
-      mataPelajaran: data.mataPelajaran,
-    });
+      password: data.password,
+    };
+
+    setGuruData(updatedGuru);
     setIsEditModalOpen(false);
-    alert('âœ… Data guru berhasil diperbarui!');
-    // TODO: Nanti ganti dengan API call
+    setDataUpdated(true);
+
+    // Panggil callback untuk update data di parent
+    if (onUpdateGuru) {
+      onUpdateGuru(updatedGuru);
+    }
+
+    alert('✓ Data guru berhasil diperbarui!');
+  };
+
+  // Handler untuk tombol kembali
+  const handleBack = () => {
+    if (dataUpdated) {
+      alert('✅ Data telah diperbarui! Kembali ke halaman daftar guru.');
+    }
+    onMenuClick('guru');
   };
 
   // Field item component untuk reusability
   const FieldItem = ({
     label,
     value,
-    onEdit,
   }: {
     label: string;
     value: string;
-    onEdit: () => void;
   }) => (
-    <div style={{ marginBottom: '16px' }}>
+    <div style={{ marginBottom: '24px' }}>
       <label
         style={{
           display: 'block',
           fontSize: '14px',
           fontWeight: '600',
-          color: '#374151',
+          color: '#FFFFFF',
           marginBottom: '8px',
         }}
       >
@@ -97,38 +107,72 @@ export default function DetailGuru({
       </label>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          backgroundColor: '#E5E7EB',
+          backgroundColor: '#FFFFFF',
           padding: '12px 16px',
           borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <span
           style={{
-            flex: 1,
             fontSize: '14px',
             color: '#1F2937',
+            display: 'block',
+            width: '100%',
           }}
         >
           {value}
         </span>
-        <button
-          onClick={onEdit}
+      </div>
+    </div>
+  );
+
+  // Password field component khusus untuk password
+  const PasswordField = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string;
+  }) => (
+    <div style={{ marginBottom: '24px' }}>
+      <label
+        style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: '600',
+          color: '#FFFFFF',
+          marginBottom: '8px',
+        }}
+      >
+        {label}
+      </label>
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <span
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            fontSize: '14px',
+            color: '#1F2937',
+            fontFamily: 'monospace',
+            letterSpacing: '1px',
+            display: 'block',
+            width: '100%',
           }}
-          title="Edit"
         >
-          <Edit size={18} strokeWidth={2} color="#1F2937" />
-        </button>
+          {value}
+        </span>
       </div>
     </div>
   );
@@ -143,135 +187,221 @@ export default function DetailGuru({
     >
       <div
         style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '32px',
+          backgroundImage: 'url(../src/assets/Background/bgdetailgurusiswa.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          minHeight: 'calc(100vh - 64px)',
+          padding: window.innerWidth < 768 ? '16px' : '32px',
         }}
       >
-        {/* Card Container */}
         <div
           style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
+            maxWidth: '800px',
+            margin: '0 auto',
           }}
         >
-          {/* Header with Profile */}
+          {/* Card Container - Navy solid */}
           <div
             style={{
-              backgroundColor: '#0f172a',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            {/* Avatar */}
+            {/* Header with Profile */}
             <div
               style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                backgroundColor: '#3b82f6',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                padding: '32px 24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
+                gap: '20px',
+                position: 'relative',
               }}
             >
-              <UserIcon size={28} color="#FFFFFF" />
-            </div>
-{/* Info */}
-            <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: 'white',
-                }}
-              >
-                {guruData.nama}
-              </h2>
-              <p
-                style={{
-                  margin: '4px 0 0 0',
-                  fontSize: '14px',
-                  color: '#cbd5e1',
-                }}
-              >
-                {guruData.nip}
-              </p>
-            </div>
-          </div>
-
-          {/* Content - Fields */}
-          <div style={{ padding: '24px' }}>
-            {/* Button Riwayat Kehadiran */}
-            {onNavigateToRiwayat && (
+              {/* Avatar */}
               <div
                 style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  border: '4px solid rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <UserIcon size={36} />
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1 }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    marginBottom: '4px',
+                  }}
+                >
+                  {guruData.nama}
+                </h2>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    color: '#cbd5e1',
+                    fontFamily: 'monospace',
+                    letterSpacing: '1px',
+                  }}
+                >
+                  {guruData.nip}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  style={{
+                    backgroundColor: '#60A5FA',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3B82F6';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#60A5FA';
+                  }}
+                >
+                  <Edit size={18} />
+                  Ubah
+                </button>
+                <button
+                  onClick={() => handleEditSubmit({
+                    jenisKelamin: guruData.jenisKelamin,
+                    peran: guruData.peran,
+                    noTelp: guruData.noTelp,
+                    password: guruData.password,
+                  })}
+                  style={{
+                    backgroundColor: '#10B981',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#059669';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#10B981';
+                  }}
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+
+            {/* Content - Fields */}
+            <div style={{ padding: '32px' }}>
+              {/* Row 1: Jenis Kelamin & Peran */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '24px',
                   marginBottom: '24px',
                 }}
               >
-                <Button
-                  label="Riwayat Kehadiran"
-                  onClick={() => onNavigateToRiwayat(guruData.id)}
+                <FieldItem
+                  label="Jenis Kelamin :"
+                  value={guruData.jenisKelamin}
+                />
+                <FieldItem
+                  label="Peran :"
+                  value={guruData.peran}
                 />
               </div>
-            )}
 
-            {/* Row 1: Role & Password */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '16px',
-                marginBottom: '16px',
-              }}
-            >
-              <FieldItem
-                label="Role :"
-                value={guruData.role}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-              <FieldItem
-                label="Password :"
-                value={guruData.password}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
+              {/* Row 2: No. Telp & Kata Sandi */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '24px',
+                  marginBottom: '24px',
+                }}
+              >
+                <FieldItem
+                  label="No. Telp :"
+                  value={guruData.noTelp}
+                />
+                <PasswordField
+                  label="Kata Sandi :"
+                  value={guruData.password}
+                />
+              </div>
+
+              {/* Tombol Kembali - DI KIRI BAWAH */}
+              <div
+                style={{
+                  marginTop: '40px',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                }}
+              >
+                <button
+                  onClick={handleBack}
+                  style={{
+                    backgroundColor: '#9CA3AF',
+                    border: 'none',
+                    color: 'black',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#6B7280';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#9CA3AF';
+                  }}
+                >
+                  <ArrowLeft size={18} />
+                  Kembali
+                </button>
+              </div>
             </div>
-
-            {/* Row 2: No. Telp & Wali Kelas dari */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '16px',
-                marginBottom: '16px',
-              }}
-            >
-              <FieldItem
-                label="No. Telp :"
-                value={guruData.noTelp}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-              <FieldItem
-                label="Wali Kelas dari :"
-                value={guruData.waliKelasDari}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-            </div>
-
-            {/* Row 3: Mata Pelajaran */}
-            <FieldItem
-              label="Mata Pelajaran :"
-              value={guruData.mataPelajaran}
-              onEdit={() => setIsEditModalOpen(true)}
-            />
           </div>
         </div>
       </div>
@@ -282,15 +412,12 @@ export default function DetailGuru({
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         initialData={{
-          role: guruData.role,
-          password: guruData.password,
+          jenisKelamin: guruData.jenisKelamin,
+          peran: guruData.peran,
           noTelp: guruData.noTelp,
-          waliKelasDari: guruData.waliKelasDari,
-          mataPelajaran: guruData.mataPelajaran,
+          password: guruData.password,
         }}
       />
     </AdminLayout>
   );
 }
-
-

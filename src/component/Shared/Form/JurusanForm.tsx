@@ -1,8 +1,8 @@
 // src/component/Shared/Form/JurusanForm.tsx
-import { useState } from 'react';
-import { FormModal } from '../../Shared/FormModal';
+import { useState, useEffect } from 'react';
+import { FormModal } from '../FormModal';
 
-interface TambahJurusanFormProps {
+interface JurusanFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: { namaJurusan: string; kodeJurusan: string }) => void;
@@ -10,21 +10,53 @@ interface TambahJurusanFormProps {
   isEdit?: boolean;
 }
 
-export function TambahJurusanForm({
+export function JurusanForm({
   isOpen,
   onClose,
   onSubmit,
   initialData,
   isEdit = false,
-}: TambahJurusanFormProps) {
-  const [kodeJurusan, setKodeJurusan] = useState(initialData?.kodeJurusan || '');
-  const [namaJurusan, setNamaJurusan] = useState(initialData?.namaJurusan || '');
+}: JurusanFormProps) {
+  const [kodeJurusan, setKodeJurusan] = useState('');
+  const [namaJurusan, setNamaJurusan] = useState('');
   const [errors, setErrors] = useState<{ namaJurusan?: string; kodeJurusan?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form ketika modal dibuka/ditutup atau initialData berubah
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData && isEdit) {
+        // Mode ubah: isi dengan data yang ada
+        setKodeJurusan(initialData.kodeJurusan || '');
+        setNamaJurusan(initialData.namaJurusan || '');
+      } else {
+        // Mode tambah: kosongkan form
+        setKodeJurusan('');
+        setNamaJurusan('');
+      }
+      setErrors({});
+      setIsSubmitting(false);
+    }
+  }, [isOpen, initialData, isEdit]);
+
+  // Sinkronkan state dengan initialData saat berubah
+  useEffect(() => {
+    if (initialData && isEdit && isOpen) {
+      setKodeJurusan(initialData.kodeJurusan || '');
+      setNamaJurusan(initialData.namaJurusan || '');
+    }
+  }, [initialData, isEdit, isOpen]);
+
   const handleReset = () => {
-    setKodeJurusan(initialData?.kodeJurusan || '');
-    setNamaJurusan(initialData?.namaJurusan || '');
+    if (initialData && isEdit) {
+      // Reset ke data awal (untuk mode ubah)
+      setKodeJurusan(initialData.kodeJurusan || '');
+      setNamaJurusan(initialData.namaJurusan || '');
+    } else {
+      // Kosongkan form (untuk mode tambah)
+      setKodeJurusan('');
+      setNamaJurusan('');
+    }
     setErrors({});
     setIsSubmitting(false);
   };
@@ -38,7 +70,7 @@ export function TambahJurusanForm({
     const newErrors: { namaJurusan?: string; kodeJurusan?: string } = {};
 
     if (!kodeJurusan.trim()) {
-      newErrors.kodeJurusan = 'Kode jurusan wajib diisi';
+      newErrors.kodeJurusan = 'Kode konsentrasi keahlian wajib diisi';
     }
 
     if (!namaJurusan.trim()) {
@@ -52,99 +84,110 @@ export function TambahJurusanForm({
   };
 
   const handleSubmit = () => {
-    if (validate()) {
-      setIsSubmitting(true);
-      setTimeout(() => {
-        onSubmit({
-          kodeJurusan: kodeJurusan.trim(),
-          namaJurusan: namaJurusan.trim(),
-        });
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    setTimeout(() => {
+      onSubmit({
+        kodeJurusan: kodeJurusan.trim().toUpperCase(),
+        namaJurusan: namaJurusan.trim(),
+      });
+      setIsSubmitting(false);
+      // Reset form hanya jika bukan mode ubah
+      if (!isEdit) {
         handleReset();
-        setIsSubmitting(false);
-      }, 500);
-    }
+      }
+    }, 500);
+  };
+
+  const inputStyle = (hasError?: boolean): React.CSSProperties => ({
+    width: '100%',
+    padding: '12px 14px',
+    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'}`,
+    borderRadius: '10px',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  });
+
+  const labelStyle: React.CSSProperties = {
+    fontWeight: 700,
+    fontSize: '14px',
+    marginBottom: '8px',
+    display: 'block',
+    color: '#0f172a',
+  };
+
+  const errorStyle: React.CSSProperties = {
+    color: '#ef4444',
+    fontSize: '12px',
+    marginTop: '6px',
+    marginBottom: 0,
   };
 
   return (
     <FormModal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEdit ? 'Edit Jurusan' : 'Tambah Jurusan'}
+      title={isEdit ? 'Ubah Konsentrasi Keahlian' : 'Tambah Konsentrasi Keahlian'}
       onSubmit={handleSubmit}
-      submitLabel={isEdit ? 'Simpan' : 'Tambahkan'}
+      submitLabel={isEdit ? 'Simpan Perubahan' : 'Tambahkan'}
       isSubmitting={isSubmitting}
+      onReset={isEdit ? handleReset : undefined}
+      resetLabel={isEdit ? 'Reset' : undefined}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* Konsentrasi Keahlian */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Nama Konsentrasi Keahlian */}
         <div>
-          <label
-            style={{
-              fontWeight: 700,
-              fontSize: '14px',
-              marginBottom: '8px',
-              display: 'block',
-              color: '#0B2948',
-            }}
-          >
-            Konsentrasi Keahlian
+          <label style={labelStyle}>
+            Nama Konsentrasi Keahlian
           </label>
           <input
             type="text"
-            placeholder="Masukan nama"
+            placeholder="Masukan nama konsentrasi keahlian"
             value={namaJurusan}
             onChange={(e) => {
               setNamaJurusan(e.target.value);
               if (errors.namaJurusan) setErrors({ ...errors, namaJurusan: undefined });
             }}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: `1px solid ${errors.namaJurusan ? '#ef4444' : '#d1d5db'}`,
-              borderRadius: '8px',
-            }}
+            style={inputStyle(!!errors.namaJurusan)}
             disabled={isSubmitting}
           />
-          {errors.namaJurusan && (
-            <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-              {errors.namaJurusan}
-            </p>
-          )}
+          {errors.namaJurusan && <p style={errorStyle}>{errors.namaJurusan}</p>}
         </div>
 
-        {/* Kode Jurusan */}
+        {/* Kode Konsentrasi Keahlian */}
         <div>
-          <label
-            style={{
-              fontWeight: 700,
-              fontSize: '14px',
-              marginBottom: '8px',
-              display: 'block',
-              color: '#0B2948',
-            }}
-          >
-            Kode Jurusan
+          <label style={labelStyle}>
+            Kode Konsentrasi Keahlian
           </label>
           <input
             type="text"
-            placeholder="Masukan kode jurusan"
+            placeholder="Masukan kode konsentrasi keahlian"
             value={kodeJurusan}
             onChange={(e) => {
-              setKodeJurusan(e.target.value.toUpperCase());
-              if (errors.kodeJurusan) setErrors({ ...errors, kodeJurusan: undefined });
+              const value = e.target.value.toUpperCase();
+              // Hanya izinkan huruf dan angka
+              if (/^[A-Z0-9]*$/.test(value)) {
+                setKodeJurusan(value);
+                if (errors.kodeJurusan) setErrors({ ...errors, kodeJurusan: undefined });
+              }
             }}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: `1px solid ${errors.kodeJurusan ? '#ef4444' : '#d1d5db'}`,
-              borderRadius: '8px',
-            }}
+            maxLength={10}
+            style={inputStyle(!!errors.kodeJurusan)}
             disabled={isSubmitting}
           />
-          {errors.kodeJurusan && (
-            <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-              {errors.kodeJurusan}
-            </p>
-          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+            {errors.kodeJurusan ? (
+              <p style={errorStyle}>{errors.kodeJurusan}</p>
+            ) : (
+              <span style={{ fontSize: '12px', color: '#6b7280' }}>Huruf dan angka saja, maks. 10 karakter</span>
+            )}
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>{kodeJurusan.length}/10</span>
+          </div>
         </div>
       </div>
     </FormModal>

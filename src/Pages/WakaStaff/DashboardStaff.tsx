@@ -1,5 +1,4 @@
-// src/Pages/WakaStaff/DashboardStaff.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import JadwalKelasStaff from "./JadwalKelasStaff";
@@ -10,6 +9,31 @@ import KehadiranGuru from "./KehadiranGuru";
 import KehadiranSiswa from "./KehadiranSiswa";
 import DetailSiswaStaff from "./DetailSiswaStaff";
 import DetailKehadiranGuru from "./DetailKehadiranGuru";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  Filler,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  Filler
+);
 
 interface DashboardStaffProps {
   user: { name: string; role: string; phone?: string };
@@ -41,30 +65,31 @@ const PAGE_TITLES: Record<WakaPage, string> = {
   "detail-kehadiran-guru": "Detail Kehadiran Guru",
 };
 
-// Dummy data updated for Monthly view (Mon-Fri) with 4 categories
+// Dummy data updated for Monthly view (Mon-Fri) with 5 categories sesuai gambar
 const dailyAttendanceData = [
-  { day: "Senin", hadir: 42, alpha: 2, izin: 3, sakit: 1 },
-  { day: "Selasa", hadir: 38, alpha: 1, izin: 5, sakit: 2 },
-  { day: "Rabu", hadir: 45, alpha: 0, izin: 2, sakit: 1 },
-  { day: "Kamis", hadir: 40, alpha: 1, izin: 4, sakit: 3 },
-  { day: "Jumat", hadir: 44, alpha: 0, izin: 1, sakit: 1 },
+  { day: "Senin", hadir: 42, tidak_hadir: 2, izin: 3, sakit: 1, pulang: 0 },
+  { day: "Selasa", hadir: 38, tidak_hadir: 1, izin: 5, sakit: 2, pulang: 1 },
+  { day: "Rabu", hadir: 45, tidak_hadir: 0, izin: 2, sakit: 1, pulang: 0 },
+  { day: "Kamis", hadir: 40, tidak_hadir: 1, izin: 4, sakit: 3, pulang: 2 },
+  { day: "Jumat", hadir: 44, tidak_hadir: 0, izin: 1, sakit: 1, pulang: 1 },
 ];
 
+// Updated monthly data with 5 categories sesuai gambar
 const monthlyAttendance = [
-  { month: "Jan", hadir: 210, izin: 8, alpha: 4 },
-  { month: "Feb", hadir: 198, izin: 12, alpha: 6 },
-  { month: "Mar", hadir: 215, izin: 10, alpha: 5 },
-  { month: "Apr", hadir: 224, izin: 9, alpha: 4 },
-  { month: "Mei", hadir: 230, izin: 7, alpha: 3 },
-  { month: "Jun", hadir: 218, izin: 11, alpha: 6 },
+  { month: "Jan", hadir: 210, izin: 8, tidak_hadir: 4, sakit: 3, pulang: 2 },
+  { month: "Feb", hadir: 198, izin: 12, tidak_hadir: 6, sakit: 2, pulang: 1 },
+  { month: "Mar", hadir: 215, izin: 10, tidak_hadir: 5, sakit: 4, pulang: 3 },
+  { month: "Apr", hadir: 224, izin: 9, tidak_hadir: 4, sakit: 1, pulang: 2 },
+  { month: "Mei", hadir: 230, izin: 7, tidak_hadir: 3, sakit: 2, pulang: 1 },
+  { month: "Jun", hadir: 218, izin: 11, tidak_hadir: 6, sakit: 3, pulang: 4 },
 ];
 
 const statCards = [
-  { label: "Tepat Waktu", value: "2100" },
-  { label: "Terlambat", value: "10" },
-  { label: "Izin", value: "18" },
-  { label: "Sakit", value: "5" },
-  { label: "Alpha", value: "5" },
+  { label: "Tepat Waktu", value: "2100", color: "#10B981" },
+  { label: "Terlambat", value: "10", color: "#F59E0B" },
+  { label: "Izin", value: "18", color: "#3B82F6" },
+  { label: "Sakit", value: "5", color: "#EF4444" },
+  { label: "Pulang", value: "3", color: "#8B5CF6" },
 ];
 
 const historyInfo = {
@@ -82,12 +107,49 @@ const cardStyle: React.CSSProperties = {
   border: "1px solid #E5E7EB",
 };
 
+// Warna sesuai gambar
+const COLORS = {
+  HADIR: "#10B981",      // Hijau
+  IZIN: "#3B82F6",       // Biru
+  PULANG: "#8B5CF6",     // Ungu
+  TIDAK_HADIR: "#EF4444", // Merah
+  SAKIT: "#F59E0B",      // Kuning/Orange
+};
+
 export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) {
   const [currentPage, setCurrentPage] = useState<WakaPage>("dashboard");
   const [selectedGuru, setSelectedGuru] = useState<string | null>(null);
   const [selectedKelas, setSelectedKelas] = useState<string | null>(null);
   const [selectedKelasId, setSelectedKelasId] = useState<string | null>(null);
+
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      };
+      setCurrentDate(now.toLocaleDateString("id-ID", options));
+      setCurrentTime(
+        now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+    };
+
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMenuClick = (page: string) => setCurrentPage(page as WakaPage);
 
@@ -209,6 +271,16 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
             onLogout={handleLogout}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "28px", backgroundColor: "#F9FAFB", padding: "4px" }}>
+              {/* Welcome Section */}
+              <div style={{ marginBottom: "8px" }}>
+                <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#111827", margin: 0 }}>
+                  Selamat Datang, {user.name}
+                </h2>
+                <p style={{ fontSize: "14px", color: "#6B7280", margin: "4px 0 0" }}>
+                  Ringkasan aktivitas dan data sekolah hari ini
+                </p>
+              </div>
+
               {/* Top Section: History & Statistics */}
               <div
                 style={{
@@ -221,7 +293,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                 <div style={cardStyle}>
                   <SectionHeader
                     title="Riwayat Kehadiran"
-                    subtitle={`${historyInfo.date} • ${historyInfo.time}`}
+                    subtitle={`${currentDate} • ${currentTime}`}
                   />
                   <HistoryCard
                     start={historyInfo.start}
@@ -246,22 +318,22 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                       <div
                         key={item.label}
                         style={{
-                          border: "1px solid #E5E7EB",
+                          border: `1px solid ${item.color}20`,
                           borderRadius: "12px",
                           padding: "16px",
                           textAlign: "center",
-                          backgroundColor: "#F8FAFC",
+                          backgroundColor: `${item.color}10`,
                           transition: "all 0.2s ease",
                           cursor: "default",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F0F9FF";
-                          e.currentTarget.style.borderColor = "#93C5FD";
+                          e.currentTarget.style.backgroundColor = `${item.color}20`;
+                          e.currentTarget.style.borderColor = item.color;
                           e.currentTarget.style.transform = "translateY(-2px)";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "#F8FAFC";
-                          e.currentTarget.style.borderColor = "#E5E7EB";
+                          e.currentTarget.style.backgroundColor = `${item.color}10`;
+                          e.currentTarget.style.borderColor = `${item.color}20`;
                           e.currentTarget.style.transform = "translateY(0)";
                         }}
                       >
@@ -281,7 +353,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                             margin: "0",
                             fontSize: "22px",
                             fontWeight: 700,
-                            color: "#1F2937",
+                            color: item.color,
                           }}
                         >
                           {item.value}
@@ -300,19 +372,30 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                   gap: "24px",
                 }}
               >
-                {/* Weekly Chart */}
+                {/* Weekly Chart - Kembali ke bentuk semula dengan warna baru */}
                 <div style={cardStyle}>
-                  <SectionHeader title="Grafik Kehadiran Bulanan" subtitle="Rekap Mingguan (Senin - Jumat)" />
+                  <SectionHeader title="Grafik Kehadiran Harian" subtitle="Rekap Mingguan (Senin - Jumat)" />
                   <WeeklyBarGraph />
                 </div>
 
-                {/* Monthly Chart */}
-                <div style={cardStyle}>
+                {/* Monthly Chart - Line Chart seperti DashboardSiswa */}
+                <div style={{
+                  ...cardStyle,
+                  transition: "all 0.3s ease",
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 62, 0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.08)";
+                  }}>
                   <SectionHeader
                     title="Grafik Kehadiran Bulanan"
                     subtitle="Periode Jan - Jun"
                   />
-                  <MonthlyLineChart />
+                  <MonthlyLineChart data={monthlyAttendance} />
                 </div>
               </div>
             </div>
@@ -368,7 +451,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 function WeeklyBarGraph() {
   const maxValue =
     dailyAttendanceData.reduce(
-      (acc, item) => Math.max(acc, item.hadir, item.alpha, item.izin, item.sakit),
+      (acc, item) => Math.max(acc, item.hadir, item.tidak_hadir, item.izin, item.sakit, item.pulang),
       1
     ) || 1;
 
@@ -394,40 +477,54 @@ function WeeklyBarGraph() {
                 height: "180px",
               }}
             >
+              {/* Hadir */}
               <div
                 title={`Hadir: ${item.hadir}`}
                 style={{
                   width: "14px",
                   height: `${(item.hadir / maxValue) * 160}px`,
                   borderRadius: "4px 4px 0 0",
-                  background: "linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%)",
+                  background: `linear-gradient(180deg, ${COLORS.HADIR} 0%, ${COLORS.HADIR}90 100%)`,
                 }}
               />
+              {/* Tidak Hadir */}
               <div
-                title={`Alpha: ${item.alpha}`}
+                title={`Tidak Hadir: ${item.tidak_hadir}`}
                 style={{
                   width: "14px",
-                  height: `${(item.alpha / maxValue) * 160}px`,
+                  height: `${(item.tidak_hadir / maxValue) * 160}px`,
                   borderRadius: "4px 4px 0 0",
-                  background: "linear-gradient(180deg, #B91C1C 0%, #F87171 100%)",
+                  background: `linear-gradient(180deg, ${COLORS.TIDAK_HADIR} 0%, ${COLORS.TIDAK_HADIR}90 100%)`,
                 }}
               />
+              {/* Izin */}
               <div
                 title={`Izin: ${item.izin}`}
                 style={{
                   width: "14px",
                   height: `${(item.izin / maxValue) * 160}px`,
                   borderRadius: "4px 4px 0 0",
-                  background: "linear-gradient(180deg, #D97706 0%, #FBBF24 100%)",
+                  background: `linear-gradient(180deg, ${COLORS.IZIN} 0%, ${COLORS.IZIN}90 100%)`,
                 }}
               />
+              {/* Sakit */}
               <div
                 title={`Sakit: ${item.sakit}`}
                 style={{
                   width: "14px",
                   height: `${(item.sakit / maxValue) * 160}px`,
                   borderRadius: "4px 4px 0 0",
-                  background: "linear-gradient(180deg, #059669 0%, #34D399 100%)",
+                  background: `linear-gradient(180deg, ${COLORS.SAKIT} 0%, ${COLORS.SAKIT}90 100%)`,
+                }}
+              />
+              {/* Pulang */}
+              <div
+                title={`Pulang: ${item.pulang}`}
+                style={{
+                  width: "14px",
+                  height: `${(item.pulang / maxValue) * 160}px`,
+                  borderRadius: "4px 4px 0 0",
+                  background: `linear-gradient(180deg, ${COLORS.PULANG} 0%, ${COLORS.PULANG}90 100%)`,
                 }}
               />
             </div>
@@ -446,115 +543,171 @@ function WeeklyBarGraph() {
           flexWrap: "wrap",
         }}
       >
-        <LegendDot color="#3B82F6" label="Jumlah Guru Hadir" />
-        <LegendDot color="#FBBF24" label="Jumlah Guru Izin" />
-        <LegendDot color="#34D399" label="Jumlah Guru Sakit" />
-        <LegendDot color="#EF4444" label="Jumlah Guru Alpha" />
+        <LegendDot color={COLORS.HADIR} label="Jumlah Guru Hadir" />
+        <LegendDot color={COLORS.IZIN} label="Jumlah Guru Izin" />
+        <LegendDot color={COLORS.PULANG} label="Jumlah Guru Pulang" />
+        <LegendDot color={COLORS.TIDAK_HADIR} label="Jumlah Guru Tidak Hadir" />
+        <LegendDot color={COLORS.SAKIT} label="Jumlah Guru Sakit" />
       </div>
     </div>
   );
 }
 
-function MonthlyLineChart() {
-  const width = 360;
-  const height = 200;
-  const padding = 26;
-  const maxValue =
-    monthlyAttendance.reduce(
-      (acc, item) => Math.max(acc, item.hadir, item.izin, item.alpha),
-      1
-    ) || 1;
+// Monthly Line Chart Component - dengan 5 kategori
+function MonthlyLineChart({
+  data,
+}: {
+  data: Array<{ month: string; hadir: number; izin: number; tidak_hadir: number; sakit: number; pulang: number }>;
+}) {
+  const chartData = {
+    labels: data.map((d) => d.month),
+    datasets: [
+      {
+        label: "Hadir",
+        data: data.map((d) => d.hadir),
+        borderColor: COLORS.HADIR,
+        backgroundColor: `${COLORS.HADIR}20`,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.HADIR,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Izin",
+        data: data.map((d) => d.izin),
+        borderColor: COLORS.IZIN,
+        backgroundColor: `${COLORS.IZIN}20`,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.IZIN,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Pulang",
+        data: data.map((d) => d.pulang),
+        borderColor: COLORS.PULANG,
+        backgroundColor: `${COLORS.PULANG}20`,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.PULANG,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Tidak Hadir",
+        data: data.map((d) => d.tidak_hadir),
+        borderColor: COLORS.TIDAK_HADIR,
+        backgroundColor: `${COLORS.TIDAK_HADIR}20`,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.TIDAK_HADIR,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Sakit",
+        data: data.map((d) => d.sakit),
+        borderColor: COLORS.SAKIT,
+        backgroundColor: `${COLORS.SAKIT}20`,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: COLORS.SAKIT,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
 
-  const buildPoints = (key: "hadir" | "izin" | "alpha") =>
-    monthlyAttendance
-      .map((item, index) => {
-        const x =
-          padding +
-          (monthlyAttendance.length === 1
-            ? 0
-            : (index / (monthlyAttendance.length - 1)) * (width - 2 * padding));
-        const y =
-          height - padding - (item[key] / maxValue) * (height - 2 * padding);
-        return `${x},${y}`;
-      })
-      .join(" ");
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 8,
+          padding: 20,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif",
+          },
+        },
+      },
+      tooltip: {
+        backgroundColor: "#1F2937",
+        padding: 12,
+        titleFont: { size: 13, family: "'Inter', sans-serif" },
+        bodyFont: { size: 12, family: "'Inter', sans-serif" },
+        cornerRadius: 8,
+        displayColors: true,
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += context.parsed.y + ' orang';
+            return label;
+          }
+        }
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 11,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: "#F3F4F6",
+          drawBorder: false,
+        },
+        border: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 11,
+          },
+          padding: 8,
+          stepSize: 50,
+        },
+      },
+    },
+    interaction: {
+      mode: "index" as const,
+      intersect: false,
+    },
+  };
 
   return (
-    <div style={{ width: "100%", overflowX: "auto" }}>
-      <svg width={width} height={height} style={{ display: "block", margin: "0 auto" }}>
-        <line
-          x1={padding}
-          y1={height - padding}
-          x2={width - padding}
-          y2={height - padding}
-          stroke="#CBD5F5"
-          strokeWidth={1}
-        />
-        <line
-          x1={padding}
-          y1={padding}
-          x2={padding}
-          y2={height - padding}
-          stroke="#CBD5F5"
-          strokeWidth={1}
-        />
-
-        <polyline
-          points={buildPoints("hadir")}
-          fill="none"
-          stroke="#3B82F6"
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-        <polyline
-          points={buildPoints("izin")}
-          fill="none"
-          stroke="#F59E0B"
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-        <polyline
-          points={buildPoints("alpha")}
-          fill="none"
-          stroke="#EF4444"
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-
-        {monthlyAttendance.map((item, index) => {
-          const x =
-            padding +
-            (monthlyAttendance.length === 1
-              ? 0
-              : (index / (monthlyAttendance.length - 1)) * (width - 2 * padding));
-          const y = height - padding + 16;
-          return (
-            <text
-              key={item.month}
-              x={x}
-              y={y}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#475569"
-            >
-              {item.month}
-            </text>
-          );
-        })}
-      </svg>
-
-      <div
-        style={{
-          marginTop: "12px",
-          display: "flex",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
-      >
-        <LegendDot color="#3B82F6" label="Jumlah Siswa Hadir" />
-        <LegendDot color="#F59E0B" label="Jumlah Siswa Izin/Sakit" />
-        <LegendDot color="#EF4444" label="Jumlah Siswa Alpha" />
-      </div>
+    <div style={{ height: "300px", width: "100%" }}>
+      <Line data={chartData} options={options} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from 'react';
 import Sidebar from '../Sidebar';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
@@ -6,6 +7,7 @@ import AWANKANAN from '../../assets/Icon/AWANKANAN.png';
 import INO from '../../assets/Icon/InoBlue.svg';
 import RASI from '../../assets/Icon/RasiRed.svg';
 import LogoSchool from '../../assets/Icon/logo smk.png';
+import { useLocalLenis } from '../Shared/SmoothScroll';
 
 interface StaffLayoutProps {
   children: ReactNode;
@@ -31,6 +33,9 @@ export default function StaffLayout({
     const saved = localStorage.getItem('wakaSidebarOpen');
     return saved ? saved === 'true' : true;
   });
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useLocalLenis(scrollContainerRef);
 
   useEffect(() => {
     localStorage.setItem('wakaSidebarOpen', sidebarOpen.toString());
@@ -101,30 +106,83 @@ export default function StaffLayout({
       >
         <header
           style={{
-            backgroundColor: '#001f3e',
-            color: 'white',
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingLeft: '24px',
-            paddingRight: '24px',
-            gap: '16px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            backgroundColor: "white",
+            height: "72px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 28px",
+            gap: "16px",
+            boxShadow: "0 2px 12px rgba(0, 31, 62, 0.08)",
+            borderBottom: "1px solid #E5E7EB",
             flexShrink: 0,
+            zIndex: 5,
           }}
         >
-          <div style={{ textAlign: 'left' }}>
-            <p style={{ margin: 0, fontSize: '14px', opacity: 0.8 }}>{user.role}</p>
-            <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 700 }}>{pageTitle}</h1>
+          <div style={{ flex: 1 }}>
+            <h1
+              style={{
+                fontSize: "24px",
+                fontWeight: "700",
+                color: "#001F3E",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
+                style={{
+                  width: "4px",
+                  height: "28px",
+                  backgroundColor: "#2563EB",
+                  borderRadius: "2px",
+                }}
+              />
+              {pageTitle}
+            </h1>
+            {pageTitle === "Beranda" && (
+              <p style={{ margin: "4px 0 0 16px", fontSize: "14px", color: "#6B7280" }}>
+                Selamat datang kembali, {user.name}!
+              </p>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontWeight: 600 }}>{user.name}</span>
-            <img src={LogoSchool} alt="Logo SMK" style={{ width: '56px', height: 'auto' }} />
+
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            flexShrink: 0
+          }}>
+            <div style={{
+              textAlign: "right",
+              paddingRight: "16px",
+              borderRight: "1px solid #E5E7EB"
+            }}>
+              <div style={{ fontSize: "14px", fontWeight: "600", color: "#001F3E" }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: "12px", color: "#6B7280", textTransform: "capitalize" }}>
+                {user.role}
+              </div>
+            </div>
+            <img
+              src={LogoSchool}
+              alt="Logo SMK"
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                padding: "4px",
+                backgroundColor: "white",
+              }}
+            />
           </div>
         </header>
 
         <main
+          ref={scrollContainerRef}
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -134,7 +192,19 @@ export default function StaffLayout({
             flexDirection: 'column',
           }}
         >
-          <div style={{ width: '100%', maxWidth: '100%' }}>{children}</div>
+          <div style={{ width: '100%', maxWidth: '100%' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </div>

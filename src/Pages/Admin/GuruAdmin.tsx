@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
-import { SearchBox } from '../../component/Shared/Search';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { TambahGuruForm } from '../../component/Shared/Form/TambahGuruForm';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
-import { MoreVertical, Edit, Trash2, Eye, Grid } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Grid, FileDown, Upload, FileText, Download, Search } from 'lucide-react';
 
 interface User {
   role: string;
@@ -105,8 +104,8 @@ export default function GuruAdmin({
 }: GuruAdminProps) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedMapel, setSelectedMapel] = useState('');
-  const [isDataGuruDropdownOpen, setIsDataGuruDropdownOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
+  const [isEksporDropdownOpen, setIsEksporDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [guruList, setGuruList] = useState<Guru[]>(dummyData);
   const [editingGuru, setEditingGuru] = useState<Guru | null>(null);
@@ -135,6 +134,21 @@ export default function GuruAdmin({
 
     return matchSearch && matchMapel && matchRole;
   });
+
+  const buttonBaseStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    fontWeight: 600,
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    height: '40px',
+    border: 'none',
+  } as const;
 
   const columns = [
     { key: 'kodeGuru', label: 'Kode Guru' },
@@ -201,7 +215,7 @@ export default function GuruAdmin({
                 }}
               >
                 <Edit size={18} strokeWidth={2} color="#64748B" />
-                <span>Edit</span>
+                <span>Ubah</span>
               </button>
               <button
                 type="button"
@@ -345,87 +359,66 @@ export default function GuruAdmin({
     fileInputRef.current?.click();
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Logika import file di sini
+    alert(`File "${file.name}" berhasil diimpor!`);
+    e.target.value = '';
+  };
+
   const handleExportPDF = () => {
     try {
-      if (typeof window !== 'undefined' && (window as any).jspdf) {
-        const { jsPDF } = (window as any).jspdf;
-        const doc = new jsPDF();
-
-        doc.setFontSize(18);
-        doc.text('Data Guru', 14, 20);
-        doc.setFontSize(12);
-        doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 14, 30);
-
-        const headers = [['No', 'Kode Guru', 'Nama Guru', 'Mata Pelajaran', 'Role']];
-        const data = filteredData.map((item, idx) => [
-          String(idx + 1),
-          item.kodeGuru,
-          item.namaGuru,
-          item.mataPelajaran,
-          item.role,
-        ]);
-
-        (doc as any).autoTable({
-          head: headers,
-          body: data,
-          startY: 40,
-          styles: { fontSize: 9 },
-          headStyles: { fillColor: [37, 99, 235] },
-        });
-
-        doc.save(`Data_Guru_${new Date().toISOString().split('T')[0]}.pdf`);
-      } else {
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <title>Data Guru</title>
-                <style>
-                  body { font-family: Arial, sans-serif; padding: 20px; }
-                  h1 { color: #0B2948; }
-                  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                  th { background-color: #2563EB; color: white; }
-                  tr:nth-child(even) { background-color: #f2f2f2; }
-                </style>
-              </head>
-              <body>
-                <h1>Data Guru</h1>
-                <p>Tanggal: ${new Date().toLocaleDateString('id-ID')}</p>
-                <table>
-                  <thead>
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Data Guru</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h1 { color: #0B2948; }
+                table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #2563EB; color: white; }
+                tr:nth-child(even) { background-color: #f2f2f2; }
+              </style>
+            </head>
+            <body>
+              <h1>Data Guru</h1>
+              <p>Tanggal: ${new Date().toLocaleDateString('id-ID')}</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Kode Guru</th>
+                    <th>Nama Guru</th>
+                    <th>Mata Pelajaran</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredData
+            .map(
+              (item, idx) => `
                     <tr>
-                      <th>No</th>
-                      <th>Kode Guru</th>
-                      <th>Nama Guru</th>
-                      <th>Mata Pelajaran</th>
-                      <th>Role</th>
+                      <td>${idx + 1}</td>
+                      <td>${item.kodeGuru}</td>
+                      <td>${item.namaGuru}</td>
+                      <td>${item.mataPelajaran}</td>
+                      <td>${item.role}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    ${filteredData
-              .map(
-                (item, idx) => `
-                      <tr>
-                        <td>${idx + 1}</td>
-                        <td>${item.kodeGuru}</td>
-                        <td>${item.namaGuru}</td>
-                        <td>${item.mataPelajaran}</td>
-                        <td>${item.role}</td>
-                      </tr>
-                    `
-              )
-              .join('')}
-                  </tbody>
-                </table>
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
-          printWindow.print();
-        }
+                  `
+            )
+            .join('')}
+                </tbody>
+              </table>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
@@ -433,18 +426,31 @@ export default function GuruAdmin({
     }
   };
 
-  const buttonBaseStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '0 20px',
-    borderRadius: '8px',
-    fontWeight: 600,
-    fontSize: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    height: '44px',
-  } as const;
+  const handleExportCSV = () => {
+    // Prepare CSV header
+    const headers = ['Kode Guru', 'Nama Guru', 'Mata Pelajaran', 'Role'];
+    const rows = filteredData.map(guru => [
+      guru.kodeGuru,
+      guru.namaGuru,
+      guru.mataPelajaran,
+      guru.role,
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Data_Guru_${new Date().getTime()}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <AdminLayout
@@ -481,10 +487,8 @@ export default function GuruAdmin({
         style={{
           position: 'relative',
           zIndex: 2,
-          minHeight: '100%',
           backgroundColor: '#FFFFFF',
           borderRadius: '16px',
-          overflow: 'hidden',
           padding: 'clamp(16px, 3vw, 32px)',
           border: '1px solid #E2E8F0',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.06)',
@@ -493,31 +497,29 @@ export default function GuruAdmin({
           gap: '24px',
         }}
       >
+        {/* ===================== MODIFIED SECTION ===================== */}
+        {/* Controls Container - MIRIP DENGAN DATA SISWA */}
         <div
           style={{
-            position: 'relative',
-            zIndex: 3,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
+            flexWrap: 'wrap',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: '16px',
           }}
         >
-          {/* Controls Container */}
+          {/* Bagian kiri: Filter dan Search */}
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
+              flexWrap: 'wrap',
+              alignItems: 'flex-end',
+              gap: '16px',
+              flex: 1,
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '16px',
-                alignItems: 'end',
-              }}
-            >
+            {/* Mata Pelajaran */}
+            <div style={{ minWidth: '200px', width: '200px' }}>
               <Select
                 label="Mata Pelajaran"
                 value={selectedMapel}
@@ -525,8 +527,12 @@ export default function GuruAdmin({
                 options={mapelOptions}
                 placeholder="Semua Mata Pelajaran"
               />
+            </div>
+
+            {/* Peran*/}
+            <div style={{ minWidth: '200px', width: '200px' }}>
               <Select
-                label="Peran / Role"
+                label="Peran"
                 value={selectedRole}
                 onChange={setSelectedRole}
                 options={roleOptions}
@@ -534,181 +540,224 @@ export default function GuruAdmin({
               />
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                alignItems: 'center',
-                borderTop: '1px solid #F1F5F9',
-                paddingTop: '20px',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 240 }}>
-                <SearchBox
-                  placeholder="Cari guru..."
-                  value={searchValue}
-                  onChange={setSearchValue}
-                />
-              </div>
-
-              <div
+            {/* Search Box - ABU-ABU */}
+            <div style={{
+              minWidth: '250px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              height: '64px'
+            }}>
+              <label
                 style={{
-                  display: 'flex',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                  justifyContent: 'flex-end',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#374151',
+                  display: 'block',
+                  marginBottom: '6px',
                 }}
               >
-                <div style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => setIsDataGuruDropdownOpen(!isDataGuruDropdownOpen)}
-                    style={{
-                      ...buttonBaseStyle,
-                      border: '1px solid #CBD5E1',
-                      backgroundColor: '#FFFFFF',
-                      color: '#0F172A',
-                    }}
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                    Data Guru
-                    <Grid size={16} style={{ marginLeft: 4 }} />
-                  </button>
-
-                  {isDataGuruDropdownOpen && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '100%',
-                        right: 0,
-                        marginTop: 4,
-                        backgroundColor: '#FFFFFF',
-                        borderRadius: 8,
-                        boxShadow:
-                          '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                        overflow: 'hidden',
-                        zIndex: 20,
-                        minWidth: 160,
-                        border: '1px solid #E5E7EB',
-                      }}
-                    >
-                      <button
-                        onClick={() => {
-                          setIsDataGuruDropdownOpen(false);
-                          handleImport();
-                        }}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '10px 16px',
-                          border: 'none',
-                          background: 'white',
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          color: '#111827',
-                          textAlign: 'left',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 3v12" />
-                          <path d="m8 11 4 4 4-4" />
-                          <path d="M20 21H4" />
-                        </svg>
-                        Import
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsDataGuruDropdownOpen(false);
-                          handleExportPDF();
-                        }}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '10px 16px',
-                          border: 'none',
-                          background: 'white',
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          color: '#111827',
-                          textAlign: 'left',
-                          borderTop: '1px solid #F1F5F9',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                          <line x1="16" y1="13" x2="8" y2="13" />
-                          <line x1="16" y1="17" x2="8" y2="17" />
-                          <polyline points="10 9 9 9 8 9" />
-                        </svg>
-                        Ekspor PDF
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  label="Tambahkan Guru"
-                  onClick={() => setIsModalOpen(true)}
-                  variant="primary"
+                Cari guru
+              </label>
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <Search
+                  size={18}
+                  color="#9CA3AF"
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Cari guru"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 36px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all 0.2s',
+                    backgroundColor: '#D9D9D9',
+                    height: '40px',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3B82F6';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#D1D5DB';
+                    e.target.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             </div>
           </div>
 
+          {/* Bagian kanan: Tambahkan Guru, Impor, dan Ekspor (SEMUA BIRU) */}
           <div
             style={{
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 0 0 1px #E5E7EB',
-              overflowX: 'auto',
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'flex-end',
+              height: '64px'
             }}
           >
-            <Table columns={columns} data={filteredData} keyField="id" />
+            {/* Tombol Tambahkan Guru - BIRU */}
+            <div style={{ 
+              alignSelf: 'flex-end',
+              height: '40px'
+            }}>
+              <Button
+                label="Tambahkan"
+                onClick={() => setIsModalOpen(true)}
+                variant="primary"
+              />
+            </div>
+            
+            {/* Tombol Impor - BIRU */}
+            <div style={{ alignSelf: 'flex-end' }}>
+              <button
+                onClick={handleImport}
+                style={{
+                  ...buttonBaseStyle,
+                  backgroundColor: '#2563EB',
+                  color: '#FFFFFF',
+                  minWidth: '100px',
+                  border: '1px solid #2563EB',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1D4ED8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2563EB';
+                }}
+              >
+                <Upload size={16} color="#FFFFFF" />
+                Impor
+              </button>
+            </div>
+
+            {/* Tombol Ekspor dengan dropdown - BIRU */}
+            <div style={{ position: 'relative', alignSelf: 'flex-end' }}>
+              <button
+                onClick={() => setIsEksporDropdownOpen(!isEksporDropdownOpen)}
+                style={{
+                  ...buttonBaseStyle,
+                  backgroundColor: '#2563EB',
+                  color: '#FFFFFF',
+                  minWidth: '100px',
+                  border: '1px solid #2563EB',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1D4ED8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2563EB';
+                }}
+              >
+                <FileDown size={16} color="#FFFFFF" />
+                Ekspor
+                <Grid size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
+              </button>
+
+              {isEksporDropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: 4,
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 8,
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                    overflow: 'hidden',
+                    zIndex: 20,
+                    minWidth: 120,
+                    border: '1px solid #E5E7EB',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setIsEksporDropdownOpen(false);
+                      handleExportPDF();
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 16px',
+                      border: 'none',
+                      background: 'white',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      color: '#111827',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                  >
+                    <FileText size={16} />
+                    PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEksporDropdownOpen(false);
+                      handleExportCSV();
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 16px',
+                      border: 'none',
+                      background: 'white',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      color: '#111827',
+                      textAlign: 'left',
+                      borderTop: '1px solid #F1F5F9',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                  >
+                    <Download size={16} />
+                    CSV
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Table */}
+        <div style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 0 1px #E5E7EB' }}>
+          <Table columns={columns} data={filteredData} keyField="id" />
+        </div>
       </div>
+
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        onChange={handleFileSelect} 
+        accept=".csv" 
+      />
 
       <TambahGuruForm
         key={editingGuru?.id || 'new'}

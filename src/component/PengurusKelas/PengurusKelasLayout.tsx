@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 import Sidebar from "../Sidebar";
+import { useLocalLenis } from "../Shared/SmoothScroll";
 
 interface PengurusKelasLayoutProps {
   user: { name: string; phone: string; role?: string };
@@ -23,6 +25,9 @@ export default function PengurusKelasLayout({
     const saved = localStorage.getItem("sidebarOpenPengurus");
     return saved ? saved === "true" : true;
   });
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useLocalLenis(scrollContainerRef);
 
   useEffect(() => {
     localStorage.setItem("sidebarOpenPengurus", isOpen.toString());
@@ -69,44 +74,87 @@ export default function PengurusKelasLayout({
         {/* Header */}
         <header
           style={{
-            height: "64px",
-            minHeight: "64px",
-            background: "#0B2948",
-            color: "#fff",
+            height: "72px",
+            minHeight: "72px",
+            background: "white",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "0 24px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            zIndex: 4,
+            padding: "0 28px",
+            boxShadow: "0 2px 12px rgba(0, 31, 62, 0.08)",
+            borderBottom: "1px solid #E5E7EB",
+            zIndex: 5,
             flexShrink: 0,
           }}
         >
-          <div
-            style={{
-              fontSize: "22px",
-              fontWeight: 800,
-              color: "#fff",
-            }}
-          >
-            {pageTitle}
+          <div style={{ flex: 1 }}>
+            <h1
+              style={{
+                fontSize: "24px",
+                fontWeight: "700",
+                color: "#001F3E",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
+                style={{
+                  width: "4px",
+                  height: "28px",
+                  backgroundColor: "#2563EB",
+                  borderRadius: "2px",
+                }}
+              />
+              {pageTitle}
+            </h1>
+            {pageTitle === "Dashboard" && (
+              <p style={{ margin: "4px 0 0 16px", fontSize: "14px", color: "#6B7280" }}>
+                Selamat bertugas, {user.name}!
+              </p>
+            )}
           </div>
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "16px",
-              color: "#fff",
+
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            flexShrink: 0
+          }}>
+            <div style={{
+              textAlign: "right",
+              paddingRight: "16px",
+              borderRight: "1px solid #E5E7EB"
+            }}>
+              <div style={{ fontSize: "14px", fontWeight: "600", color: "#001F3E" }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                Pengurus Kelas
+              </div>
+            </div>
+            <div style={{
+              width: "48px",
+              height: "48px",
+              backgroundColor: "#3B82F6",
+              borderRadius: "12px",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <span>{user.name}</span>
+              justifyContent: "center",
+              color: "white",
+              fontSize: "20px",
+              fontWeight: "bold",
+              boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)"
+            }}>
+              {user.name.charAt(0)}
+            </div>
           </div>
         </header>
 
         {/* Main Content Area */}
         <main
+          ref={scrollContainerRef}
           style={{
             flex: 1,
             overflowY: "auto",
@@ -118,7 +166,18 @@ export default function PengurusKelasLayout({
             height: "100%",
           }}
         >
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              style={{ height: "100%" }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

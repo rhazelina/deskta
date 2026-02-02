@@ -8,19 +8,15 @@ interface EditSiswaFormProps {
   onSubmit: (data: {
     jenisKelamin: string;
     noTelp: string;
-    jurusanId: string;
     tahunAngkatan: string;
-    kelasId: string;
+    password: string;
   }) => void;
   initialData: {
     jenisKelamin: string;
     noTelp: string;
-    jurusanId: string;
     tahunAngkatan: string;
-    kelasId: string;
+    password: string;
   };
-  jurusanList?: { id: string; nama: string }[];
-  kelasList?: { id: string; nama: string }[];
 }
 
 export function EditSiswaForm({
@@ -28,29 +24,24 @@ export function EditSiswaForm({
   onClose,
   onSubmit,
   initialData,
-  jurusanList = [],
-  kelasList = [],
 }: EditSiswaFormProps) {
   const [jenisKelamin, setJenisKelamin] = useState(initialData.jenisKelamin);
   const [noTelp, setNoTelp] = useState(initialData.noTelp);
-  const [jurusanId, setJurusanId] = useState(initialData.jurusanId);
   const [tahunAngkatan, setTahunAngkatan] = useState(initialData.tahunAngkatan);
-  const [kelasId, setKelasId] = useState(initialData.kelasId);
+  const [password, setPassword] = useState(initialData.password);
   const [errors, setErrors] = useState<{
     jenisKelamin?: string;
     noTelp?: string;
-    jurusanId?: string;
     tahunAngkatan?: string;
-    kelasId?: string;
+    password?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleReset = () => {
     setJenisKelamin(initialData.jenisKelamin);
     setNoTelp(initialData.noTelp);
-    setJurusanId(initialData.jurusanId);
     setTahunAngkatan(initialData.tahunAngkatan);
-    setKelasId(initialData.kelasId);
+    setPassword(initialData.password);
     setErrors({});
     setIsSubmitting(false);
   };
@@ -71,14 +62,11 @@ export function EditSiswaForm({
     } else if (!/^\d{10,13}$/.test(noTelp.trim())) {
       newErrors.noTelp = "No. Telp harus 10-13 digit angka";
     }
-    if (!jurusanId) {
-      newErrors.jurusanId = "Jurusan harus dipilih";
-    }
     if (!tahunAngkatan.trim()) {
       newErrors.tahunAngkatan = "Tahun angkatan harus diisi";
     }
-    if (!kelasId) {
-      newErrors.kelasId = "Kelas harus dipilih";
+    if (!password.trim()) {
+      newErrors.password = "Kata sandi harus diisi";
     }
 
     setErrors(newErrors);
@@ -92,9 +80,8 @@ export function EditSiswaForm({
         onSubmit({
           jenisKelamin: jenisKelamin.trim(),
           noTelp: noTelp.trim(),
-          jurusanId: jurusanId.trim(),
           tahunAngkatan: tahunAngkatan.trim(),
-          kelasId: kelasId.trim(),
+          password: password.trim(),
         });
         handleReset();
         setIsSubmitting(false);
@@ -111,20 +98,17 @@ export function EditSiswaForm({
     }
   };
 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) {
+      setErrors({ ...errors, password: undefined });
+    }
+  };
+
   const jenisKelaminOptions = [
     { label: "Laki-Laki", value: "Laki-Laki" },
     { label: "Perempuan", value: "Perempuan" },
   ];
-
-  const jurusanOptions = jurusanList.map((j) => ({
-    label: j.nama,
-    value: j.id,
-  }));
-
-  const kelasOptions = kelasList.map((k) => ({
-    label: k.nama,
-    value: k.id,
-  }));
 
   const inputStyle = (hasError: boolean): React.CSSProperties => ({
     width: "100%",
@@ -155,7 +139,7 @@ export function EditSiswaForm({
     <FormModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Edit Data Siswa"
+      title="Ubah Data Siswa"
       onSubmit={handleSubmit}
       submitLabel="Simpan"
       isSubmitting={isSubmitting}
@@ -173,35 +157,6 @@ export function EditSiswaForm({
           {errors.jenisKelamin && (
             <p style={errorStyle}>{errors.jenisKelamin}</p>
           )}
-        </div>
-
-        {/* No. Telp */}
-        <div>
-          <label htmlFor="noTelp" style={labelStyle}>
-            No. Telp
-          </label>
-          <input
-            id="noTelp"
-            type="text"
-            placeholder="Masukkan no. telp (10-13 digit)"
-            value={noTelp}
-            onChange={(e) => handleNoTelpChange(e.target.value)}
-            style={inputStyle(!!errors.noTelp)}
-            disabled={isSubmitting}
-          />
-          {errors.noTelp && <p style={errorStyle}>{errors.noTelp}</p>}
-        </div>
-
-        {/* Jurusan */}
-        <div>
-          <label style={labelStyle}>Jurusan</label>
-          <Select
-            value={jurusanId}
-            onChange={setJurusanId}
-            options={jurusanOptions}
-            placeholder="Pilih jurusan"
-          />
-          {errors.jurusanId && <p style={errorStyle}>{errors.jurusanId}</p>}
         </div>
 
         {/* Tahun Angkatan */}
@@ -228,16 +183,38 @@ export function EditSiswaForm({
           )}
         </div>
 
-        {/* Kelas */}
+        {/* No. Telp */}
         <div>
-          <label style={labelStyle}>Kelas</label>
-          <Select
-            value={kelasId}
-            onChange={setKelasId}
-            options={kelasOptions}
-            placeholder="Pilih kelas"
+          <label htmlFor="noTelp" style={labelStyle}>
+            No. Telp
+          </label>
+          <input
+            id="noTelp"
+            type="text"
+            placeholder="Masukkan no. telp (10-13 digit)"
+            value={noTelp}
+            onChange={(e) => handleNoTelpChange(e.target.value)}
+            style={inputStyle(!!errors.noTelp)}
+            disabled={isSubmitting}
           />
-          {errors.kelasId && <p style={errorStyle}>{errors.kelasId}</p>}
+          {errors.noTelp && <p style={errorStyle}>{errors.noTelp}</p>}
+        </div>
+
+        {/* Kata Sandi */}
+        <div>
+          <label htmlFor="password" style={labelStyle}>
+            Kata Sandi
+          </label>
+          <input
+            id="password"
+            type="text"
+            placeholder="Masukkan kata sandi"
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            style={inputStyle(!!errors.password)}
+            disabled={isSubmitting}
+          />
+          {errors.password && <p style={errorStyle}>{errors.password}</p>}
         </div>
       </div>
     </FormModal>

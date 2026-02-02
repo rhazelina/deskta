@@ -13,6 +13,8 @@ import WakaDashboard from "./Pages/WakaStaff/DashboardStaff";
 import DashboardSiswa from "./Pages/Siswa/DashboardSiswa";
 import DashboardPengurusKelas from "./Pages/PengurusKelas/DashboardPengurusKelas";
 import DashboardWalliKelas from "./Pages/WaliKelas/DashboardWalliKelas";
+import { SmoothScroll } from "./component/Shared/SmoothScroll";
+// import { SmoothScroll } from "./Shared/SmoothScroll";
 
 
 export default function App() {
@@ -30,7 +32,7 @@ export default function App() {
     const storedUserLocal = localStorage.getItem("currentUser");
     const storedUserSession = sessionStorage.getItem("currentUser");
     const storedRole = localStorage.getItem("selectedRole");
-    
+
     if (storedUserLocal) {
       try {
         const parsedUser = JSON.parse(storedUserLocal);
@@ -72,7 +74,7 @@ export default function App() {
     localStorage.setItem("selectedRole", role);
     setSelectedRole(null);
   }, []);
-  
+
   const handleLogout = useCallback(() => {
     setCurrentUser(null);
     setSelectedRole(null);
@@ -136,6 +138,7 @@ export default function App() {
 
   return (
     <Router>
+      <SmoothScroll />
       <Routes>
         {/* Role Selector */}
         <Route

@@ -1,7 +1,7 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { EditSiswaForm } from '../../component/Shared/EditSiswa';
-import { Edit, User as UserIcon } from 'lucide-react';
+import { Edit, User as UserIcon, ArrowLeft } from 'lucide-react';
 
 interface User {
   role: string;
@@ -19,6 +19,7 @@ interface Siswa {
   tahunAngkatan: string;
   kelas: string;
   kelasId: string;
+  password: string;
 }
 
 interface DetailSiswaProps {
@@ -27,10 +28,27 @@ interface DetailSiswaProps {
   currentPage: string;
   onMenuClick: (page: string) => void;
   siswaId: string;
+  onUpdateSiswa?: (updatedSiswa: Siswa) => void; // Tambah prop ini
 }
 
-// Dummy data siswa (nanti diganti dengan fetch dari API)
-const dummySiswaData: Siswa = {
+// Data untuk dropdown di form
+const jurusanListForForm = [
+  { id: 'MT', nama: 'Mekatronika' },
+  { id: 'AN', nama: 'Animasi' },
+  { id: 'EI', nama: 'Elektronika Industri' },
+  { id: 'RPL', nama: 'Rekayasa Perangkat Lunak' },
+];
+
+const kelasListForForm = [
+  { id: 'X-MT-1', nama: 'X Mekatronika 1' },
+  { id: 'X-AN-2', nama: 'X Animasi 2' },
+  { id: 'XI-EI-1', nama: 'XI Elektronika Industri 1' },
+  { id: 'XII-RPL-1', nama: 'XII Rekayasa Perangkat Lunak 1' },
+  { id: 'XII-RPL-2', nama: 'XII Rekayasa Perangkat Lunak 2' },
+];
+
+// Data default jika tidak ditemukan
+const defaultSiswaData: Siswa = {
   id: '1',
   namaSiswa: 'Muhammad Wito Suherman',
   nisn: '0918415784',
@@ -41,33 +59,73 @@ const dummySiswaData: Siswa = {
   tahunAngkatan: '2023 - 2026',
   kelas: 'XII Mekatronika 1',
   kelasId: 'XII-MTK-1',
+  password: 'ABC123',
 };
-
-// Data untuk dropdown di form
-const jurusanListForForm = [
-  { id: 'TI', nama: 'Teknik Informatika' },
-  { id: 'TM', nama: 'Teknik Mesin' },
-  { id: 'AK', nama: 'Akuntansi' },
-  { id: 'MTK', nama: 'Mekatronika' },
-];
-
-const kelasListForForm = [
-  { id: 'X-TI-1', nama: 'X Teknik Informatika 1' },
-  { id: 'X-TI-2', nama: 'X Teknik Informatika 2' },
-  { id: 'XI-TM-1', nama: 'XI Teknik Mesin 1' },
-  { id: 'XII-AK-1', nama: 'XII Akuntansi 1' },
-  { id: 'XII-MTK-1', nama: 'XII Mekatronika 1' },
-];
 
 export default function DetailSiswa({
   user,
   onLogout,
   currentPage,
   onMenuClick,
-  siswaId: _siswaId,
+  siswaId,
+  onUpdateSiswa,
 }: DetailSiswaProps) {
-  const [siswaData, setSiswaData] = useState<Siswa>(dummySiswaData);
+  const [siswaData, setSiswaData] = useState<Siswa>(defaultSiswaData);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [dataUpdated, setDataUpdated] = useState(false);
+
+  // Load data siswa berdasarkan ID
+  useEffect(() => {
+    // Coba ambil data dari localStorage (simulasi data dari SiswaAdmin)
+    const savedSiswa = localStorage.getItem('selectedSiswa');
+    if (savedSiswa) {
+      try {
+        const parsedSiswa = JSON.parse(savedSiswa);
+        if (parsedSiswa.id === siswaId) {
+          setSiswaData(parsedSiswa);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing saved siswa:', error);
+      }
+    }
+
+    // Jika tidak ada data di localStorage, coba ambil dari dummy data berdasarkan ID
+    // Di aplikasi nyata, ini akan diambil dari API
+    const dummyData = [
+      { 
+        id: '1', 
+        namaSiswa: 'Muhammad Wito Suherman', 
+        nisn: '0918415784', 
+        jenisKelamin: 'Laki-Laki', 
+        noTelp: '08218374859',
+        jurusan: 'Mekatronika', 
+        jurusanId: 'MTK', 
+        tahunAngkatan: '2023 - 2026',
+        kelas: 'XII Mekatronika 1', 
+        kelasId: 'XII-MTK-1',
+        password: 'ABC123'
+      },
+      { 
+        id: '2', 
+        namaSiswa: 'Siti Nurhaliza', 
+        nisn: '2347839284', 
+        jenisKelamin: 'Perempuan', 
+        noTelp: '08123456789',
+        jurusan: 'Rekayasa Perangkat Lunak', 
+        jurusanId: 'RPL', 
+        tahunAngkatan: '2023 - 2026',
+        kelas: '10', 
+        kelasId: '10-RPL-1',
+        password: 'password123'
+      },
+    ];
+
+    const foundSiswa = dummyData.find(s => s.id === siswaId);
+    if (foundSiswa) {
+      setSiswaData(foundSiswa);
+    }
+  }, [siswaId]);
 
   // Handler untuk submit edit
   const handleEditSubmit = (data: {
@@ -76,11 +134,12 @@ export default function DetailSiswa({
     jurusanId: string;
     tahunAngkatan: string;
     kelasId: string;
+    password: string;
   }) => {
     const jurusanNama = jurusanListForForm.find(j => j.id === data.jurusanId)?.nama || data.jurusanId;
     const kelasNama = kelasListForForm.find(k => k.id === data.kelasId)?.nama || data.kelasId;
     
-    setSiswaData({
+    const updatedSiswa = {
       ...siswaData,
       jenisKelamin: data.jenisKelamin,
       noTelp: data.noTelp,
@@ -89,29 +148,47 @@ export default function DetailSiswa({
       tahunAngkatan: data.tahunAngkatan,
       kelas: kelasNama,
       kelasId: data.kelasId,
-    });
+      password: data.password,
+    };
+    
+    setSiswaData(updatedSiswa);
     setIsEditModalOpen(false);
-    alert('âœ… Data siswa berhasil diperbarui!');
-    // TODO: Nanti ganti dengan API call
+    setDataUpdated(true);
+
+    // Simpan ke localStorage (sementara)
+    localStorage.setItem('selectedSiswa', JSON.stringify(updatedSiswa));
+    
+    // Panggil callback untuk update data di parent (SiswaAdmin)
+    if (onUpdateSiswa) {
+      onUpdateSiswa(updatedSiswa);
+    }
+    
+    alert('✓ Data siswa berhasil diperbarui!');
+  };
+
+  // Handler untuk tombol kembali
+  const handleBack = () => {
+    if (dataUpdated) {
+      alert('✅ Data telah diperbarui! Kembali ke halaman daftar siswa.');
+    }
+    onMenuClick('siswa');
   };
 
   // Field item component untuk reusability
   const FieldItem = ({
     label,
     value,
-    onEdit,
   }: {
     label: string;
     value: string;
-    onEdit: () => void;
   }) => (
-    <div style={{ marginBottom: '16px' }}>
+    <div style={{ marginBottom: '24px' }}>
       <label
         style={{
           display: 'block',
           fontSize: '14px',
           fontWeight: '600',
-          color: '#374151',
+          color: '#FFFFFF',
           marginBottom: '8px',
         }}
       >
@@ -119,38 +196,72 @@ export default function DetailSiswa({
       </label>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          backgroundColor: '#E5E7EB',
+          backgroundColor: '#FFFFFF',
           padding: '12px 16px',
           borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <span
           style={{
-            flex: 1,
             fontSize: '14px',
             color: '#1F2937',
+            display: 'block',
+            width: '100%',
           }}
         >
           {value}
         </span>
-        <button
-          onClick={onEdit}
+      </div>
+    </div>
+  );
+
+  // Password field component khusus untuk password
+  const PasswordField = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string;
+  }) => (
+    <div style={{ marginBottom: '24px' }}>
+      <label
+        style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: '600',
+          color: '#FFFFFF',
+          marginBottom: '8px',
+        }}
+      >
+        {label}
+      </label>
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <span
           style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            fontSize: '14px',
+            color: '#1F2937',
+            fontFamily: 'monospace',
+            letterSpacing: '1px',
+            display: 'block',
+            width: '100%',
           }}
-          title="Edit"
         >
-          <Edit size={18} strokeWidth={2} color="#1F2937" />
-        </button>
+          {value}
+        </span>
       </div>
     </div>
   );
@@ -165,119 +276,223 @@ export default function DetailSiswa({
     >
       <div
         style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: window.innerWidth < 768 ? '16px' : '32px', // Responsive padding
+          backgroundImage: 'url(../src/assets/Background/bgdetailgurusiswa.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          minHeight: 'calc(100vh - 64px)',
+          padding: window.innerWidth < 768 ? '16px' : '32px',
         }}
       >
-        {/* Card Container */}
         <div
           style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
+            maxWidth: '800px',
+            margin: '0 auto',
           }}
         >
-          {/* Header with Profile */}
+          {/* Card Container - Navy solid */}
           <div
             style={{
-              backgroundColor: '#0f172a',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            {/* Avatar */}
+            {/* Header with Profile */}
             <div
               style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                backgroundColor: '#3b82f6',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                padding: '32px 24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
+                gap: '20px',
+                position: 'relative',
               }}
             >
-              <UserIcon size={28} color="#FFFFFF" />
-            </div>
-{/* Info */}
-            <div>
-              <h2
+              {/* Avatar */}
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: '20px',
-                  fontWeight: 'bold',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   color: 'white',
+                  border: '4px solid rgba(255, 255, 255, 0.2)',
                 }}
               >
-                {siswaData.namaSiswa}
-              </h2>
-              <p
+                <UserIcon size={36} />
+              </div>
+              
+              {/* Info */}
+              <div style={{ flex: 1 }}>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    marginBottom: '4px',
+                  }}
+                >
+                  {siswaData.namaSiswa}
+                </h2>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    color: '#cbd5e1',
+                    fontFamily: 'monospace',
+                    letterSpacing: '1px',
+                  }}
+                >
+                  {siswaData.nisn}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  style={{
+                    backgroundColor: '#60A5FA',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3B82F6';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#60A5FA';
+                  }}
+                >
+                  <Edit size={18} />
+                  Ubah
+                </button>
+                <button
+                  onClick={() => handleEditSubmit({
+                    jenisKelamin: siswaData.jenisKelamin,
+                    noTelp: siswaData.noTelp,
+                    jurusanId: siswaData.jurusanId,
+                    tahunAngkatan: siswaData.tahunAngkatan,
+                    kelasId: siswaData.kelasId,
+                    password: siswaData.password,
+                  })}
+                  style={{
+                    backgroundColor: '#10B981',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#059669';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#10B981';
+                  }}
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+
+            {/* Content - Fields */}
+            <div style={{ padding: '32px' }}>
+              {/* Row 1: Jenis Kelamin & Tahun Angkatan */}
+              <div
                 style={{
-                  margin: '4px 0 0 0',
-                  fontSize: '14px',
-                  color: '#cbd5e1',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '24px',
+                  marginBottom: '24px',
                 }}
               >
-                {siswaData.nisn}
-              </p>
-            </div>
-          </div>
+                <FieldItem
+                  label="Jenis Kelamin :"
+                  value={siswaData.jenisKelamin}
+                />
+                <FieldItem
+                  label="Tahun Angkatan :"
+                  value={siswaData.tahunAngkatan}
+                />
+              </div>
 
-          {/* Content - Fields */}
-          <div style={{ padding: '24px' }}>
-            {/* Row 1: Jenis Kelamin & No. Telp */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '16px',
-                marginBottom: '16px',
-              }}
-            >
-              <FieldItem
-                label="Jenis Kelamin :"
-                value={siswaData.jenisKelamin}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-              <FieldItem
-                label="No. Telp :"
-                value={siswaData.noTelp}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-            </div>
+              {/* Row 2: No. Telp & Kata Sandi */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '24px',
+                  marginBottom: '24px',
+                }}
+              >
+                <FieldItem
+                  label="No. Telp :"
+                  value={siswaData.noTelp}
+                />
+                <PasswordField
+                  label="Kata Sandi:"
+                  value={siswaData.password}
+                />
+              </div>
 
-            {/* Row 2: Jurusan & Tahun Angkatan */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '16px',
-                marginBottom: '16px',
-              }}
-            >
-              <FieldItem
-                label="Jurusan :"
-                value={siswaData.jurusan}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-              <FieldItem
-                label="Tahun Angkatan :"
-                value={siswaData.tahunAngkatan}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
+              {/* Tombol Kembali - DI KIRI BAWAH */}
+              <div
+                style={{
+                  marginTop: '40px',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                }}
+              >
+                <button
+                  onClick={handleBack}
+                  style={{
+                    backgroundColor: '#9CA3AF',
+                    border: 'none',
+                    color: 'black',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#6B7280';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#9CA3AF';
+                  }}
+                >
+                  <ArrowLeft size={18} />
+                  Kembali
+                </button>
+              </div>
             </div>
-
-            {/* Row 3: Kelas */}
-            <FieldItem
-              label="Kelas :"
-              value={siswaData.kelas}
-              onEdit={() => setIsEditModalOpen(true)}
-            />
           </div>
         </div>
       </div>
@@ -293,6 +508,7 @@ export default function DetailSiswa({
           jurusanId: siswaData.jurusanId,
           tahunAngkatan: siswaData.tahunAngkatan,
           kelasId: siswaData.kelasId,
+          password: siswaData.password,
         }}
         jurusanList={jurusanListForForm}
         kelasList={kelasListForForm}
@@ -300,5 +516,3 @@ export default function DetailSiswa({
     </AdminLayout>
   );
 }
-
-

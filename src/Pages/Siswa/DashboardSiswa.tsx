@@ -22,22 +22,26 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
   ArcElement,
+  Filler,
 } from "chart.js";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Line, Doughnut } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
+  Filler
 );
 
 type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
@@ -57,12 +61,12 @@ interface DashboardSiswaProps {
 
 // Dummy data untuk statistik
 const monthlyTrendData = [
-  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2 },
-  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3 },
-  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2 },
-  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1 },
-  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1 },
-  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1 },
+  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2, dispen: 1 },
+  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3, dispen: 2 },
+  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2, dispen: 1 },
+  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1, dispen: 2 },
+  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1, dispen: 1 },
+  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1, dispen: 2 },
 ];
 
 const weeklyStats = {
@@ -70,6 +74,7 @@ const weeklyStats = {
   izin: 25,
   sakit: 20,
   alpha: 40,
+  dispen: 15,
 };
 
 export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) {
@@ -609,7 +614,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                 gap: "24px",
                 width: "100%",
               }}>
-                {/* Monthly Trend Chart */}
+                {/* Monthly Trend Chart - CHANGED TO LINE CHART */}
                 <div style={{
                   backgroundColor: "white",
                   borderRadius: "16px",
@@ -650,10 +655,10 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       fontWeight: "600",
                       color: "#001F3E"
                     }}>
-                      Tren Kehadiran Bulanan
+                      Grafik Kehadiran Bulanan
                     </h3>
                   </div>
-                  <MonthlyBarChart data={monthlyTrendData} />
+                  <MonthlyLineChart data={monthlyTrendData} />
                 </div>
 
                 {/* Weekly Statistics */}
@@ -758,11 +763,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
   return renderPage();
 }
 
-// Monthly Bar Chart Component
-function MonthlyBarChart({
+// Monthly Line Chart Component - KOMPONEN BARU DENGAN GRAFIK GARIS
+function MonthlyLineChart({
   data,
 }: {
-  data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number }>;
+  data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number; dispen: number }>;
 }) {
   const chartData = {
     labels: data.map((d) => d.month),
@@ -770,26 +775,72 @@ function MonthlyBarChart({
       {
         label: "Hadir",
         data: data.map((d) => d.hadir),
-        backgroundColor: "#10B981",
-        borderRadius: 4,
+        borderColor: "#10B981",
+        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#10B981",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Izin",
         data: data.map((d) => d.izin),
-        backgroundColor: "#F59E0B",
-        borderRadius: 4,
+        borderColor: "#F59E0B",
+        backgroundColor: "rgba(245, 158, 11, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#F59E0B",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Sakit",
         data: data.map((d) => d.sakit),
-        backgroundColor: "#3B82F6",
-        borderRadius: 4,
+        borderColor: "#3B82F6",
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#3B82F6",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
       {
         label: "Alpha",
         data: data.map((d) => d.alpha),
-        backgroundColor: "#EF4444",
-        borderRadius: 4,
+        borderColor: "#EF4444",
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#EF4444",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: "Dispen",
+        data: data.map((d) => d.dispen),
+        borderColor: "#6B7280",
+        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#6B7280",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        tension: 0.4,
+        fill: true,
       },
     ],
   };
@@ -817,6 +868,16 @@ function MonthlyBarChart({
         bodyFont: { size: 12, family: "'Inter', sans-serif" },
         cornerRadius: 8,
         displayColors: true,
+        callbacks: {
+          label: function(context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += context.parsed.y + ' hari';
+            return label;
+          }
+        }
       },
     },
     scales: {
@@ -831,6 +892,7 @@ function MonthlyBarChart({
         },
       },
       y: {
+        beginAtZero: true,
         grid: {
           color: "#F3F4F6",
           drawBorder: false,
@@ -843,6 +905,7 @@ function MonthlyBarChart({
             size: 11,
           },
           padding: 8,
+          stepSize: 10,
         },
       },
     },
@@ -854,7 +917,7 @@ function MonthlyBarChart({
 
   return (
     <div style={{ height: "300px", width: "100%" }}>
-      <Bar data={chartData} options={options} />
+      <Line data={chartData} options={options} />
     </div>
   );
 }
@@ -863,14 +926,14 @@ function MonthlyBarChart({
 function WeeklyDonutChart({
   data,
 }: {
-  data: { hadir: number; izin: number; sakit: number; alpha: number };
+  data: { hadir: number; izin: number; sakit: number; alpha: number; dispen: number };
 }) {
   const chartData = {
-    labels: ["Hadir", "Izin", "Sakit", "Alpha"],
+    labels: ["Hadir", "Izin", "Sakit", "Alpha", "Dispen"],
     datasets: [
       {
-        data: [data.hadir, data.izin, data.sakit, data.alpha],
-        backgroundColor: ["#10B981", "#F59E0B", "#3B82F6", "#EF4444"],
+        data: [data.hadir, data.izin, data.sakit, data.alpha, data.dispen],
+        backgroundColor: ["#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#6B7280"],
         borderColor: "#ffffff",
         borderWidth: 2,
       },
@@ -900,10 +963,10 @@ function WeeklyDonutChart({
                 const style = meta.controller.getStyle(i);
                 const value = data.datasets[0].data[i];
                 const total = data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
-                const percentage = Math.round((value / total) * 100) + "%";
+                const percentage = Math.round((value / total) * 100);
 
                 return {
-                  text: `${label} (${percentage})`,
+                  text: `${label} (${percentage}%)`,
                   fillStyle: style.backgroundColor,
                   strokeStyle: style.borderColor,
                   lineWidth: style.borderWidth,
@@ -925,8 +988,6 @@ function WeeklyDonutChart({
     </div>
   );
 }
-
-
 
 // Modal Component untuk Siswa
 interface JadwalSiswaModalProps {
@@ -1065,7 +1126,6 @@ function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
           <button
             type="button"
             onClick={() => {
-              // Action for reminder
               alert("Pengingat ditambahkan!");
               onClose();
             }}
@@ -1139,990 +1199,3 @@ function TimePill({ label }: { label: string }) {
     </div>
   );
 }
-
-
-// LEGACY CODE - DO NOT DELETE
-// import { useMemo, useState, useEffect } from "react";
-// import SiswaLayout from "../../component/Siswa/SiswaLayout";
-// import openBook from "../../assets/Icon/open-book.png";
-// import { Modal } from "../../component/Shared/Modal";
-// import JadwalSiswa from "./JadwalSiswa.tsx";
-// import AbsensiSiswa from "./AbsensiSiswa";
-
-// type SiswaPage = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
-
-// interface ScheduleItem {
-//   id: string;
-//   mapel: string;
-//   guru: string;
-//   start: string;
-//   end: string;
-// }
-
-// interface DashboardSiswaProps {
-//   user: { name: string; phone: string };
-//   onLogout: () => void;
-// }
-
-// // Dummy data untuk statistik
-// const monthlyTrendData = [
-//   { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2 },
-//   { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3 },
-//   { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2 },
-//   { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1 },
-//   { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1 },
-//   { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1 },
-// ];
-
-// const weeklyStats = {
-//   hadir: 80,
-//   izin: 25,
-//   sakit: 20,
-//   alpha: 40,
-// };
-
-// export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) {
-//   const [currentPage, setCurrentPage] = useState<SiswaPage>("dashboard");
-//   const [currentDate, setCurrentDate] = useState("");
-//   const [currentTime, setCurrentTime] = useState("");
-//   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
-//   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-
-//   useEffect(() => {
-//     const updateDateTime = () => {
-//       const now = new Date();
-//       const options: Intl.DateTimeFormatOptions = {
-//         weekday: "long",
-//         year: "numeric",
-//         month: "long",
-//         day: "numeric",
-//       };
-//       setCurrentDate(now.toLocaleDateString("id-ID", options));
-//       setCurrentTime(now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
-//     };
-
-//     updateDateTime();
-//     const interval = setInterval(updateDateTime, 60000);
-
-//     return () => clearInterval(interval);
-//   }, []);
-
-//   const schedules = useMemo<ScheduleItem[]>(
-//     () => [
-//       { id: "1", mapel: "Matematika", guru: "Ewit Erniyah S.Pd", start: "07:00", end: "08:30" },
-//       { id: "2", mapel: "Bahasa Indonesia", guru: "Budi Santoso S.Pd", start: "08:30", end: "10:00" },
-//       { id: "3", mapel: "Bahasa Inggris", guru: "Siti Nurhaliza S.Pd", start: "10:15", end: "11:45" },
-//     ],
-//     []
-//   );
-
-//   const handleMenuClick = (page: string) => {
-//     setCurrentPage(page as SiswaPage);
-//   };
-
-//   const handleLogout = () => {
-//     onLogout();
-//   };
-
-//   const handleScheduleClick = (schedule: ScheduleItem) => {
-//     setSelectedSchedule(schedule);
-//     setIsScheduleModalOpen(true);
-//   };
-
-//   // Dummy user data - nanti dari props atau API
-//   const userInfo = {
-//     name: user.name || "Muhammad Wito S.",
-//     id: "0918415784",
-//   };
-
-//   const renderPage = () => {
-//     switch (currentPage) {
-//       case "absensi":
-//         return (
-//           <AbsensiSiswa
-//             user={user}
-//             currentPage={currentPage}
-//             onMenuClick={handleMenuClick}
-//             onLogout={handleLogout}
-//           />
-//         );
-//       case "jadwal-anda":
-//         return (
-//           <JadwalSiswa
-//             user={user}
-//             currentPage={currentPage}
-//             onMenuClick={handleMenuClick}
-//             onLogout={handleLogout}
-//           />
-//         );
-//       case "notifikasi":
-//         return (
-//           <SiswaLayout
-//             pageTitle="Notifikasi"
-//             currentPage={currentPage}
-//             onMenuClick={handleMenuClick}
-//             user={user}
-//             onLogout={handleLogout}
-//           >
-//             <div
-//               style={{
-//                 width: "100%",
-//                 maxWidth: "1400px",
-//                 margin: "0 auto",
-//                 padding: "24px",
-//                 background: "#FFFFFF",
-//                 borderRadius: "16px",
-//                 boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                 border: "1px solid #E2E8F0",
-//               }}
-//             >
-//               <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#0F172A" }}>
-//                 Notifikasi
-//               </h2>
-//               <p style={{ marginTop: "16px", color: "#64748B" }}>Coming Soon...</p>
-//             </div>
-//           </SiswaLayout>
-//         );
-//       case "dashboard":
-//       default:
-//         return (
-//           <SiswaLayout
-//             pageTitle="Dashboard"
-//             currentPage={currentPage}
-//             onMenuClick={handleMenuClick}
-//             user={user}
-//             onLogout={handleLogout}
-//           >
-//             <div
-//               style={{
-//                 width: "100%",
-//                 maxWidth: "1400px",
-//                 margin: "0 auto",
-//                 display: "flex",
-//                 flexDirection: "column",
-//                 gap: "24px",
-//               }}
-//             >
-//               {/* Header Cards: User Info, Schedule, Total Mapel */}
-//               <div
-//                 style={{
-//                   display: "grid",
-//                   gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-//                   gap: "16px",
-//                   width: "100%",
-//                 }}
-//               >
-//                 {/* User Information Card - Dark Blue */}
-//                 <div
-//                   style={{
-//                     background: "#0B2948",
-//                     borderRadius: "16px",
-//                     padding: "20px",
-//                     boxShadow: "0 4px 12px rgba(11, 41, 72, 0.2)",
-//                     border: "1px solid #0B2948",
-//                     minHeight: "120px",
-//                     display: "flex",
-//                     alignItems: "center",
-//                     gap: "16px",
-//                   }}
-//                 >
-//                   {/* Person Icon */}
-//                   <div
-//                     style={{
-//                       width: "48px",
-//                       height: "48px",
-//                       borderRadius: "12px",
-//                       background: "rgba(255, 255, 255, 0.1)",
-//                       display: "flex",
-//                       alignItems: "center",
-//                       justifyContent: "center",
-//                       flexShrink: 0,
-//                     }}
-//                   >
-//                     <svg
-//                       width="24"
-//                       height="24"
-//                       viewBox="0 0 24 24"
-//                       fill="none"
-//                       style={{ filter: "brightness(0) invert(1)" }}
-//                     >
-//                       <path
-//                         d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
-//                         fill="white"
-//                       />
-//                     </svg>
-//                   </div>
-
-//                   {/* User Info */}
-//                   <div style={{ flex: 1, minWidth: 0 }}>
-//                     <div
-//                       style={{
-//                         fontWeight: 700,
-//                         fontSize: "16px",
-//                         color: "#FFFFFF",
-//                         marginBottom: "4px",
-//                         whiteSpace: "nowrap",
-//                         overflow: "hidden",
-//                         textOverflow: "ellipsis",
-//                       }}
-//                     >
-//                       {userInfo.name}
-//                     </div>
-//                     <div
-//                       style={{
-//                         fontWeight: 500,
-//                         fontSize: "14px",
-//                         color: "rgba(255, 255, 255, 0.8)",
-//                       }}
-//                     >
-//                       {userInfo.id}
-//                     </div>
-//                   </div>
-//                 </div>
-
-//                 {/* Card Tanggal & Waktu */}
-//                 <div
-//                   style={{
-//                     background: "#fff",
-//                     borderRadius: "16px",
-//                     padding: "20px",
-//                     boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                     border: "1px solid #E2E8F0",
-//                     minHeight: "120px",
-//                     display: "flex",
-//                     flexDirection: "column",
-//                     justifyContent: "space-between",
-//                   }}
-//                 >
-//                   <div
-//                     style={{
-//                       display: "flex",
-//                       justifyContent: "space-between",
-//                       alignItems: "flex-start",
-//                       marginBottom: "16px",
-//                       flexWrap: "wrap",
-//                       gap: "8px",
-//                     }}
-//                   >
-//                     <span
-//                       style={{
-//                         fontWeight: 700,
-//                         fontSize: "15px",
-//                         color: "#0F172A",
-//                         lineHeight: "1.4",
-//                       }}
-//                     >
-//                       {currentDate || "Memuat..."}
-//                     </span>
-//                     <span
-//                       style={{
-//                         fontWeight: 700,
-//                         fontSize: "18px",
-//                         color: "#0B2948",
-//                         whiteSpace: "nowrap",
-//                       }}
-//                     >
-//                       {currentTime || "00:00"}
-//                     </span>
-//                   </div>
-//                   <div
-//                     style={{
-//                       display: "flex",
-//                       alignItems: "center",
-//                       gap: "12px",
-//                       flexWrap: "wrap",
-//                     }}
-//                   >
-//                     <TimePill label="07:00:00" />
-//                     <span style={{ fontWeight: 700, color: "#64748B" }}>—</span>
-//                     <TimePill label="15:00:00" />
-//                   </div>
-//                 </div>
-
-//                 {/* Card Total Mapel */}
-//                 <div
-//                   style={{
-//                     background: "#fff",
-//                     borderRadius: "16px",
-//                     padding: "20px",
-//                     boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                     border: "1px solid #E2E8F0",
-//                     minHeight: "120px",
-//                     display: "flex",
-//                     flexDirection: "column",
-//                     justifyContent: "space-between",
-//                   }}
-//                 >
-//                   <div
-//                     style={{
-//                       fontWeight: 700,
-//                       fontSize: "15px",
-//                       color: "#0F172A",
-//                       marginBottom: "16px",
-//                     }}
-//                   >
-//                     Total Mata Pelajaran Hari Ini
-//                   </div>
-//                   <div
-//                     style={{
-//                       display: "inline-flex",
-//                       minWidth: "140px",
-//                       justifyContent: "center",
-//                       padding: "12px 16px",
-//                       borderRadius: "12px",
-//                       background: "#F8FAFC",
-//                       border: "1px solid #E2E8F0",
-//                       fontWeight: 800,
-//                       fontSize: "18px",
-//                       color: "#0B2948",
-//                     }}
-//                   >
-//                     {schedules.length} Mapel
-//                   </div>
-//                 </div>
-//               </div>
-
-//               {/* Jadwal Hari Ini Section */}
-//               <div
-//                 style={{
-//                   backgroundColor: "#FFFFFF",
-//                   borderRadius: "16px",
-//                   padding: "24px",
-//                   boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                   border: "1px solid #E2E8F0",
-//                 }}
-//               >
-//                 <h3
-//                   style={{
-//                     margin: "0 0 16px 0",
-//                     fontSize: "18px",
-//                     fontWeight: 700,
-//                     color: "#0F172A",
-//                   }}
-//                 >
-//                   Jadwal Hari Ini
-//                 </h3>
-//                 <div
-//                   style={{
-//                     display: "grid",
-//                     gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-//                     gap: "12px",
-//                   }}
-//                 >
-//                   {schedules.map((schedule) => (
-//                     <div
-//                       key={schedule.id}
-//                       onClick={() => handleScheduleClick(schedule)}
-//                       style={{
-//                         padding: "16px",
-//                         borderRadius: "12px",
-//                         border: "1px solid #E2E8F0",
-//                         backgroundColor: "#F8FAFC",
-//                         cursor: "pointer",
-//                         transition: "all 0.2s ease",
-//                       }}
-//                       onMouseEnter={(e) => {
-//                         const div = e.currentTarget as HTMLDivElement;
-//                         div.style.backgroundColor = "#E0E7FF";
-//                         div.style.borderColor = "#2563EB";
-//                         div.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.1)";
-//                       }}
-//                       onMouseLeave={(e) => {
-//                         const div = e.currentTarget as HTMLDivElement;
-//                         div.style.backgroundColor = "#F8FAFC";
-//                         div.style.borderColor = "#E2E8F0";
-//                         div.style.boxShadow = "none";
-//                       }}
-//                     >
-//                       <div
-//                         style={{
-//                           display: "flex",
-//                           alignItems: "flex-start",
-//                           gap: "12px",
-//                           marginBottom: "12px",
-//                         }}
-//                       >
-//                         <img
-//                           src={openBook}
-//                           alt="Book"
-//                           style={{
-//                             width: "24px",
-//                             height: "24px",
-//                             objectFit: "contain",
-//                             flexShrink: 0,
-//                           }}
-//                         />
-//                         <div style={{ flex: 1 }}>
-//                           <h4
-//                             style={{
-//                               margin: "0 0 4px 0",
-//                               fontSize: "16px",
-//                               fontWeight: 700,
-//                               color: "#0F172A",
-//                             }}
-//                           >
-//                             {schedule.mapel}
-//                           </h4>
-//                           <p
-//                             style={{
-//                               margin: "0",
-//                               fontSize: "13px",
-//                               color: "#64748B",
-//                               fontWeight: 500,
-//                             }}
-//                           >
-//                             {schedule.guru}
-//                           </p>
-//                         </div>
-//                       </div>
-//                       <div
-//                         style={{
-//                           display: "flex",
-//                           alignItems: "center",
-//                           gap: "8px",
-//                           padding: "8px 12px",
-//                           backgroundColor: "rgba(37, 99, 235, 0.1)",
-//                           borderRadius: "8px",
-//                           width: "fit-content",
-//                         }}
-//                       >
-//                         <svg
-//                           width="16"
-//                           height="16"
-//                           viewBox="0 0 24 24"
-//                           fill="none"
-//                           stroke="#2563EB"
-//                           strokeWidth="2"
-//                           strokeLinecap="round"
-//                           strokeLinejoin="round"
-//                         >
-//                           <circle cx="12" cy="12" r="10" />
-//                           <polyline points="12 6 12 12 16 14" />
-//                         </svg>
-//                         <span
-//                           style={{
-//                             fontSize: "13px",
-//                             fontWeight: 600,
-//                             color: "#2563EB",
-//                           }}
-//                         >
-//                           {schedule.start} - {schedule.end}
-//                         </span>
-//                       </div>
-//                     </div>
-//                   ))}
-//                 </div>
-//               </div>
-
-//               {/* Statistik Kehadiran Section */}
-//               <div
-//                 style={{
-//                   background: "#0B2948",
-//                   color: "#fff",
-//                   borderRadius: "12px",
-//                   padding: "16px 24px",
-//                   fontWeight: 800,
-//                   fontSize: "18px",
-//                   boxShadow: "0 4px 12px rgba(11, 41, 72, 0.2)",
-//                   textAlign: "center",
-//                   cursor: "pointer",
-//                   transition: "all 0.2s",
-//                 }}
-//                 onMouseEnter={(e) => {
-//                   (e.currentTarget as HTMLDivElement).style.backgroundColor = "#0A2340";
-//                 }}
-//                 onMouseLeave={(e) => {
-//                   (e.currentTarget as HTMLDivElement).style.backgroundColor = "#0B2948";
-//                 }}
-//               >
-//                 Statistik Kehadiran
-//               </div>
-
-//               {/* Charts Grid */}
-//               <div
-//                 style={{
-//                   display: "grid",
-//                   gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-//                   gap: "24px",
-//                   width: "100%",
-//                 }}
-//               >
-//                 {/* Grafik Tren Bulanan */}
-//                 <div
-//                   style={{
-//                     backgroundColor: "#FFFFFF",
-//                     borderRadius: "16px",
-//                     padding: "24px",
-//                     boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                     border: "1px solid #E2E8F0",
-//                   }}
-//                 >
-//                   <h3
-//                     style={{
-//                       margin: "0 0 8px 0",
-//                       fontSize: "18px",
-//                       fontWeight: 700,
-//                       color: "#0F172A",
-//                     }}
-//                   >
-//                     Grafik Tren Bulanan
-//                   </h3>
-//                   <MonthlyBarChart data={monthlyTrendData} />
-//                 </div>
-
-//                 {/* Statistik Minggu Ini */}
-//                 <div
-//                   style={{
-//                     backgroundColor: "#FFFFFF",
-//                     borderRadius: "16px",
-//                     padding: "24px",
-//                     boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-//                     border: "1px solid #E2E8F0",
-//                   }}
-//                 >
-//                   <h3
-//                     style={{
-//                       margin: "0 0 8px 0",
-//                       fontSize: "18px",
-//                       fontWeight: 700,
-//                       color: "#0F172A",
-//                     }}
-//                   >
-//                     Statistik Minggu Ini
-//                   </h3>
-//                   <WeeklyDonutChart data={weeklyStats} />
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Modal Jadwal Siswa */}
-//             <JadwalSiswaModal
-//               isOpen={isScheduleModalOpen}
-//               onClose={() => {
-//                 setIsScheduleModalOpen(false);
-//                 setSelectedSchedule(null);
-//               }}
-//               data={selectedSchedule}
-//             />
-//           </SiswaLayout>
-//         );
-//     }
-//   };
-
-//   return renderPage();
-// }
-
-// // Monthly Bar Chart Component
-// function MonthlyBarChart({
-//   data,
-// }: {
-//   data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number }>;
-// }) {
-//   const maxValue = Math.max(
-//     ...data.map((item) => Math.max(item.hadir, item.izin, item.sakit, item.alpha))
-//   );
-
-//   return (
-//     <div style={{ position: "relative" }}>
-//       {/* Y-axis labels */}
-//       <div
-//         style={{
-//           position: "absolute",
-//           left: 0,
-//           top: 0,
-//           bottom: "40px",
-//           width: "30px",
-//           display: "flex",
-//           flexDirection: "column",
-//           justifyContent: "space-between",
-//           fontSize: "12px",
-//           color: "#64748B",
-//         }}
-//       >
-//         <span>60</span>
-//         <span>40</span>
-//         <span>20</span>
-//         <span>0</span>
-//       </div>
-
-//       {/* Chart */}
-//       <div
-//         style={{
-//           display: "flex",
-//           alignItems: "flex-end",
-//           gap: "12px",
-//           height: "200px",
-//           marginLeft: "40px",
-//           marginBottom: "40px",
-//           paddingTop: "20px",
-//         }}
-//       >
-//         {data.map((item) => (
-//           <div key={item.month} style={{ flex: 1, textAlign: "center" }}>
-//             <div
-//               style={{
-//                 display: "flex",
-//                 justifyContent: "center",
-//                 alignItems: "flex-end",
-//                 gap: "4px",
-//                 height: "160px",
-//               }}
-//             >
-//               <div
-//                 style={{
-//                   width: "18px",
-//                   height: `${(item.hadir / maxValue) * 160}px`,
-//                   borderRadius: "4px 4px 0 0",
-//                   background: "#10B981",
-//                 }}
-//               />
-//               <div
-//                 style={{
-//                   width: "18px",
-//                   height: `${(item.izin / maxValue) * 160}px`,
-//                   borderRadius: "4px 4px 0 0",
-//                   background: "#F59E0B",
-//                 }}
-//               />
-//               <div
-//                 style={{
-//                   width: "18px",
-//                   height: `${(item.sakit / maxValue) * 160}px`,
-//                   borderRadius: "4px 4px 0 0",
-//                   background: "#3B82F6",
-//                 }}
-//               />
-//               <div
-//                 style={{
-//                   width: "18px",
-//                   height: `${(item.alpha / maxValue) * 160}px`,
-//                   borderRadius: "4px 4px 0 0",
-//                   background: "#EF4444",
-//                 }}
-//               />
-//             </div>
-//             <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#475569" }}>
-//               {item.month}
-//             </p>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Legend */}
-//       <div
-//         style={{
-//           display: "flex",
-//           gap: "16px",
-//           justifyContent: "center",
-//           flexWrap: "wrap",
-//           marginTop: "16px",
-//         }}
-//       >
-//         <LegendDot color="#10B981" label="Hadir" />
-//         <LegendDot color="#F59E0B" label="Izin" />
-//         <LegendDot color="#3B82F6" label="Sakit" />
-//         <LegendDot color="#EF4444" label="Alpha" />
-//       </div>
-//     </div>
-//   );
-// }
-
-// // Weekly Donut Chart Component
-// function WeeklyDonutChart({
-//   data,
-// }: {
-//   data: { hadir: number; izin: number; sakit: number; alpha: number };
-// }) {
-//   const total = data.hadir + data.izin + data.sakit + data.alpha;
-//   const radius = 80;
-//   const centerX = 100;
-//   const centerY = 100;
-//   let currentAngle = -90;
-
-//   const colors = {
-//     hadir: "#10B981",
-//     izin: "#F59E0B",
-//     sakit: "#3B82F6",
-//     alpha: "#EF4444",
-//   };
-
-//   const segments = [
-//     { key: "hadir", value: data.hadir, label: "Total Kehadiran" },
-//     { key: "izin", value: data.izin, label: "Total Izin" },
-//     { key: "sakit", value: data.sakit, label: "Total Sakit" },
-//     { key: "alpha", value: data.alpha, label: "Total Alpha" },
-//   ];
-
-//   const createPath = (startAngle: number, endAngle: number) => {
-//     const start = polarToCartesian(centerX, centerY, radius, endAngle);
-//     const end = polarToCartesian(centerX, centerY, radius, startAngle);
-//     const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-//     return [
-//       "M",
-//       centerX,
-//       centerY,
-//       "L",
-//       start.x,
-//       start.y,
-//       "A",
-//       radius,
-//       radius,
-//       0,
-//       largeArcFlag,
-//       0,
-//       end.x,
-//       end.y,
-//       "Z",
-//     ].join(" ");
-//   };
-
-//   const polarToCartesian = (
-//     centerX: number,
-//     centerY: number,
-//     radius: number,
-//     angleInDegrees: number
-//   ) => {
-//     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-//     return {
-//       x: centerX + radius * Math.cos(angleInRadians),
-//       y: centerY + radius * Math.sin(angleInRadians),
-//     };
-//   };
-
-//   return (
-//     <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-//       {/* Donut Chart */}
-//       <div style={{ position: "relative", flexShrink: 0 }}>
-//         <svg width="200" height="200" style={{ display: "block" }}>
-//           {segments.map((segment) => {
-//             const angle = (segment.value / total) * 360;
-//             const startAngle = currentAngle;
-//             const endAngle = currentAngle + angle;
-//             const path = createPath(startAngle, endAngle);
-//             currentAngle = endAngle;
-
-//             return (
-//               <path
-//                 key={segment.key}
-//                 d={path}
-//                 fill={colors[segment.key as keyof typeof colors]}
-//                 stroke="#FFFFFF"
-//                 strokeWidth="2"
-//               />
-//             );
-//           })}
-//         </svg>
-//       </div>
-
-//       {/* Legend */}
-//       <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
-//         {segments.map((segment) => (
-//           <div
-//             key={segment.key}
-//             style={{ display: "flex", alignItems: "center", gap: "8px" }}
-//           >
-//             <span
-//               style={{
-//                 width: "12px",
-//                 height: "12px",
-//                 borderRadius: "999px",
-//                 backgroundColor: colors[segment.key as keyof typeof colors],
-//                 display: "inline-block",
-//               }}
-//             />
-//             <span style={{ fontSize: "14px", color: "#475569", fontWeight: 500 }}>
-//               {segment.label} {segment.value}%
-//             </span>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function LegendDot({ color, label }: { color: string; label: string }) {
-//   return (
-//     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-//       <span
-//         style={{
-//           width: "12px",
-//           height: "12px",
-//           borderRadius: "999px",
-//           backgroundColor: color,
-//           display: "inline-block",
-//         }}
-//       />
-//       <span style={{ fontSize: "13px", color: "#475569" }}>{label}</span>
-//     </div>
-//   );
-// }
-
-// // Modal Component untuk Siswa
-// interface JadwalSiswaModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   data: ScheduleItem | null;
-// }
-
-// function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
-//   if (!data) return null;
-
-//   return (
-//     <Modal isOpen={isOpen} onClose={onClose}>
-//       <div
-//         style={{
-//           border: "3px solid #1e40af",
-//           borderRadius: "16px",
-//           overflow: "hidden",
-//         }}
-//       >
-//         <div
-//           style={{
-//             backgroundColor: "#0f172a",
-//             color: "white",
-//             padding: "16px 24px",
-//             display: "flex",
-//             justifyContent: "space-between",
-//             alignItems: "center",
-//           }}
-//         >
-//           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-//             <img
-//               src={openBook}
-//               alt="Book"
-//               style={{
-//                 width: "24px",
-//                 height: "24px",
-//                 objectFit: "contain",
-//                 filter: "brightness(0) invert(1)",
-//               }}
-//             />
-//             <h2 style={{ fontSize: "18px", fontWeight: "bold", margin: 0 }}>
-//               {data.mapel}
-//             </h2>
-//           </div>
-//           <button
-//             onClick={onClose}
-//             style={{
-//               background: "none",
-//               border: "none",
-//               color: "white",
-//               fontSize: "24px",
-//               cursor: "pointer",
-//               padding: "0",
-//               width: "32px",
-//               height: "32px",
-//               display: "flex",
-//               alignItems: "center",
-//               justifyContent: "center",
-//             }}
-//             type="button"
-//           >
-//             ×
-//           </button>
-//         </div>
-
-//         <div style={{ padding: "24px", backgroundColor: "white" }}>
-//           <div style={{ marginBottom: "24px" }}>
-//             <h3
-//               style={{
-//                 fontSize: "16px",
-//                 fontWeight: "bold",
-//                 color: "#111827",
-//                 marginBottom: "12px",
-//               }}
-//             >
-//               Keterangan
-//             </h3>
-//             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-//               <InfoRow label="Mata Pelajaran" value={data.mapel} />
-//               <InfoRow label="Guru Pengajar" value={data.guru} />
-//               <InfoRow label="Waktu" value={`${data.start} - ${data.end}`} />
-//             </div>
-//           </div>
-//         </div>
-
-//         <div
-//           style={{
-//             padding: "16px 24px",
-//             backgroundColor: "white",
-//             display: "flex",
-//             justifyContent: "center",
-//           }}
-//         >
-//           <button
-//             type="button"
-//             onClick={onClose}
-//             style={{
-//               padding: "12px 32px",
-//               borderRadius: "8px",
-//               border: "none",
-//               backgroundColor: "#1e40af",
-//               color: "white",
-//               fontWeight: "600",
-//               cursor: "pointer",
-//               fontSize: "16px",
-//               transition: "background-color 0.2s",
-//             }}
-//             onMouseEnter={(e) => {
-//               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1e3a8a";
-//             }}
-//             onMouseLeave={(e) => {
-//               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#1e40af";
-//             }}
-//           >
-//             Tutup
-//           </button>
-//         </div>
-//       </div>
-//     </Modal>
-//   );
-// }
-
-// function InfoRow({ label, value }: { label: string; value: string }) {
-//   return (
-//     <div
-//       style={{
-//         display: "flex",
-//         justifyContent: "space-between",
-//         alignItems: "center",
-//         gap: "12px",
-//         background: "#F1F5F9",
-//         borderRadius: "8px",
-//         padding: "12px 16px",
-//         border: "1px solid #E2E8F0",
-//       }}
-//     >
-//       <span style={{ fontWeight: "600", color: "#0f172a", fontSize: "14px" }}>
-//         {label}
-//       </span>
-//       <span style={{ color: "#0f172a", fontSize: "14px", fontWeight: "500" }}>
-//         {value}
-//       </span>
-//     </div>
-//   );
-// }
-
-// function TimePill({ label }: { label: string }) {
-//   return (
-//     <div
-//       style={{
-//         minWidth: "110px",
-//         padding: "10px 14px",
-//         borderRadius: "12px",
-//         border: "1px solid #CBD5E1",
-//         background: "#fff",
-//         boxShadow: "inset 0 1px 2px rgba(15, 23, 42, 0.04)",
-//         textAlign: "center",
-//         fontWeight: 800,
-//         fontSize: "14px",
-//         color: "#0F172A",
-//       }}
-//     >
-//       {label}
-//     </div>
-//   );
-// }
-
-

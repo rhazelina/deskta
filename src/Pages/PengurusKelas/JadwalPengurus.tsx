@@ -1,4 +1,3 @@
-// import SiswaLayout from "../../component/Siswa/SiswaLayout";
 import PengurusKelasLayout from "../../component/PengurusKelas/PengurusKelasLayout";
 import JadwalImg from "../../assets/Icon/DummyJadwal.png";
 
@@ -11,11 +10,6 @@ interface JadwalPengurusProps {
     onLogout: () => void;
 }
 
-/**
- * Catatan:
- * - Pastikan jadwal berupa file: .png / .jpg / .jpeg
- * - Simpan file di /src/assets/jadwal/ (atau folder lain), lalu import seperti di atas
- */
 export default function JadwalPengurus({
     user,
     currentPage,
@@ -137,13 +131,12 @@ export default function JadwalPengurus({
                                     display: "block",
                                     width: "100%",
                                     height: "auto",
-                                    maxWidth: 1200, // biar tetap enak di desktop
+                                    maxWidth: 1200, 
                                     margin: "0 auto",
                                 }}
                             /> 
                         </div>
 
-                        {/* tombol opsional: buka gambar full */}
                         <div style={{ marginTop: 12, textAlign: "right" }}>
                             <a
                                 href={JadwalImg}

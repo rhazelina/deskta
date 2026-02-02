@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock, BookOpen, Users, Eye, QrCode } from "lucide-react";
+import { BookOpen, Users, Eye, QrCode } from "lucide-react";
 import WalikelasLayout from "../../component/Walikelas/layoutwakel";
 import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
-import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
 import { InputAbsenWalikelas } from "./InputAbsenWalikelas";
 import { KehadiranSiswaWakel } from "./KehadiranSiswaWakel";
+import JadwalPengurus from "./JadwalPengurus";
+import { RekapKehadiranSiswa } from "./RekapKehadiranSiswa";
 
 // ==================== INTERFACES ====================
 interface DashboardWalliKelasProps {
@@ -18,7 +19,9 @@ type WalikelasPage =
   | "jadwal-anda"
   | "notifikasi"
   | "input-manual"
-  | "kehadiran-siswa";
+  | "kehadiran-siswa"
+  | "jadwal-pengurus"
+  | "rekap-kehadiran-siswa";
 
 interface ScheduleItem {
   id: string;
@@ -29,11 +32,13 @@ interface ScheduleItem {
 }
 
 const PAGE_TITLES: Record<WalikelasPage, string> = {
-  Beranda: "Dashboard",
+  Beranda: "Beranda",
   "jadwal-anda": "Jadwal Anda",
   notifikasi: "Notifikasi",
   "input-manual": "Input Manual",
   "kehadiran-siswa": "Kehadiran Siswa",
+  "jadwal-pengurus": "Jadwal Kelas",
+  "rekap-kehadiran-siswa": "Rekap Kehadiran Siswa",
 };
 
 const BREAKPOINTS = {
@@ -77,130 +82,231 @@ const styles = {
     minHeight: "100vh",
   }),
 
-  topGrid: (isMobile: boolean) => ({
-    display: "grid" as const,
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-    gap: isMobile ? 12 : 16,
-    marginBottom: 8,
-  }),
-
-  userCard: (isMobile: boolean) => ({
-    position: "relative" as const,
-    padding: isMobile ? "16px" : "20px",
-    background: "linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)",
-    borderRadius: "14px",
-    color: "white",
+  // ===== BAGIAN ATAS BARU =====
+  topInfoCard: (isMobile: boolean) => ({
+    background: "white",
+    // color: "black",
+    borderRadius: "12px",
+    padding: isMobile ? "16px 20px" : "20px 24px",
     display: "flex",
     alignItems: "center",
     gap: "16px",
-    overflow: "hidden",
-    boxShadow: "0 4px 16px rgba(30, 58, 138, 0.3)",
-    gridColumn: isMobile ? "1" : "span 2",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+    border: "1px solid #E5E7EB",
   }),
 
-  decorativeCircle: {
-    position: "absolute" as const,
-    width: "140px",
-    height: "140px",
-    borderRadius: "50%",
-    background: "rgba(255, 255, 255, 0.08)",
-    top: "-50px",
-    right: "-50px",
-  },
-
-  userIcon: (isMobile: boolean) => ({
-    position: "relative" as const,
-    zIndex: 1,
-    width: isMobile ? "44px" : "52px",
-    height: isMobile ? "44px" : "52px",
-    borderRadius: "12px",
-    background: "rgba(255, 255, 255, 0.15)",
+  iconContainer: {
+    width: "40px",
+    height: "40px",
+    borderRadius: "8px",
+    background: "#06254D",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    border: "2px solid rgba(255, 255, 255, 0.25)",
-  }),
+  },
 
-  dateTimeCard: (isMobile: boolean) => ({
-    position: "relative" as const,
-    padding: isMobile ? "16px" : "20px",
-    background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+  textContainer: {
+    flex: 1,
+    textAlign: "left" as const,
+  },
+
+  titleText: {
+    color: "#06254D",
+    fontSize: "18px",
+    fontWeight: 700,
+    marginBottom: "4px",
+  },
+
+  subtitleText: {
+    color: "#6B7280",
+    fontSize: "14px",
+    fontWeight: 500,
+  },
+
+  // ===== CARD UNTUK SEMUA (KONSISTEN WARNA #06254D) =====
+  navyCard: (isMobile: boolean) => ({
+    background: "#06254D",
     borderRadius: "14px",
+    padding: isMobile ? "16px" : "20px",
     color: "white",
     display: "flex",
     flexDirection: "column" as const,
-    gap: "14px",
-    boxShadow: "0 4px 16px rgba(99, 102, 241, 0.3)",
+    justifyContent: "space-between",
+    boxShadow: "0 4px 12px rgba(6, 37, 77, 0.3)",
   }),
 
-  infoCard: (isMobile: boolean, color: string) => ({
-    position: "relative" as const,
-    padding: isMobile ? "16px" : "20px",
-    background: color,
+  // Card untuk tanggal & waktu (spesifik)
+  dateTimeCard: (isMobile: boolean) => ({
+    background: "#06254D",
     borderRadius: "14px",
+    padding: isMobile ? "16px" : "20px",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "10px",
+    boxShadow: "0 4px 12px rgba(6, 37, 77, 0.3)",
+  }),
+
+  dateTimeRow: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+  },
+
+  dateTimeText: {
+    fontSize: "14px",
+    opacity: 0.9,
+  },
+
+  // Card untuk statistik
+  statCard: (isMobile: boolean) => ({
+    background: "#06254D",
+    borderRadius: "14px",
+    padding: isMobile ? "16px" : "20px",
     color: "white",
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "space-between",
     gap: "14px",
-    boxShadow: `0 4px 16px rgba(0, 0, 0, 0.1)`,
+    boxShadow: "0 4px 12px rgba(6, 37, 77, 0.3)",
   }),
 
-  infoBadge: (isMobile: boolean) => ({
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  statHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+
+  statIcon: {
+    width: "20px",
+    height: "20px",
+    color: "rgba(255,255,255,0.95)",
+  },
+
+  statLabel: {
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.95)",
+  },
+
+  statBadge: (isMobile: boolean) => ({
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: "10px",
     padding: isMobile ? "8px 14px" : "10px 16px",
     fontSize: isMobile ? "15px" : "17px",
     fontWeight: 700,
     display: "inline-block",
     width: "fit-content",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+  }),
+
+  statBadgeSmall: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: "10px",
+    padding: "8px 12px",
+    fontSize: "14px",
+    fontWeight: 700,
+    display: "inline-block",
+    width: "fit-content",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+  },
+
+  // Style untuk top grid
+  topGrid: (isMobile: boolean) => ({
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+    gap: isMobile ? "12px" : "16px",
+    marginBottom: "8px",
   }),
 
   sectionTitle: (isMobile: boolean) => ({
     fontSize: isMobile ? "18px" : "20px",
     fontWeight: 700,
-    color: "#111827",
-    marginBottom: 16,
+    color: "#06254D",
+    marginBottom: "16px",
+    textAlign: "left" as const,
   }),
 
+  // ===== CARD JADWAL (KONSISTEN WARNA #06254D) =====
   scheduleCard: (isMobile: boolean) => ({
     display: "flex",
     alignItems: "center",
     gap: isMobile ? "12px" : "16px",
     padding: isMobile ? "14px 16px" : "18px 22px",
-    background: "#FFFFFF",
+    background: "#06254D",
     borderRadius: "12px",
-    border: "1px solid #E5E7EB",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     cursor: "pointer",
     transition: "all 0.3s ease",
-    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
+    boxShadow: "0 4px 12px rgba(6, 37, 77, 0.3)",
   }),
 
-  bookIconWrapper: (isMobile: boolean) => ({
+  scheduleIconWrapper: (isMobile: boolean) => ({
     width: isMobile ? "44px" : "48px",
     height: isMobile ? "44px" : "48px",
-    borderRadius: 12,
-    background: "linear-gradient(135deg, #2563EB 0%, #1E40AF 100%)",
+    borderRadius: "12px",
+    background: "rgba(255, 255, 255, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
-    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
   }),
 
+  scheduleContent: {
+    flex: 1,
+    textAlign: "left" as const,
+  },
+
+  scheduleSubject: {
+    fontSize: "16px",
+    fontWeight: 700,
+    color: "white",
+    marginBottom: "4px",
+  },
+
+  scheduleDetail: {
+    fontSize: "13px",
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: 500,
+  },
+
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#F3F4F6",
+    width: "40px",
+    height: "40px",
+    borderRadius: "10px",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
     transition: "all 0.3s",
-    border: "1px solid #E5E7EB",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+  },
+
+  actionIcon: {
+    color: "white",
+  },
+
+  eyeButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: "10px",
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+  },
+
+  // Container untuk aksi di card jadwal
+  scheduleActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   },
 };
 
@@ -209,11 +315,12 @@ export default function DashboardWalliKelas({
   onLogout,
 }: DashboardWalliKelasProps) {
   const [currentPage, setCurrentPage] = useState<WalikelasPage>("Beranda");
-  const [currentDateStr, setCurrentDateStr] = useState("");
-  const [currentTimeStr, setCurrentTimeStr] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
-  const [activeModal, setActiveModal] = useState<"schedule" | "metode" | "tidakBisa" | null>(null);
+  const [activeModal, setActiveModal] = useState<"schedule" | "metode" | null>(null);
+
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
 
   // Responsive handler
   useEffect(() => {
@@ -224,26 +331,29 @@ export default function DashboardWalliKelas({
 
   const isMobile = windowWidth < BREAKPOINTS.mobile;
 
-  // Real-time Clock
-  useEffect(() => {
-    const updateDateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      };
-      setCurrentDateStr(now.toLocaleDateString("id-ID", options));
-      setCurrentTimeStr(
-        now.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-    };
+  /* ================= DATE & TIME ================= */
+  const updateDateTime = () => {
+    const now = new Date();
 
+    setCurrentDate(
+      now.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
+
+    setCurrentTime(
+      now.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
+  };
+
+  useEffect(() => {
     updateDateTime();
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
@@ -264,6 +374,13 @@ export default function DashboardWalliKelas({
     setActiveModal("metode");
   };
 
+  // Handler untuk klik icon mata di card jadwal - langsung ke JadwalPengurus
+  const handleEyeScheduleClick = (e: React.MouseEvent, _schedule: ScheduleItem) => {
+    e.stopPropagation();
+    // Langsung navigasi ke halaman JadwalPengurus
+    setCurrentPage("jadwal-pengurus");
+  };
+
   const handlePilihQR = () => {
     setActiveModal("schedule");
   };
@@ -273,25 +390,12 @@ export default function DashboardWalliKelas({
     setCurrentPage("input-manual");
   };
 
-  const handleTidakBisaMengajar = () => {
-    setActiveModal("tidakBisa");
-  };
-
   const handleMulaiAbsen = () => {
     setActiveModal(null);
     setCurrentPage("input-manual");
   };
 
-  const handleSubmitTidakBisaMengajar = (data: {
-    alasan: string;
-    keterangan?: string;
-    foto1?: File;
-  }) => {
-    console.log("Data tidak bisa mengajar:", data);
-    alert("Laporan berhasil dikirim!");
-    setActiveModal(null);
-  };
-
+  // ========== RENDER HALAMAN BERDASARKAN CURRENT PAGE ==========
   if (currentPage === "input-manual") {
     return (
       <InputAbsenWalikelas
@@ -314,6 +418,29 @@ export default function DashboardWalliKelas({
     );
   }
 
+  // Jika currentPage adalah "jadwal-pengurus", render komponen JadwalPengurus
+  if (currentPage === "jadwal-pengurus") {
+    return (
+      <JadwalPengurus
+        user={{ name: user.name, phone: "1234567890" }}
+        currentPage="jadwal-pengurus"
+        onMenuClick={handleMenuClick}
+        onLogout={onLogout}
+      />
+    );
+  }
+
+  if (currentPage === "rekap-kehadiran-siswa") {
+    return (
+      <RekapKehadiranSiswa
+        user={user}
+        onLogout={onLogout}
+        currentPage={currentPage}
+        onMenuClick={handleMenuClick}
+      />
+    );
+  }
+
   return (
     <WalikelasLayout
       pageTitle={PAGE_TITLES[currentPage]}
@@ -323,95 +450,81 @@ export default function DashboardWalliKelas({
       onLogout={onLogout}
     >
       <div style={styles.mainContainer(isMobile)}>
-        {/* Top Grid: 4 Column Layout */}
-        <div style={styles.topGrid(isMobile)}>
-          {/* 1. User Info Card (Spans 2 on desktop) */}
-          <div style={styles.userCard(isMobile)}>
-            <div style={styles.decorativeCircle} />
-            <div style={styles.userIcon(isMobile)}>
-              <svg
-                width={isMobile ? "28" : "32"}
-                height={isMobile ? "28" : "32"}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#FFFFFF"
-                strokeWidth="2.5"
+        {/* ===== BAGIAN ATAS BARU (Background Putih, Teks Rata Kiri) ===== */}
+        <div style={styles.topInfoCard(isMobile)}>
+          <div style={styles.iconContainer}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 21H21M5 21V7L13 2L21 7V21M5 21H9M21 21H17M9 21V13H15V21M9 21H15"
+                stroke="white"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, zIndex: 1 }}>
-              <span style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 700, color: "#FFFFFF" }}>
-                {user.name}
-              </span>
-              {/* REMOVED SUBTITLE AS REQUESTED */}
-            </div>
+              />
+            </svg>
           </div>
 
-          {/* 2. Date & Time Card */}
+          <div style={styles.textContainer}>
+            <div style={styles.titleText}>
+              Selamat Datang di Beranda, {user.name}
+            </div>
+            <div style={styles.subtitleText}>
+              Kelola kelas Anda, pantau kehadiran siswa, dan input jadwal mengajar dengan mudah
+            </div>
+          </div>
+        </div>
+
+        {/* ===== TOP GRID (4 Column Layout) - SEMUA CARD WARNA NAVY ===== */}
+        <div style={styles.topGrid(isMobile)}>
+          {/* 1. Date & Time Card */}
           <div style={styles.dateTimeCard(isMobile)}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Calendar size={24} strokeWidth={1.5} />
-              <span style={{ fontSize: "14px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
-                {currentDateStr || "Memuat..."}
-              </span>
+            <div style={styles.dateTimeRow}>
+              📅 <span style={styles.dateTimeText}>{currentDate || "Memuat..."}</span>
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Clock size={24} strokeWidth={1.5} />
-              <span style={{ fontSize: "20px", fontWeight: "700", letterSpacing: "0.5px", color: "#FFFFFF" }}>
-                {currentTimeStr || "00:00:00"}
-              </span>
+            <div style={styles.dateTimeRow}>
+              ⏰ <span style={styles.dateTimeText}>{currentTime || "00:00:00"}</span>
+            </div>
+            <div style={styles.dateTimeRow}>
+              🎓 <span style={styles.dateTimeText}>Semester Genap</span>
             </div>
           </div>
 
-          {/* 3. Kelas Asuh Card */}
-          <div style={styles.infoCard(isMobile, "linear-gradient(135deg, #10B981 0%, #059669 100%)")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <BookOpen size={20} />
-              <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
-                Wali Kelas
-              </span>
+          {/* 2. Wali Kelas Card */}
+          <div style={styles.statCard(isMobile)}>
+            <div style={styles.statHeader}>
+              <BookOpen size={20} style={styles.statIcon} />
+              <span style={styles.statLabel}>Wali Kelas</span>
             </div>
-            <div style={styles.infoBadge(isMobile)}>
+            <div style={styles.statBadge(isMobile)}>
               X Mekatronika 1
             </div>
           </div>
 
-          {/* 4. Total Siswa Card */}
-          <div style={styles.infoCard(isMobile, "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Users size={20} />
-              <span style={{ fontSize: "13px", fontWeight: "600", color: "rgba(255,255,255,0.95)" }}>
-                Total Siswa
-              </span>
+          {/* 3. Total Siswa Card */}
+          <div style={styles.statCard(isMobile)}>
+            <div style={styles.statHeader}>
+              <Users size={20} style={styles.statIcon} />
+              <span style={styles.statLabel}>Total Siswa</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-              <div style={styles.infoBadge(isMobile)}>
+              <div style={styles.statBadge(isMobile)}>
                 40
               </div>
-              <div style={{
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                borderRadius: "10px",
-                width: 40,
-                height: 40,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                border: "1px solid rgba(255,255,255,0.3)"
-              }}
+              <div
+                style={styles.eyeButton}
                 onClick={handleEyeClick}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
                   e.currentTarget.style.transform = "scale(1.08)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
                   e.currentTarget.style.transform = "scale(1)";
                 }}
               >
@@ -421,7 +534,7 @@ export default function DashboardWalliKelas({
           </div>
         </div>
 
-        {/* Schedule Section */}
+        {/* ===== JADWAL KELAS - SEMUA CARD WARNA NAVY ===== */}
         <div>
           <h3 style={styles.sectionTitle(isMobile)}>Jadwal Kelas Anda</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -430,45 +543,66 @@ export default function DashboardWalliKelas({
                 key={item.id}
                 style={styles.scheduleCard(isMobile)}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.12)";
+                  e.currentTarget.style.boxShadow = "0 8px 20px rgba(6, 37, 77, 0.4)";
                   e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.backgroundColor = "#F9FAFB";
-                  e.currentTarget.style.borderColor = "#BFDBFE";
+                  e.currentTarget.style.backgroundColor = "#0A2E5C";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0, 0, 0, 0.05)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(6, 37, 77, 0.3)";
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.backgroundColor = "#FFFFFF";
-                  e.currentTarget.style.borderColor = "#E5E7EB";
+                  e.currentTarget.style.backgroundColor = "#06254D";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
                 }}
               >
-                <div style={styles.bookIconWrapper(isMobile)}>
+                <div style={styles.scheduleIconWrapper(isMobile)}>
                   <BookOpen size={isMobile ? 20 : 24} color="white" strokeWidth={2} />
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: "#111827", marginBottom: 4 }}>
+                <div style={styles.scheduleContent}>
+                  <div style={styles.scheduleSubject}>
                     {item.subject}
                   </div>
-                  <div style={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>
+                  <div style={styles.scheduleDetail}>
                     {item.className} • {item.jam}
                   </div>
                 </div>
 
-                {/* Action Icon (QR) */}
-                <div
-                  onClick={(e) => handleQRClick(e, item)}
-                  style={styles.actionButton}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#DBEAFE";
-                    e.currentTarget.style.transform = "scale(1.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#F3F4F6";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <QrCode size={20} color="#2563EB" />
+                {/* Action Icons (Mata dan QR) */}
+                <div style={styles.scheduleActions}>
+                  {/* Icon Mata - untuk melihat jadwal */}
+                  <div
+                    onClick={(e) => handleEyeScheduleClick(e, item)}
+                    style={styles.actionButton}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    title="Lihat Jadwal Kelas"
+                  >
+                    <Eye size={20} color="white" strokeWidth={2} />
+                  </div>
+
+                  {/* Icon QR - untuk absensi */}
+                  <div
+                    onClick={(e) => handleQRClick(e, item)}
+                    style={styles.actionButton}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    title="Absensi Kelas"
+                  >
+                    <QrCode size={20} color="white" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -482,7 +616,6 @@ export default function DashboardWalliKelas({
             onClose={() => setActiveModal(null)}
             onPilihQR={handlePilihQR}
             onPilihManual={handlePilihManual}
-            onTidakBisaMengajar={handleTidakBisaMengajar}
           />
         )}
 
@@ -502,29 +635,8 @@ export default function DashboardWalliKelas({
                 : { subject: "", className: "" }
             }
             onMulaiAbsen={handleMulaiAbsen}
-            onTidakBisaMengajar={handleTidakBisaMengajar}
           />
         )}
-
-        {activeModal === "tidakBisa" && (
-          <TidakBisaMengajar
-            isOpen={true}
-            onClose={() => setActiveModal(null)}
-            data={
-              selectedSchedule
-                ? {
-                  subject: selectedSchedule.subject,
-                  className: selectedSchedule.className,
-                  jurusan: selectedSchedule.jurusan,
-                  jam: selectedSchedule.jam,
-                }
-                : { subject: "", className: "" }
-            }
-            onSubmit={handleSubmitTidakBisaMengajar}
-            onPilihMetode={() => setActiveModal("metode")}
-          />
-        )}
-
       </div>
     </WalikelasLayout>
   );

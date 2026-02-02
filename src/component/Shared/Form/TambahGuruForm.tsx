@@ -9,18 +9,12 @@ interface TambahGuruFormProps {
     namaGuru: string;
     mataPelajaran: string;
     role: string;
-    password: string;
-    noTelp: string;
-    waliKelasDari: string;
   }) => void;
   initialData?: {
     kodeGuru: string;
     namaGuru: string;
     mataPelajaran: string;
     role: string;
-    password: string;
-    noTelp: string;
-    waliKelasDari: string;
   };
   isEdit?: boolean;
 }
@@ -29,6 +23,26 @@ const roleOptions = [
   { id: 'wali-kelas', nama: 'Wali Kelas' },
   { id: 'staf', nama: 'Staf' },
   { id: 'guru', nama: 'Guru' },
+];
+
+const mataPelajaranOptions = [
+  'Matematika',
+  'Bahasa Indonesia',
+  'Bahasa Inggris',
+  'Fisika',
+  'Kimia',
+  'Biologi',
+  'Sejarah',
+  'Geografi',
+  'Ekonomi',
+  'Sosiologi',
+  'Seni Budaya',
+  'Penjasorkes',
+  'PKn',
+  'Agama',
+  'Informatika',
+  'IPAS',
+  'Dasar Program Keahlian',
 ];
 
 export function TambahGuruForm({
@@ -42,17 +56,11 @@ export function TambahGuruForm({
   const [namaGuru, setNamaGuru] = useState(initialData?.namaGuru || '');
   const [mataPelajaran, setMataPelajaran] = useState(initialData?.mataPelajaran || '');
   const [role, setRole] = useState(initialData?.role || '');
-  const [password, setPassword] = useState(initialData?.password || '');
-  const [noTelp, setNoTelp] = useState(initialData?.noTelp || '');
-  const [waliKelasDari, setWaliKelasDari] = useState(initialData?.waliKelasDari || '');
   const [errors, setErrors] = useState<{
     kodeGuru?: string;
     namaGuru?: string;
     mataPelajaran?: string;
     role?: string;
-    password?: string;
-    noTelp?: string;
-    waliKelasDari?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,9 +69,6 @@ export function TambahGuruForm({
     setNamaGuru(initialData?.namaGuru || '');
     setMataPelajaran(initialData?.mataPelajaran || '');
     setRole(initialData?.role || '');
-    setPassword(initialData?.password || '');
-    setNoTelp(initialData?.noTelp || '');
-    setWaliKelasDari(initialData?.waliKelasDari || '');
     setErrors({});
     setIsSubmitting(false);
   };
@@ -79,31 +84,14 @@ export function TambahGuruForm({
       namaGuru?: string;
       mataPelajaran?: string;
       role?: string;
-      password?: string;
-      noTelp?: string;
-      waliKelasDari?: string;
     } = {};
 
-    if (!kodeGuru.trim()) newErrors.kodeGuru = 'Kode guru (NIP) wajib diisi';
+    if (!kodeGuru.trim()) newErrors.kodeGuru = 'Kode guru wajib diisi';
     else if (!/^\d+$/.test(kodeGuru)) newErrors.kodeGuru = 'Kode guru hanya boleh angka';
-    else if (kodeGuru.length !== 10) newErrors.kodeGuru = 'Kode guru harus 10 digit';
 
     if (!namaGuru.trim()) newErrors.namaGuru = 'Nama guru wajib diisi';
-    else if (namaGuru.trim().length < 3) newErrors.namaGuru = 'Nama guru minimal 3 karakter';
-
-    if (!mataPelajaran.trim()) newErrors.mataPelajaran = 'Mata pelajaran wajib diisi';
+    if (!mataPelajaran.trim()) newErrors.mataPelajaran = 'Mata pelajaran wajib dipilih';
     if (!role) newErrors.role = 'Role wajib dipilih';
-
-    if (!password.trim()) newErrors.password = 'Kata sandi wajib diisi';
-    else if (password.length < 6) newErrors.password = 'Kata sandi minimal 6 karakter';
-
-    if (!noTelp.trim()) newErrors.noTelp = 'No. telepon wajib diisi';
-    else if (!/^\d+$/.test(noTelp)) newErrors.noTelp = 'No. telepon hanya boleh angka';
-    else if (noTelp.length < 10 || noTelp.length > 13) newErrors.noTelp = 'No. telepon harus 10-13 digit';
-
-    if (role === 'Wali Kelas' && !waliKelasDari.trim()) {
-      newErrors.waliKelasDari = 'Wali kelas dari wajib diisi untuk role Wali Kelas';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -118,9 +106,6 @@ export function TambahGuruForm({
           namaGuru: namaGuru.trim(),
           mataPelajaran: mataPelajaran.trim(),
           role: role.trim(),
-          password: password.trim(),
-          noTelp: noTelp.trim(),
-          waliKelasDari: waliKelasDari.trim(),
         });
         handleReset();
         setIsSubmitting(false);
@@ -128,18 +113,10 @@ export function TambahGuruForm({
     }
   };
 
-  const handleKodeGuruChange = (value: string) => {
-    console.log('handleKodeGuruChange called with:', value);
-    if (/^\d*$/.test(value) && value.length <= 10) {
-      setKodeGuru(value);
-      if (errors.kodeGuru) setErrors({ ...errors, kodeGuru: undefined });
-    }
-  };
-
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     width: '100%',
     padding: '12px 14px',
-    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'} `,
+    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'}`,
     borderRadius: '10px',
     fontSize: '14px',
     outline: 'none',
@@ -147,6 +124,25 @@ export function TambahGuruForm({
     backgroundColor: '#ffffff',
     color: '#0f172a',
     transition: 'border-color 0.2s, box-shadow 0.2s',
+  });
+
+  const selectStyle = (hasError?: boolean): React.CSSProperties => ({
+    width: '100%',
+    padding: '12px 14px',
+    border: `1px solid ${hasError ? '#ef4444' : '#cbd5e1'}`,
+    borderRadius: '10px',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+    backgroundPosition: 'right 0.5rem center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '1.5em 1.5em',
+    paddingRight: '2.5rem',
   });
 
   const labelStyle: React.CSSProperties = {
@@ -174,6 +170,7 @@ export function TambahGuruForm({
       isSubmitting={isSubmitting}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Nama Guru */}
         <div>
           <label htmlFor="namaGuru" style={labelStyle}>Nama Guru</label>
           <input
@@ -191,28 +188,28 @@ export function TambahGuruForm({
           {errors.namaGuru && <p style={errorStyle}>{errors.namaGuru}</p>}
         </div>
 
+        {/* Kode Guru */}
         <div>
-          <label htmlFor="kodeGuru" style={labelStyle}>Kode Guru (NIP)</label>
+          <label htmlFor="kodeGuru" style={labelStyle}>Kode Guru</label>
           <input
             id="kodeGuru"
             type="text"
             placeholder="Masukkan kode guru"
             value={kodeGuru}
-            onChange={(e) => handleKodeGuruChange(e.target.value)}
-            maxLength={10}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                setKodeGuru(value);
+                if (errors.kodeGuru) setErrors({ ...errors, kodeGuru: undefined });
+              }
+            }}
             style={inputStyle(!!errors.kodeGuru)}
             disabled={isSubmitting}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-            {errors.kodeGuru ? (
-              <p style={errorStyle}>{errors.kodeGuru}</p>
-            ) : (
-              <span style={{ fontSize: '12px', color: '#6b7280' }}>Hanya angka, 10 digit</span>
-            )}
-            <span style={{ fontSize: '12px', color: '#6b7280' }}>{kodeGuru.length}/10</span>
-          </div>
+          {errors.kodeGuru && <p style={errorStyle}>{errors.kodeGuru}</p>}
         </div>
 
+        {/* Role */}
         <div>
           <label htmlFor="role" style={labelStyle}>Role</label>
           <select
@@ -222,7 +219,7 @@ export function TambahGuruForm({
               setRole(e.target.value);
               if (errors.role) setErrors({ ...errors, role: undefined });
             }}
-            style={inputStyle(!!errors.role)}
+            style={selectStyle(!!errors.role)}
             disabled={isSubmitting}
           >
             <option value="">Pilih Role</option>
@@ -235,6 +232,7 @@ export function TambahGuruForm({
           {errors.role && <p style={errorStyle}>{errors.role}</p>}
         </div>
 
+        {/* Mata Pelajaran */}
         <div>
           <label htmlFor="mataPelajaran" style={labelStyle}>Mata Pelajaran</label>
           <select
@@ -244,67 +242,17 @@ export function TambahGuruForm({
               setMataPelajaran(e.target.value);
               if (errors.mataPelajaran) setErrors({ ...errors, mataPelajaran: undefined });
             }}
-            style={inputStyle(!!errors.mataPelajaran)}
+            style={selectStyle(!!errors.mataPelajaran)}
             disabled={isSubmitting}
           >
             <option value="">Pilih Mata Pelajaran</option>
-            <option value="Matematika">Matematika</option>
-            <option value="Bahasa Indonesia">Bahasa Indonesia</option>
-            <option value="Bahasa Inggris">Bahasa Inggris</option>
-            <option value="Fisika">Fisika</option>
-            <option value="Kimia">Kimia</option>
-            <option value="Biologi">Biologi</option>
-            <option value="Sejarah">Sejarah</option>
-            <option value="Geografi">Geografi</option>
-            <option value="Ekonomi">Ekonomi</option>
-            <option value="Sosiologi">Sosiologi</option>
-            <option value="Seni Budaya">Seni Budaya</option>
-            <option value="Penjasorkes">Penjasorkes</option>
-            <option value="PKn">PKn</option>
-            <option value="Agama">Agama</option>
-            <option value="Informatika">Informatika</option>
-            <option value="IPAS">IPAS</option>
-            <option value="Dasar Program Keahlian">Dasar Program Keahlian</option>
+            {mataPelajaranOptions.map((mapel, index) => (
+              <option key={index} value={mapel}>
+                {mapel}
+              </option>
+            ))}
           </select>
           {errors.mataPelajaran && <p style={errorStyle}>{errors.mataPelajaran}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="password" style={labelStyle}>Kata Sandi</label>
-          <input
-            id="password"
-            type="text"
-            placeholder="Masukkan kata sandi"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors({ ...errors, password: undefined });
-            }}
-            style={inputStyle(!!errors.password)}
-            disabled={isSubmitting}
-          />
-          {errors.password && <p style={errorStyle}>{errors.password}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="noTelp" style={labelStyle}>No Telepon</label>
-          <input
-            id="noTelp"
-            type="text"
-            placeholder="Masukkan nomor telepon"
-            value={noTelp}
-            onChange={(e) => {
-              // Allow only numbers
-              if (/^\d*$/.test(e.target.value)) {
-                setNoTelp(e.target.value);
-                if (errors.noTelp) setErrors({ ...errors, noTelp: undefined });
-              }
-            }}
-            style={inputStyle(!!errors.noTelp)}
-            disabled={isSubmitting}
-            maxLength={13}
-          />
-          {errors.noTelp && <p style={errorStyle}>{errors.noTelp}</p>}
         </div>
       </div>
     </FormModal>

@@ -207,7 +207,7 @@ export default function LoginPage({ role, onLogin, onBack }: LoginPageProps) {
               Selamat Datang
             </h1>
             <h2 style={{ fontSize: 34, fontWeight: 700, margin: "6px 0 0 0" }}>
-              di Absensi Digital
+              di Presensi Pembelajaran Digital
             </h2>
           </div>
 

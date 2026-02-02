@@ -1,27 +1,20 @@
 import { useMemo, useState } from "react";
-import { User, SquarePen } from "lucide-react";
+import { User, SquarePen, ArrowLeft } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { FormModal } from "../../component/Shared/FormModal";
 import { Select } from "../../component/Shared/Select";
+import { StatusBadge } from "../../component/Shared/StatusBadge";
 
 type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa";
 
 type RowKehadiran = {
   no: number;
-  tanggal: string; // dd-mm-yyyy
-  jam: string; // "1-4"
+  tanggal: string;
+  jam: string;
   mapel: string;
   kelas: string;
   status: StatusKehadiran;
 };
-
-interface DetailKehadiranGuruProps {
-  user?: { name: string; role: string };
-  currentPage?: string;
-  onMenuClick?: (page: string) => void;
-  onLogout?: () => void;
-  onBack?: () => void;
-}
 
 export default function DetailKehadiranGuru({
   user = { name: "Admin", role: "waka" },
@@ -29,11 +22,10 @@ export default function DetailKehadiranGuru({
   onMenuClick = () => {},
   onLogout = () => {},
   onBack = () => {},
-}: DetailKehadiranGuruProps) {
-  // contoh data (silakan ganti dari API)
+}) {
   const [rows, setRows] = useState<RowKehadiran[]>([
     {
-      no: 2,
+      no: 1,
       tanggal: "25-05-2025",
       jam: "1-4",
       mapel: "Matematika",
@@ -49,7 +41,7 @@ export default function DetailKehadiranGuru({
       status: "Hadir",
     },
     {
-      no: 2,
+      no: 3,
       tanggal: "25-05-2025",
       jam: "9-10",
       mapel: "Matematika",
@@ -84,12 +76,6 @@ export default function DetailKehadiranGuru({
     setIsEditOpen(true);
   };
 
-  const handleCloseEdit = () => {
-    setIsEditOpen(false);
-    setEditingRow(null);
-    setIsSubmitting(false);
-  };
-
   const handleSubmitEdit = () => {
     if (!editingRow) return;
     setIsSubmitting(true);
@@ -105,29 +91,17 @@ export default function DetailKehadiranGuru({
     }, 300);
   };
 
-  const statusStyle = (status: StatusKehadiran): React.CSSProperties => {
-    if (status === "Hadir") {
-      return {
-        backgroundColor: "#0AA000",
-        color: "#FFFFFF",
-      };
+  const mapStatusToBadge = (status: StatusKehadiran) => {
+    switch (status) {
+      case "Hadir":
+        return "hadir";
+      case "Izin":
+        return "izin";
+      case "Sakit":
+        return "sakit";
+      default:
+        return "tidak-hadir";
     }
-    if (status === "Izin") {
-      return {
-        backgroundColor: "#D6BE2C",
-        color: "#FFFFFF",
-      };
-    }
-    if (status === "Sakit") {
-      return {
-        backgroundColor: "#3B82F6",
-        color: "#FFFFFF",
-      };
-    }
-    return {
-      backgroundColor: "#EF4444",
-      color: "#FFFFFF",
-    };
   };
 
   return (
@@ -138,184 +112,166 @@ export default function DetailKehadiranGuru({
       user={user}
       onLogout={onLogout}
     >
-      <div style={{ width: "100%" }}>
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          style={{
-            marginBottom: "20px",
-            padding: "10px 16px",
-            borderRadius: "8px",
-            border: "1px solid #E2E8F0",
-            backgroundColor: "#FFFFFF",
-            color: "#0F172A",
-            fontWeight: "600",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#F1F5F9";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#FFFFFF";
-          }}
-        >
-          ← Kembali
-        </button>
-
-        {/* CONTENT */}
-        <div style={{ padding: "28px 24px 40px" }}>
-        {/* Card Guru */}
+      {/* CARD GURU */}
+      <div
+        style={{
+          width: 420,
+          backgroundColor: "#062A4A",
+          borderRadius: 10,
+          padding: 18,
+          display: "flex",
+          gap: 16,
+          color: "#fff",
+          marginBottom: 24,
+        }}
+      >
         <div
           style={{
-            width: 420,
-            backgroundColor: "#062A4A",
-            borderRadius: 10,
-            padding: "18px 18px",
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            color: "#FFFFFF",
-            boxShadow: "0 10px 24px rgba(0,0,0,0.10)",
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            backgroundColor: "rgba(255,255,255,0.15)",
+            display: "grid",
+            placeItems: "center",
           }}
         >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              backgroundColor: "rgba(255,255,255,0.10)",
-              display: "grid",
-              placeItems: "center",
-              flexShrink: 0,
-            }}
-          >
-            <User size={30} color="#FFFFFF" />
-          </div>
-
-          <div style={{ lineHeight: 1.15 }}>
-            <div style={{ fontSize: 22, fontWeight: 900 }}>{guruInfo.name}</div>
-            <div style={{ marginTop: 6, fontSize: 18, fontWeight: 700, opacity: 0.95 }}>
-              {guruInfo.phone}
-            </div>
-          </div>
+          <User size={30} />
         </div>
-
-        {/* Table */}
-        <div
-          style={{
-            marginTop: 34,
-            borderRadius: 8,
-            overflow: "hidden",
-            border: "2px solid #C7C7C7",
-            backgroundColor: "#FFFFFF",
-          }}
-        >
-          {/* header */}
-          <div
-            style={{
-              backgroundColor: "#C9C3C3",
-              padding: "14px 0",
-              display: "grid",
-              gridTemplateColumns: "90px 160px 220px 260px 220px 160px 90px",
-              alignItems: "center",
-              fontWeight: 900,
-              color: "#374151",
-              fontSize: 20,
-            }}
-          >
-            <div style={{ paddingLeft: 16 }}>No</div>
-            <div>Tanggal</div>
-            <div>Jam Pelajaran</div>
-            <div>Mata Pelajaran</div>
-            <div>Kelas</div>
-            <div style={{ textAlign: "center" }}>Status</div>
-            <div style={{ textAlign: "center" }}>Aksi</div>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>
+            {guruInfo.name}
           </div>
-
-          {/* rows */}
-          {rows.map((r, idx) => (
-            <div
-              key={`${r.no}-${idx}`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "90px 160px 220px 260px 220px 160px 90px",
-                alignItems: "center",
-                padding: "16px 0",
-                borderTop: idx === 0 ? "1px solid #7B7B7B" : "1px solid #7B7B7B",
-                fontSize: 20,
-                color: "#0F172A",
-                backgroundColor: "#FFFFFF",
-              }}
-            >
-              <div style={{ paddingLeft: 24 }}>{r.no}.</div>
-              <div style={{ fontWeight: 800 }}>{r.tanggal}</div>
-              <div style={{ textAlign: "center", fontWeight: 800 }}>{r.jam}</div>
-              <div style={{ fontWeight: 900, textAlign: "center" }}>{r.mapel}</div>
-              <div style={{ fontWeight: 800 }}>{r.kelas}</div>
-
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <div
-                  style={{
-                    minWidth: 130,
-                    padding: "8px 16px",
-                    borderRadius: 10,
-                    fontWeight: 900,
-                    textAlign: "center",
-                    ...statusStyle(r.status),
-                  }}
-                >
-                  {r.status}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <button
-                  type="button"
-                  aria-label="Edit"
-                  onClick={() => handleOpenEdit(r)}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                >
-                  <SquarePen size={28} color="#0F172A" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+          <div style={{ fontSize: 15, opacity: 0.9 }}>
+            {guruInfo.phone}
+          </div>
         </div>
       </div>
 
+      {/* BUTTON KEMBALI */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: 10,
+        }}
+      >
+        <button
+          onClick={onBack}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 14px",
+            borderRadius: 8,
+            backgroundColor: "#494a4b",
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <ArrowLeft size={16} />
+          Kembali
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <div
+        style={{
+          border: "1px solid #E5E7EB",
+          borderRadius: 10,
+          overflow: "hidden",
+          backgroundColor: "#fff",
+        }}
+      >
+        {/* HEADER */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "70px 140px 140px 220px 200px 150px 90px",
+            backgroundColor: "#E5E7EB",
+            padding: "12px 0",
+            fontWeight: 700,
+            fontSize: 14,
+            textAlign: "center",
+          }}
+        >
+          <div>No</div>
+          <div>Tanggal</div>
+          <div>Jam</div>
+          <div>Mapel</div>
+          <div>Kelas</div>
+          <div>Status</div>
+          <div style={{ textAlign: "right", paddingRight: 16 }}>
+            Aksi
+          </div>
+        </div>
+
+        {/* ROW */}
+        {rows.map((r, i) => (
+          <div
+            key={i}
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "70px 140px 140px 220px 200px 150px 90px",
+              padding: "12px 0",
+              fontSize: 14,
+              alignItems: "center",
+              textAlign: "center",
+              borderTop: "1px solid #E5E7EB",
+              backgroundColor: "#fff",
+            }}
+          >
+            <div>{r.no}</div>
+            <div>{r.tanggal}</div>
+            <div>{r.jam}</div>
+            <div>{r.mapel}</div>
+            <div>{r.kelas}</div>
+
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <StatusBadge status={mapStatusToBadge(r.status)} />
+            </div>
+
+            {/* AKSI */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                paddingRight: 16,
+              }}
+            >
+              <button
+                onClick={() => handleOpenEdit(r)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <SquarePen size={20} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* MODAL */}
       <FormModal
         isOpen={isEditOpen}
-        onClose={handleCloseEdit}
-        title="Edit Kehadiran"
+        onClose={() => setIsEditOpen(false)}
+        title="Ubah Kehadiran"
         onSubmit={handleSubmitEdit}
         submitLabel="Simpan"
         isSubmitting={isSubmitting}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>
-            Pilih Kehadiran
-          </div>
-          <Select
-            value={editStatus}
-            onChange={(val) => setEditStatus(val as StatusKehadiran)}
-            options={statusOptions}
-            placeholder="Hadir/Sakit/Izin/Tdk Hadir"
-          />
-        </div>
+        <Select
+          value={editStatus}
+          onChange={(v) => setEditStatus(v as StatusKehadiran)}
+          options={statusOptions}
+        />
       </FormModal>
     </StaffLayout>
   );

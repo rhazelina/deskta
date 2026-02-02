@@ -1,8 +1,9 @@
 // src/Pages/WakaStaff/JadwalGuruStaff.tsx
-import { useState } from 'react';
-import StaffLayout from '../../component/WakaStaff/StaffLayout';
-import { SearchBox } from '../../component/Shared/Search';
-import { Table } from '../../component/Shared/Table';
+import { useState } from "react";
+import StaffLayout from "../../component/WakaStaff/StaffLayout";
+import { SearchBox } from "../../component/Shared/Search";
+import { Table } from "../../component/Shared/Table";
+import { Eye, Upload } from "lucide-react";
 
 interface JadwalGuruStaffProps {
   user: {
@@ -11,8 +12,8 @@ interface JadwalGuruStaffProps {
   };
   onLogout: () => void;
   currentPage: string;
-  onMenuClick: (page: string) => void;
-  onselectGuru?: (guruId: string) => void;
+  onMenuClick: (page: string, payload?: any) => void;
+  onselectGuru?: (namaGuru: string) => void;
 }
 
 interface GuruJadwal {
@@ -25,32 +26,32 @@ interface GuruJadwal {
 
 const dummyGuruJadwal: GuruJadwal[] = [
   {
-    id: '1',
-    kodeGuru: '0918415784',
-    namaGuru: 'Alifah Diantobes Aindra S.Pd',
-    mataPelajaran: 'Matematika',
-    role: 'Wali Kelas',
+    id: "1",
+    kodeGuru: "0918415784",
+    namaGuru: "Alifah Diantobes Aindra S.Pd",
+    mataPelajaran: "Matematika",
+    role: "Wali Kelas",
   },
   {
-    id: '2',
-    kodeGuru: '1348576392',
-    namaGuru: 'Budi Santoso',
-    mataPelajaran: 'Bahasa Inggris',
-    role: 'Staf',
+    id: "2",
+    kodeGuru: "1348576392",
+    namaGuru: "Budi Santoso",
+    mataPelajaran: "Bahasa Inggris",
+    role: "Staf",
   },
   {
-    id: '3',
-    kodeGuru: '0918415785',
-    namaGuru: 'Joko Widodo',
-    mataPelajaran: 'Fisika',
-    role: 'Wali Kelas',
+    id: "3",
+    kodeGuru: "0918415785",
+    namaGuru: "Joko Widodo",
+    mataPelajaran: "Fisika",
+    role: "Wali Kelas",
   },
   {
-    id: '4',
-    kodeGuru: '1348576393',
-    namaGuru: 'Siti Nurhaliza',
-    mataPelajaran: 'Kimia',
-    role: 'Staf',
+    id: "4",
+    kodeGuru: "1348576393",
+    namaGuru: "Siti Nurhaliza",
+    mataPelajaran: "Kimia",
+    role: "Staf",
   },
 ];
 
@@ -61,7 +62,8 @@ export default function JadwalGuruStaff({
   onMenuClick,
   onselectGuru,
 }: JadwalGuruStaffProps) {
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
+  const [jadwalImages, setJadwalImages] = useState<Record<string, string>>({});
 
   const filteredData = dummyGuruJadwal.filter(
     (item) =>
@@ -71,19 +73,83 @@ export default function JadwalGuruStaff({
       item.role.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  const columns = [
-    { key: 'kodeGuru', label: 'Kode Guru' },
-    { key: 'namaGuru', label: 'Nama Guru' },
-    { key: 'mataPelajaran', label: 'Mata Pelajaran' },
-    { key: 'role', label: 'Role' },
-  ];
+  const handleUpload = (row: GuruJadwal) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png, image/jpeg, image/jpg";
+
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        const imageUrl = URL.createObjectURL(file);
+        setJadwalImages((prev) => ({
+          ...prev,
+          [row.id]: imageUrl,
+        }));
+      }
+    };
+
+    input.click();
+  };
 
   const handleViewDetail = (row: GuruJadwal) => {
     if (onselectGuru) {
-      onselectGuru(row.id);
+      onselectGuru(row.namaGuru);
     }
-    onMenuClick('lihat-guru');
+
+    onMenuClick("lihat-guru", {
+      namaGuru: row.namaGuru,
+      noIdentitas: row.kodeGuru,
+      jadwalImage: jadwalImages[row.id],
+    });
   };
+
+  const columns = [
+    { key: "kodeGuru", label: "Kode Guru" },
+    { key: "namaGuru", label: "Nama Guru" },
+    { key: "mataPelajaran", label: "Mata Pelajaran" },
+    { key: "role", label: "Role" },
+    {
+      key: "aksi",
+      label: "Aksi",
+      align: "center",
+      render: (_: any, row: GuruJadwal) => (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <button
+            onClick={() => handleViewDetail(row)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Eye size={18} />
+          </button>
+
+          <button
+            onClick={() => handleUpload(row)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Upload size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <StaffLayout
@@ -93,49 +159,29 @@ export default function JadwalGuruStaff({
       user={user}
       onLogout={onLogout}
     >
-      {/* Container utama dengan style konsisten Admin */}
       <div
         style={{
-          position: 'relative',
-          minHeight: '100%',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          padding: '32px',
-          border: '1px solid #E5E7EB',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          backgroundColor: "#FFFFFF",
+          borderRadius: 12,
+          padding: 32,
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
         }}
       >
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* Header: Search */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '24px',
-              gap: '16px',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <SearchBox
-                placeholder="Cari guru..."
-                value={searchValue}
-                onChange={setSearchValue}
-              />
-            </div>
-          </div>
-
-          {/* Tabel Guru */}
-          <Table
-            columns={columns}
-            data={filteredData}
-            onView={handleViewDetail}
-            keyField="id"
-            emptyMessage="Belum ada data jadwal guru."
+        <div style={{ marginBottom: 24 }}>
+          <SearchBox
+            placeholder="Cari guru..."
+            value={searchValue}
+            onChange={setSearchValue}
           />
         </div>
+
+        <Table
+          columns={columns}
+          data={filteredData}
+          keyField="id"
+          emptyMessage="Belum ada data jadwal guru."
+        />
       </div>
     </StaffLayout>
   );

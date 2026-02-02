@@ -1,22 +1,21 @@
 import { useState } from "react";
 import { FormModal } from "./FormModal";
+import { Select } from "./Select";
 
 interface EditGuruFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
-    role: string;
-    password: string;
+    jenisKelamin: string;
+    peran: string;
     noTelp: string;
-    waliKelasDari: string;
-    mataPelajaran: string;
+    password: string;
   }) => void;
   initialData: {
-    role: string;
-    password: string;
+    jenisKelamin: string;
+    peran: string;
     noTelp: string;
-    waliKelasDari: string;
-    mataPelajaran: string;
+    password: string;
   };
 }
 
@@ -26,26 +25,23 @@ export function EditGuruForm({
   onSubmit,
   initialData,
 }: EditGuruFormProps) {
-  const [role, setRole] = useState(initialData.role);
-  const [password, setPassword] = useState(initialData.password);
+  const [jenisKelamin, setJenisKelamin] = useState(initialData.jenisKelamin);
+  const [peran, setPeran] = useState(initialData.peran);
   const [noTelp, setNoTelp] = useState(initialData.noTelp);
-  const [waliKelasDari, setWaliKelasDari] = useState(initialData.waliKelasDari);
-  const [mataPelajaran, setMataPelajaran] = useState(initialData.mataPelajaran);
+  const [password, setPassword] = useState(initialData.password);
   const [errors, setErrors] = useState<{
-    role?: string;
-    password?: string;
+    jenisKelamin?: string;
+    peran?: string;
     noTelp?: string;
-    waliKelasDari?: string;
-    mataPelajaran?: string;
+    password?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleReset = () => {
-    setRole(initialData.role);
-    setPassword(initialData.password);
+    setJenisKelamin(initialData.jenisKelamin);
+    setPeran(initialData.peran);
     setNoTelp(initialData.noTelp);
-    setWaliKelasDari(initialData.waliKelasDari);
-    setMataPelajaran(initialData.mataPelajaran);
+    setPassword(initialData.password);
     setErrors({});
     setIsSubmitting(false);
   };
@@ -56,38 +52,21 @@ export function EditGuruForm({
   };
 
   const validate = (): boolean => {
-    const newErrors: {
-      role?: string;
-      password?: string;
-      noTelp?: string;
-      waliKelasDari?: string;
-      mataPelajaran?: string;
-    } = {};
+    const newErrors: typeof errors = {};
 
-    if (!role.trim()) {
-      newErrors.role = "Role wajib diisi";
+    if (!jenisKelamin.trim()) {
+      newErrors.jenisKelamin = "Jenis kelamin harus diisi";
     }
-
-    if (!password.trim()) {
-      newErrors.password = "Password wajib diisi";
-    } else if (password.length < 6) {
-      newErrors.password = "Password minimal 6 karakter";
+    if (!peran.trim()) {
+      newErrors.peran = "Peran harus diisi";
     }
-
     if (!noTelp.trim()) {
-      newErrors.noTelp = "No. Telepon wajib diisi";
-    } else if (!/^\d+$/.test(noTelp)) {
-      newErrors.noTelp = "No. Telepon hanya boleh angka";
-    } else if (noTelp.length < 10 || noTelp.length > 13) {
-      newErrors.noTelp = "No. Telepon harus 10-13 digit";
+      newErrors.noTelp = "No. Telp harus diisi";
+    } else if (!/^\d{10,13}$/.test(noTelp.trim())) {
+      newErrors.noTelp = "No. Telp harus 10-13 digit angka";
     }
-
-    if (!waliKelasDari.trim()) {
-      newErrors.waliKelasDari = "Wali Kelas dari wajib diisi";
-    }
-
-    if (!mataPelajaran.trim()) {
-      newErrors.mataPelajaran = "Mata Pelajaran wajib diisi";
+    if (!password.trim()) {
+      newErrors.password = "Kata sandi harus diisi";
     }
 
     setErrors(newErrors);
@@ -99,11 +78,10 @@ export function EditGuruForm({
       setIsSubmitting(true);
       setTimeout(() => {
         onSubmit({
-          role: role.trim(),
-          password: password.trim(),
+          jenisKelamin: jenisKelamin.trim(),
+          peran: peran.trim(),
           noTelp: noTelp.trim(),
-          waliKelasDari: waliKelasDari.trim(),
-          mataPelajaran: mataPelajaran.trim(),
+          password: password.trim(),
         });
         handleReset();
         setIsSubmitting(false);
@@ -120,6 +98,50 @@ export function EditGuruForm({
     }
   };
 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (errors.password) {
+      setErrors({ ...errors, password: undefined });
+    }
+  };
+
+  const jenisKelaminOptions = [
+    { label: "Laki-Laki", value: "Laki-Laki" },
+    { label: "Perempuan", value: "Perempuan" },
+  ];
+
+  const peranOptions = [
+    { label: "Wali Kelas", value: "Wali Kelas" },
+    { label: "Guru Mapel", value: "Guru Mapel" },
+    { label: "Guru BK", value: "Guru BK" },
+    { label: "Kepala Sekolah", value: "Kepala Sekolah" },
+  ];
+
+  const inputStyle = (hasError: boolean): React.CSSProperties => ({
+    width: "100%",
+    padding: "10px 12px",
+    border: `1px solid ${hasError ? "#ef4444" : "#d1d5db"}`,
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+  });
+
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontWeight: "600",
+    fontSize: "14px",
+    marginBottom: "8px",
+    color: "#1f2937",
+  };
+
+  const errorStyle: React.CSSProperties = {
+    color: "#ef4444",
+    fontSize: "12px",
+    marginTop: "4px",
+    margin: "4px 0 0 0",
+  };
+
   return (
     <FormModal
       isOpen={isOpen}
@@ -130,260 +152,66 @@ export function EditGuruForm({
       isSubmitting={isSubmitting}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* Role */}
+        {/* Jenis Kelamin */}
         <div>
-          <label
-            htmlFor="role"
-            style={{
-              display: "block",
-              fontWeight: "600",
-              fontSize: "14px",
-              marginBottom: "8px",
-              color: "#1f2937",
-            }}
-          >
-            Role
-          </label>
-          <input
-            id="role"
-            type="text"
-            placeholder="Masukkan role"
-            value={role}
-            onChange={(e) => {
-              setRole(e.target.value);
-              if (errors.role) {
-                setErrors({ ...errors, role: undefined });
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: `1px solid ${errors.role ? "#ef4444" : "#d1d5db"}`,
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            disabled={isSubmitting}
+          <label style={labelStyle}>Jenis Kelamin</label>
+          <Select
+            value={jenisKelamin}
+            onChange={setJenisKelamin}
+            options={jenisKelaminOptions}
+            placeholder="Pilih jenis kelamin"
           />
-          {errors.role && (
-            <p
-              style={{
-                color: "#ef4444",
-                fontSize: "12px",
-                marginTop: "4px",
-                margin: "4px 0 0 0",
-              }}
-            >
-              {errors.role}
-            </p>
+          {errors.jenisKelamin && (
+            <p style={errorStyle}>{errors.jenisKelamin}</p>
           )}
         </div>
 
-        {/* Password */}
+        {/* Peran */}
         <div>
-          <label
-            htmlFor="password"
-            style={{
-              display: "block",
-              fontWeight: "600",
-              fontSize: "14px",
-              marginBottom: "8px",
-              color: "#1f2937",
-            }}
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="text"
-            placeholder="Masukkan password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) {
-                setErrors({ ...errors, password: undefined });
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`,
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            disabled={isSubmitting}
+          <label style={labelStyle}>Peran</label>
+          <Select
+            value={peran}
+            onChange={setPeran}
+            options={peranOptions}
+            placeholder="Pilih peran"
           />
-          {errors.password && (
-            <p
-              style={{
-                color: "#ef4444",
-                fontSize: "12px",
-                marginTop: "4px",
-                margin: "4px 0 0 0",
-              }}
-            >
-              {errors.password}
-            </p>
+          {errors.peran && (
+            <p style={errorStyle}>{errors.peran}</p>
           )}
         </div>
 
         {/* No. Telp */}
         <div>
-          <label
-            htmlFor="noTelp"
-            style={{
-              display: "block",
-              fontWeight: "600",
-              fontSize: "14px",
-              marginBottom: "8px",
-              color: "#1f2937",
-            }}
-          >
+          <label htmlFor="noTelp" style={labelStyle}>
             No. Telp
           </label>
           <input
             id="noTelp"
             type="text"
-            placeholder="Masukkan nomor telepon"
+            placeholder="Masukkan no. telp (10-13 digit)"
             value={noTelp}
             onChange={(e) => handleNoTelpChange(e.target.value)}
-            maxLength={13}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: `1px solid ${errors.noTelp ? "#ef4444" : "#d1d5db"}`,
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
+            style={inputStyle(!!errors.noTelp)}
             disabled={isSubmitting}
           />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "4px",
-            }}
-          >
-            {errors.noTelp ? (
-              <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>
-                {errors.noTelp}
-              </p>
-            ) : (
-              <span style={{ fontSize: "12px", color: "#6b7280" }}>
-                Hanya angka, 10-13 digit
-              </span>
-            )}
-            <span style={{ fontSize: "12px", color: "#6b7280" }}>
-              {noTelp.length}/13
-            </span>
-          </div>
+          {errors.noTelp && <p style={errorStyle}>{errors.noTelp}</p>}
         </div>
 
-        {/* Wali Kelas dari */}
+        {/* Kata Sandi */}
         <div>
-          <label
-            htmlFor="waliKelasDari"
-            style={{
-              display: "block",
-              fontWeight: "600",
-              fontSize: "14px",
-              marginBottom: "8px",
-              color: "#1f2937",
-            }}
-          >
-            Wali Kelas dari
+          <label htmlFor="password" style={labelStyle}>
+            Kata Sandi
           </label>
           <input
-            id="waliKelasDari"
+            id="password"
             type="text"
-            placeholder="Contoh: XII RPL 2"
-            value={waliKelasDari}
-            onChange={(e) => {
-              setWaliKelasDari(e.target.value);
-              if (errors.waliKelasDari) {
-                setErrors({ ...errors, waliKelasDari: undefined });
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: `1px solid ${errors.waliKelasDari ? "#ef4444" : "#d1d5db"
-                }`,
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
+            placeholder="Masukkan kata sandi"
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            style={inputStyle(!!errors.password)}
             disabled={isSubmitting}
           />
-          {errors.waliKelasDari && (
-            <p
-              style={{
-                color: "#ef4444",
-                fontSize: "12px",
-                marginTop: "4px",
-                margin: "4px 0 0 0",
-              }}
-            >
-              {errors.waliKelasDari}
-            </p>
-          )}
-        </div>
-
-        {/* Mata Pelajaran */}
-        <div>
-          <label
-            htmlFor="mataPelajaran"
-            style={{
-              display: "block",
-              fontWeight: "600",
-              fontSize: "14px",
-              marginBottom: "8px",
-              color: "#1f2937",
-            }}
-          >
-            Mata Pelajaran
-          </label>
-          <input
-            id="mataPelajaran"
-            type="text"
-            placeholder="Contoh: MTK, B.Ing"
-            value={mataPelajaran}
-            onChange={(e) => {
-              setMataPelajaran(e.target.value);
-              if (errors.mataPelajaran) {
-                setErrors({ ...errors, mataPelajaran: undefined });
-              }
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: `1px solid ${errors.mataPelajaran ? "#ef4444" : "#d1d5db"
-                }`,
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            disabled={isSubmitting}
-          />
-          {errors.mataPelajaran && (
-            <p
-              style={{
-                color: "#ef4444",
-                fontSize: "12px",
-                marginTop: "4px",
-                margin: "4px 0 0 0",
-              }}
-            >
-              {errors.mataPelajaran}
-            </p>
-          )}
+          {errors.password && <p style={errorStyle}>{errors.password}</p>}
         </div>
       </div>
     </FormModal>

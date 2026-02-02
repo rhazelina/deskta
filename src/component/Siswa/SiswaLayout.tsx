@@ -1,7 +1,9 @@
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "../Sidebar";
+import { useLocalLenis } from "../Shared/SmoothScroll";
 
-type MenuKey = "dashboard" | "jadwal-anda" | "notifikasi" | "absensi";
+type MenuKey = "dashboard" | "jadwal-anda" | "absensi" | "notifikasi";
 
 interface SiswaLayoutProps {
   user: { name: string; phone: string };
@@ -24,6 +26,9 @@ export default function SiswaLayout({
     const saved = localStorage.getItem("sidebarOpenSiswa");
     return saved ? saved === "true" : true;
   });
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useLocalLenis(scrollContainerRef);
 
   useEffect(() => {
     localStorage.setItem("sidebarOpenSiswa", isOpen.toString());
@@ -111,14 +116,14 @@ export default function SiswaLayout({
               </p>
             )}
           </div>
-          
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
+
+          <div style={{
+            display: "flex",
+            alignItems: "center",
             gap: "16px",
-            flexShrink: 0 
+            flexShrink: 0
           }}>
-            <div style={{ 
+            <div style={{
               textAlign: "right",
               paddingRight: "16px",
               borderRight: "1px solid #E5E7EB"
@@ -150,6 +155,7 @@ export default function SiswaLayout({
 
         {/* Main Content Area */}
         <main
+          ref={scrollContainerRef}
           style={{
             flex: 1,
             overflowY: "auto",
@@ -161,7 +167,18 @@ export default function SiswaLayout({
             height: "100%",
           }}
         >
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              style={{ width: "100%" }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { FormModal } from "../../Shared/FormModal";
+import { FormModal } from "../FormModal";
 
 interface KelasFormProps {
   isOpen: boolean;
@@ -59,32 +59,32 @@ export function TambahKelasForm({
     }
   }, [isOpen, initialData]);
 
-  const labelStyle: React.CSSProperties = {
-    fontWeight: 600,
-    fontSize: "14px",
-    marginBottom: "8px",
-    color: "#374151",
-    display: "block",
-  };
+  // Data guru dengan 3 data guru random + Alifah Diantebes
+  const defaultWaliKelasList = [
+    ...waliKelasList,
+    { id: "Alifah Diantebes Aindra S.pd", nama: "Alifah Diantebes Aindra S.pd" },
+    { id: "Budi Santoso, S.Pd", nama: "Budi Santoso, S.Pd" },
+    { id: "Sri Wulandari, M.Pd", nama: "Sri Wulandari, M.Pd" },
+    { id: "Ahmad Fauzi, S.Pd", nama: "Ahmad Fauzi, S.Pd" }
+  ];
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "1px solid #E5E7EB",
-    fontSize: "14px",
-    backgroundColor: "#F9FAFB",
-    color: "#1F2937",
-    outline: "none",
-    boxSizing: "border-box",
-  };
+  // Filter guru yang tersedia (belum menjadi wali kelas atau sedang diedit)
+  const availableWaliKelas = defaultWaliKelasList.filter((guru) =>
+    !takenWaliKelasIds.includes(guru.id) || guru.id === initialData?.waliKelasId
+  );
 
   return (
     <FormModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? "Edit Kelas" : "Tambah Kelas"}
-      titleStyle={{ textAlign: "center" }}
+      title={isEdit ? "Ubah Kelas" : "Tambah Kelas"}
+      titleStyle={{
+        textAlign: "center",
+        fontSize: "20px",
+        fontWeight: 600,
+        color: "#FFFFFF", // Judul warna putih
+        marginBottom: "8px"
+      }}
       submitLabel={isEdit ? "Simpan" : "Tambahkan"}
       onSubmit={() =>
         onSubmit({
@@ -94,15 +94,58 @@ export function TambahKelasForm({
           waliKelasId,
         })
       }
+      contentStyle={{
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(8px)",
+        borderRadius: "16px",
+        padding: "24px",
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
+        border: "1px solid rgba(255, 255, 255, 0.6)",
+        position: "relative",
+        zIndex: 10,
+      }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+        marginTop: 8
+      }}>
         {/* Konsentrasi Keahlian */}
         <div>
-          <label style={labelStyle}>Konsentrasi Keahlian</label>
+          <label style={{
+            fontWeight: 600,
+            fontSize: "14px",
+            marginBottom: "10px",
+            color: "#374151",
+            display: "block",
+          }}>
+            Konsentrasi Keahlian
+          </label>
           <select
             value={jurusanId}
             onChange={(e) => setJurusanId(e.target.value)}
-            style={inputStyle}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              border: "1px solid #E5E7EB",
+              fontSize: "14px",
+              backgroundColor: "#FFFFFF",
+              color: "#1F2937",
+              outline: "none",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.2s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3B82F6";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#E5E7EB";
+              e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
+            }}
           >
             <option value="">Pilih konsentrasi keahlian</option>
             {jurusanList.map((item) => (
@@ -115,11 +158,39 @@ export function TambahKelasForm({
 
         {/* Tingkat Kelas */}
         <div>
-          <label style={labelStyle}>Tingkat Kelas</label>
+          <label style={{
+            fontWeight: 600,
+            fontSize: "14px",
+            marginBottom: "10px",
+            color: "#374151",
+            display: "block",
+          }}>
+            Tingkat Kelas
+          </label>
           <select
             value={kelasId}
             onChange={(e) => setKelasId(e.target.value)}
-            style={inputStyle}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              border: "1px solid #E5E7EB",
+              fontSize: "14px",
+              backgroundColor: "#FFFFFF",
+              color: "#1F2937",
+              outline: "none",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.2s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3B82F6";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#E5E7EB";
+              e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
+            }}
           >
             <option value="">Pilih tingkat kelas</option>
             {(kelasList.length > 0
@@ -139,11 +210,39 @@ export function TambahKelasForm({
 
         {/* Kelas */}
         <div>
-          <label style={labelStyle}>Kelas</label>
+          <label style={{
+            fontWeight: 600,
+            fontSize: "14px",
+            marginBottom: "10px",
+            color: "#374151",
+            display: "block",
+          }}>
+            Kelas
+          </label>
           <select
             value={namaKelas}
             onChange={(e) => setNamaKelas(e.target.value)}
-            style={inputStyle}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              border: "1px solid #E5E7EB",
+              fontSize: "14px",
+              backgroundColor: "#FFFFFF",
+              color: "#1F2937",
+              outline: "none",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.2s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3B82F6";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#E5E7EB";
+              e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
+            }}
           >
             <option value="">Pilih kelas</option>
             <option value="Mekatronika 1">Mekatronika 1</option>
@@ -160,32 +259,69 @@ export function TambahKelasForm({
           </select>
         </div>
 
-        {/* Wali Kelas */}
+        {/* Wali Kelas - DROPDOWN */}
         <div>
-          <label style={labelStyle}>Wali Kelas</label>
-          {waliKelasList.length > 0 ? (
-            <select
-              value={waliKelasId}
-              onChange={(e) => setWaliKelasId(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="">Pilih wali kelas</option>
-              {waliKelasList
-                .filter(t => !takenWaliKelasIds.includes(t.id) || t.id === initialData?.waliKelasId)
-                .map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.nama}
-                  </option>
-                ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              placeholder="Masukkan nama guru"
-              value={waliKelasId}
-              onChange={(e) => setWaliKelasId(e.target.value)}
-              style={inputStyle}
-            />
+          <label style={{
+            fontWeight: 600,
+            fontSize: "14px",
+            marginBottom: "10px",
+            color: "#374151",
+            display: "block",
+          }}>
+            Wali Kelas
+          </label>
+          <select
+            value={waliKelasId}
+            onChange={(e) => setWaliKelasId(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              border: "1px solid #E5E7EB",
+              fontSize: "14px",
+              backgroundColor: "#FFFFFF",
+              color: "#1F2937",
+              outline: "none",
+              boxSizing: "border-box",
+              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+              transition: "all 0.2s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3B82F6";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#E5E7EB";
+              e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
+            }}
+          >
+            <option value="">Pilih wali kelas</option>
+            {availableWaliKelas.map((guru) => (
+              <option key={guru.id} value={guru.id}>
+                {guru.nama}
+              </option>
+            ))}
+          </select>
+
+          {availableWaliKelas.length === 0 && (
+            <div style={{
+              marginTop: "10px",
+              padding: "12px 16px",
+              backgroundColor: "#FEF2F2",
+              borderRadius: "8px",
+              border: "1px solid #FECACA",
+            }}>
+              <p style={{
+                fontSize: "13px",
+                color: "#DC2626",
+                margin: 0,
+                fontWeight: 500,
+              }}>
+                {takenWaliKelasIds.length > 0
+                  ? "⚠️ Semua guru sudah menjadi wali kelas. Silakan tambah guru baru terlebih dahulu."
+                  : "⚠️ Belum ada data guru. Silakan tambah data guru terlebih dahulu."}
+              </p>
+            </div>
           )}
         </div>
       </div>

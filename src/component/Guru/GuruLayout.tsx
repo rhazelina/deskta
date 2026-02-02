@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from '../Sidebar';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
 import LogoSchool from '../../assets/Icon/logo smk.png';
+import { useLocalLenis } from '../Shared/SmoothScroll';
 
 interface GuruLayoutProps {
   children: ReactNode;
@@ -29,6 +30,9 @@ export default function GuruLayout({
     const saved = localStorage.getItem('guruSidebarOpen');
     return saved ? saved === 'true' : true;
   });
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useLocalLenis(scrollContainerRef);
 
   useEffect(() => {
     localStorage.setItem('guruSidebarOpen', sidebarOpen.toString());
@@ -87,32 +91,76 @@ export default function GuruLayout({
         {/* Header */}
         <header
           style={{
-            backgroundColor: '#001f3e',
-            color: 'white',
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingLeft: '24px',
-            paddingRight: '24px',
-            gap: '16px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            backgroundColor: "white",
+            height: "72px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 28px",
+            gap: "16px",
+            boxShadow: "0 2px 12px rgba(0, 31, 62, 0.08)",
+            borderBottom: "1px solid #E5E7EB",
             flexShrink: 0,
+            zIndex: 5,
           }}
         >
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', flex: 1, textAlign: 'center' }}>
-            {pageTitle}
-          </h1>
+          <div style={{ flex: 1 }}>
+            <h1
+              style={{
+                fontSize: "24px",
+                fontWeight: "700",
+                color: "#001F3E",
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
+                style={{
+                  width: "4px",
+                  height: "28px",
+                  backgroundColor: "#2563EB",
+                  borderRadius: "2px",
+                }}
+              />
+              {pageTitle}
+            </h1>
+            {pageTitle === "Beranda" && (
+              <p style={{ margin: "4px 0 0 16px", fontSize: "14px", color: "#6B7280" }}>
+                Selamat datang kembali, {user.name}!
+              </p>
+            )}
+          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            flexShrink: 0
+          }}>
+            <div style={{
+              textAlign: "right",
+              paddingRight: "16px",
+              borderRight: "1px solid #E5E7EB"
+            }}>
+              <div style={{ fontSize: "14px", fontWeight: "600", color: "#001F3E" }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: "12px", color: "#6B7280", textTransform: "capitalize" }}>
+                {user.role}
+              </div>
+            </div>
             <img
               src={LogoSchool}
               alt="Logo SMK"
               style={{
-                width: '60px',
-                height: 'auto',
-                cursor: 'default',
+                width: '48px',
+                height: '48px',
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                padding: "4px",
+                backgroundColor: "white",
               }}
             />
           </div>
@@ -120,6 +168,7 @@ export default function GuruLayout({
 
         {/* Content */}
         <main
+          ref={scrollContainerRef}
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -130,7 +179,17 @@ export default function GuruLayout({
           }}
         >
           <div style={{ maxWidth: '100%', width: '100%' }}>
-            {children}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>

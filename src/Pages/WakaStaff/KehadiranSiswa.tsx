@@ -82,7 +82,7 @@ export default function KehadiranSiswa({
   const columns = useMemo(
     () => [
       { key: "namaKelas", label: "Nama kelas" },
-      { key: "namaJurusan", label: "Nama Jurusan" },
+      { key: "namaJurusan", label: "Nama Konsentrasi Keahlian" },
       { key: "waliKelas", label: "Wali Kelas" },
     ],
     []
@@ -114,7 +114,7 @@ export default function KehadiranSiswa({
         {/* Filter */}
         <div style={{ marginBottom: 16 }}>
           <p style={{ fontWeight: 600, marginBottom: 8 }}>
-            Silahkan Pilih Kelas :
+            Silahkan Pilih Konsentrasi Keahlian dan Tingkat Kelas :
           </p>
 
           <div
@@ -135,7 +135,7 @@ export default function KehadiranSiswa({
                 minWidth: 200,
               }}
             >
-              <option value="">Jurusan</option>
+              <option value="">Semua Konsentrasi Keahlian</option>
               {JURUSAN_LIST.map((jurusan) => (
                 <option key={jurusan} value={jurusan}>
                   {jurusan}
@@ -154,7 +154,7 @@ export default function KehadiranSiswa({
                 minWidth: 120,
               }}
             >
-              <option value="">Kelas</option>
+              <option value="">Semua Tingkat Kelas</option>
               {KELAS_LIST.map((kelas) => (
                 <option key={kelas} value={kelas}>
                   {kelas}

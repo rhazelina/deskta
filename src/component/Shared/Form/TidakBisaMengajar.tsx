@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import { Modal } from '../Modal';
-// import BookIcon from '../../../assets/Icon/book.png';
 import EditIcon from '../../../assets/Icon/Edit.png';
 
 interface TidakBisaMengajarData {
@@ -40,7 +39,7 @@ export function TidakBisaMengajar({
   const [errors, setErrors] = useState<{ alasan?: string }>({});
   const fileInput1Ref = useRef<HTMLInputElement>(null);
 
-  if (!data) return null;
+
 
   const handleFileChange = (
     file: File | null,
@@ -94,7 +93,7 @@ export function TidakBisaMengajar({
 
   const handleSubmit = () => {
     const newErrors: { alasan?: string } = {};
-    
+
     if (!alasan) {
       newErrors.alasan = 'Alasan harus dipilih';
     }
@@ -132,6 +131,8 @@ export function TidakBisaMengajar({
       resetForm();
     }
   }, [isOpen]);
+
+  if (!data) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>

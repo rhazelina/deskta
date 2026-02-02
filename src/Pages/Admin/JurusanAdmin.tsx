@@ -1,33 +1,34 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import AdminLayout from "../../component/Admin/AdminLayout";
 import { Button } from "../../component/Shared/Button";
 import { SearchBox } from "../../component/Shared/Search";
 import { Table } from "../../component/Shared/Table";
- import { TambahJurusanForm } from "../../component/Shared/Form/JurusanForm"
-// import { TambahJurusanForm } from "../../component/Shared/Form/JurusanForm";
+import { JurusanForm } from "../../component/Shared/Form/JurusanForm";
 import AWANKIRI from "../../assets/Icon/AWANKIRI.png";
 import AwanBawahkanan from "../../assets/Icon/AwanBawahkanan.png";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
 
+/* ===================== INTERFACE ===================== */
 interface User {
   role: string;
   name: string;
 }
 
-interface Jurusan {
+interface KonsentrasiKeahlian {
   id: string;
   kode: string;
   nama: string;
 }
 
-interface JurusanAdminProps {
+interface KonsentrasiKeahlianAdminProps {
   user: User;
   onLogout: () => void;
   currentPage: string;
   onMenuClick: (page: string) => void;
 }
 
-const dummyData: Jurusan[] = [
+/* ===================== DUMMY DATA ===================== */
+const dummyData: KonsentrasiKeahlian[] = [
   { id: "1", kode: "0874621525", nama: "Rekayasa Perangkat Lunak" },
   { id: "2", kode: "0874621525", nama: "Elektronika Industri" },
   { id: "3", kode: "0874621525", nama: "Mekatronika" },
@@ -35,69 +36,152 @@ const dummyData: Jurusan[] = [
   { id: "5", kode: "0874621525", nama: "Desain Komunikasi Visual" },
 ];
 
-export default function JurusanAdmin({
+/* ===================== COMPONENT ===================== */
+export default function KonsentrasiKeahlianAdmin({
   user,
   onLogout,
   currentPage,
   onMenuClick,
-}: JurusanAdminProps) {
+}: KonsentrasiKeahlianAdminProps) {
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [jurusanList, setJurusanList] = useState<Jurusan[]>(dummyData);
-  const [editingJurusan, setEditingJurusan] = useState<Jurusan | null>(null);
+  const [konsentrasiKeahlianList, setKonsentrasiKeahlianList] = useState<KonsentrasiKeahlian[]>(dummyData);
+  const [editingKonsentrasiKeahlian, setEditingKonsentrasiKeahlian] = useState<KonsentrasiKeahlian | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
+  /* ===================== FILTER ===================== */
+  const filteredData = konsentrasiKeahlianList.filter(
+    (k) =>
+      k.kode.includes(searchValue) ||
+      k.nama.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  const handleDelete = (row: KonsentrasiKeahlian) => {
+    if (confirm(`Hapus "${row.nama}"?`)) {
+      setKonsentrasiKeahlianList((prev) => prev.filter((k) => k.id !== row.id));
+    }
+  };
+
+  /* ===================== HANDLER FUNCTIONS ===================== */
+  const handleEditKonsentrasi = (konsentrasi: KonsentrasiKeahlian) => {
+    setEditingKonsentrasiKeahlian(konsentrasi);
+    setIsEditMode(true);
+    setIsModalOpen(true);
+    setOpenActionId(null);
+  };
+
+  const handleTambahKonsentrasi = () => {
+    setEditingKonsentrasiKeahlian(null);
+    setIsEditMode(false);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmitKonsentrasi = (data: { namaJurusan: string; kodeJurusan: string }) => {
+    if (isEditMode && editingKonsentrasiKeahlian) {
+      // Mode ubah: update data konsentrasi keahlian
+      setKonsentrasiKeahlianList((prev) =>
+        prev.map((k) =>
+          k.id === editingKonsentrasiKeahlian.id
+            ? { ...k, nama: data.namaJurusan, kode: data.kodeJurusan }
+            : k
+        )
+      );
+      alert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil diperbarui!`);
+    } else {
+      // Mode tambah: tambah konsentrasi keahlian baru
+      setKonsentrasiKeahlianList((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          nama: data.namaJurusan,
+          kode: data.kodeJurusan,
+        },
+      ]);
+      alert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil ditambahkan!`);
+    }
+    
+    setIsModalOpen(false);
+    setEditingKonsentrasiKeahlian(null);
+    setIsEditMode(false);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingKonsentrasiKeahlian(null);
+    setIsEditMode(false);
+  };
+
+  /* ===================== TABLE ===================== */
   const columns = [
-    { key: "kode", label: "Kode Jurusan" },
+    { key: "kode", label: "Kode Konsentrasi Keahlian" },
     { key: "nama", label: "Konsentrasi Keahlian" },
     {
       key: "aksi",
       label: "Aksi",
-      render: (_: any, row: Jurusan) => (
+      render: (_: any, row: KonsentrasiKeahlian) => (
         <div style={{ position: "relative" }}>
           <button
             onClick={() =>
-              setOpenActionId((prev) => (prev === row.id ? null : row.id))
+              setOpenActionId(openActionId === row.id ? null : row.id)
             }
             style={{
-              background: "transparent",
               border: "none",
+              background: "transparent",
               cursor: "pointer",
             }}
           >
-            <MoreVertical size={20} strokeWidth={1.5} />
+            <MoreVertical size={22} strokeWidth={1.5} />
           </button>
 
           {openActionId === row.id && (
             <div
               style={{
                 position: "absolute",
-                right: 0,
                 top: "100%",
+                right: 0,
                 marginTop: 6,
-                background: "#fff",
+                background: "#FFFFFF",
                 borderRadius: 8,
-                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-                zIndex: 20,
+                boxShadow: "0 10px 15px rgba(0,0,0,0.1)",
+                minWidth: 180,
+                zIndex: 10,
                 overflow: "hidden",
-                minWidth: 140,
+                border: "1px solid #E2E8F0",
               }}
             >
+              {/* UBAH */}
               <button
-                onClick={() => {
-                  setOpenActionId(null);
-                  setEditingJurusan(row);
-                  setIsModalOpen(true);
+                onClick={() => handleEditKonsentrasi(row)} // GANTI INI
+                style={actionItemStyle}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#F0F4FF";
+                  e.currentTarget.style.color = "#2563EB";
                 }}
-                style={{ ...actionBtnStyle, color: "#0F172A" }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                  e.currentTarget.style.color = "#0F172A";
+                }}
               >
-                <Edit size={18} strokeWidth={2} /> Edit
+                <Edit size={16} strokeWidth={2} />
+                Ubah
               </button>
+
+              {/* HAPUS */}
               <button
                 onClick={() => handleDelete(row)}
-                style={{ ...actionBtnStyle, color: "#B91C1C" }}
+                style={{ ...actionItemStyle, borderBottom: "none" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#FEF2F2";
+                  e.currentTarget.style.color = "#DC2626";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                  e.currentTarget.style.color = "#0F172A";
+                }}
               >
-                <Trash2 size={18} strokeWidth={2} /> Hapus
+                <Trash2 size={16} strokeWidth={2} />
+                Hapus
               </button>
             </div>
           )}
@@ -106,33 +190,9 @@ export default function JurusanAdmin({
     },
   ];
 
-  const actionBtnStyle: React.CSSProperties = {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "8px 12px",
-    border: "none",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: 14,
-  };
-
-  const filteredData = jurusanList.filter(
-    (j) =>
-      j.kode.includes(searchValue) ||
-      j.nama.toLowerCase().includes(searchValue.toLowerCase())
-  );
-
-  const handleDelete = (row: Jurusan) => {
-    if (confirm(`Hapus "${row.nama}"?`)) {
-      setJurusanList((prev) => prev.filter((j) => j.id !== row.id));
-    }
-  };
-
   return (
     <AdminLayout
-      pageTitle="Data Jurusan"
+      pageTitle="Data Konsentrasi Keahlian"
       currentPage={currentPage}
       onMenuClick={onMenuClick}
       user={user}
@@ -155,65 +215,73 @@ export default function JurusanAdmin({
           gap: 24,
         }}
       >
-        <div style={{ display: "flex", gap: 16 }}>
-          <SearchBox
-            placeholder="Cari Jurusan..."
-            value={searchValue}
-            onChange={setSearchValue}
-          />
-          <Button label="Tambahkan" onClick={() => setIsModalOpen(true)} />
+        {/* HEADER */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ width: 300 }}>
+            <SearchBox
+              placeholder="Cari Konsentrasi Keahlian.."
+              value={searchValue}
+              onChange={setSearchValue}
+            />
+          </div>
+          {/* GANTI ONCLICK TOMBOL TAMBAHKAN */}
+          <Button label="Tambahkan" onClick={handleTambahKonsentrasi} />
         </div>
 
-        <Table columns={columns} data={filteredData} keyField="id" />
+        {/* TABLE WRAPPER */}
+        <div
+          style={{
+            borderRadius: 12,
+            overflow: "hidden",
+            boxShadow: "0 0 0 1px #E5E7EB",
+          }}
+        >
+          <Table columns={columns} data={filteredData} keyField="id" />
+        </div>
       </div>
 
-      <TambahJurusanForm
+      {/* GANTI TAMBAHJURUSANFORM MENJADI JURUSANFORM */}
+      <JurusanForm
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingJurusan(null);
-        }}
-        isEdit={!!editingJurusan}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitKonsentrasi}
         initialData={
-          editingJurusan
+          editingKonsentrasiKeahlian
             ? {
-                namaJurusan: editingJurusan.nama,
-                kodeJurusan: editingJurusan.kode,
+                namaJurusan: editingKonsentrasiKeahlian.nama,
+                kodeJurusan: editingKonsentrasiKeahlian.kode,
               }
             : undefined
         }
-        onSubmit={(data) => {
-          if (editingJurusan) {
-            // ✅ FIX EDIT UPDATE
-            setJurusanList((prev) =>
-              prev.map((j) =>
-                j.id === editingJurusan.id
-                  ? {
-                      ...j,
-                      nama: data.namaJurusan,
-                      kode: data.kodeJurusan,
-                    }
-                  : j
-              )
-            );
-          } else {
-            setJurusanList((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                nama: data.namaJurusan,
-                kode: data.kodeJurusan,
-              },
-            ]);
-          }
-
-          setIsModalOpen(false);
-          setEditingJurusan(null);
-        }}
+        isEdit={isEditMode}
       />
     </AdminLayout>
   );
 }
+
+/* ===================== STYLE ===================== */
+const actionItemStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 16px",
+  border: "none",
+  background: "none",
+  textAlign: "left",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  color: "#0F172A",
+  fontSize: 14,
+  fontWeight: 500,
+  transition: "all 0.2s ease",
+  borderBottom: "1px solid #F1F5F9",
+};
 
 const bgLeft: React.CSSProperties = {
   position: "fixed",
