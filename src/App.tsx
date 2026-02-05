@@ -28,38 +28,39 @@ export default function App() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore user dari localStorage
+  // Validate token and restore user on mount
   useEffect(() => {
-    const storedUserLocal = localStorage.getItem("currentUser");
-    const storedUserSession = sessionStorage.getItem("currentUser");
-    const storedRole = localStorage.getItem("selectedRole");
+    const validateAuth = async () => {
+      const { authService } = await import('./services/auth');
 
-    if (storedUserLocal) {
+      // Check if token exists
+      if (!authService.isAuthenticated()) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const parsedUser = JSON.parse(storedUserLocal);
-        setCurrentUser(parsedUser);
-        if (storedRole) {
-          setSelectedRole(storedRole);
-        }
-      } catch (e) {
-        console.error("Error restoring user from localStorage:", e);
+        // Validate token by fetching user data
+        const user = await authService.getMe();
+        const userData = {
+          role: user.role,
+          name: user.name,
+          phone: user.phone || '',
+        };
+        setCurrentUser(userData);
+        localStorage.setItem("currentUser", JSON.stringify(userData));
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        // Clear invalid token
+        authService.removeToken();
         localStorage.removeItem("currentUser");
         localStorage.removeItem("selectedRole");
+      } finally {
+        setIsLoading(false);
       }
-    } else if (storedUserSession) {
-      try {
-        const parsedUser = JSON.parse(storedUserSession);
-        setCurrentUser(parsedUser);
-        localStorage.setItem("currentUser", storedUserSession);
-        if (storedRole) {
-          localStorage.setItem("selectedRole", storedRole);
-        }
-      } catch (e) {
-        console.error("Error restoring user from sessionStorage:", e);
-        sessionStorage.removeItem("currentUser");
-      }
-    }
-    setIsLoading(false);
+    };
+
+    validateAuth();
   }, []);
 
   const handleRoleSelect = useCallback((role: string) => {
@@ -76,12 +77,11 @@ export default function App() {
     setSelectedRole(null);
   }, []);
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    const { authService } = await import('./services/auth');
+    await authService.logout();
     setCurrentUser(null);
     setSelectedRole(null);
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("selectedRole");
-    sessionStorage.removeItem("currentUser");
   }, []);
 
   const handleBackFromLogin = useCallback(() => {
@@ -142,110 +142,110 @@ export default function App() {
       <Router>
         <SmoothScroll />
         <Routes>
-        {/* Role Selector */}
-        <Route
-          path="/"
-          element={
-            currentUser && isValidRole ? (
-              <Navigate to={`/${currentUser.role}/dashboard`} replace />
-            ) : (
-              <LandingPage onRoleSelect={handleRoleSelect} />
-            )
-          }
-        />
+          {/* Role Selector */}
+          <Route
+            path="/"
+            element={
+              currentUser && isValidRole ? (
+                <Navigate to={`/${currentUser.role}/dashboard`} replace />
+              ) : (
+                <LandingPage onRoleSelect={handleRoleSelect} />
+              )
+            }
+          />
 
-        {/* Login Page */}
-        <Route
-          path="/login"
-          element={
-            currentUser && isValidRole ? (
-              <Navigate to={`/${currentUser.role}/dashboard`} replace />
-            ) : selectedRole ? (
-              <LoginPage
-                role={selectedRole}
-                onLogin={handleLogin}
-                onBack={handleBackFromLogin}
-              />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Login Page */}
+          <Route
+            path="/login"
+            element={
+              currentUser && isValidRole ? (
+                <Navigate to={`/${currentUser.role}/dashboard`} replace />
+              ) : selectedRole ? (
+                <LoginPage
+                  role={selectedRole}
+                  onLogin={handleLogin}
+                  onBack={handleBackFromLogin}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Admin Dashboard */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            currentUser?.role === "admin" ? (
-              <AdminDashboard user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Admin Dashboard */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              currentUser?.role === "admin" ? (
+                <AdminDashboard user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Guru Dashboard */}
-        <Route
-          path="/guru/dashboard"
-          element={
-            currentUser?.role === "guru" ? (
-              <GuruDashboard user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Guru Dashboard */}
+          <Route
+            path="/guru/dashboard"
+            element={
+              currentUser?.role === "guru" ? (
+                <GuruDashboard user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Siswa Dashboard */}
-        <Route
-          path="/siswa/dashboard"
-          element={
-            currentUser?.role === "siswa" ? (
-              <DashboardSiswa user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Siswa Dashboard */}
+          <Route
+            path="/siswa/dashboard"
+            element={
+              currentUser?.role === "siswa" ? (
+                <DashboardSiswa user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Pengurus Kelas Dashboard */}
-        <Route
-          path="/pengurus_kelas/dashboard"
-          element={
-            currentUser?.role === "pengurus_kelas" ? (
-              <DashboardPengurusKelas user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Pengurus Kelas Dashboard */}
+          <Route
+            path="/pengurus_kelas/dashboard"
+            element={
+              currentUser?.role === "pengurus_kelas" ? (
+                <DashboardPengurusKelas user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Waka Staff Dashboard */}
-        <Route
-          path="/waka/dashboard"
-          element={
-            currentUser?.role === "waka" ? (
-              <WakaDashboard user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Waka Staff Dashboard */}
+          <Route
+            path="/waka/dashboard"
+            element={
+              currentUser?.role === "waka" ? (
+                <WakaDashboard user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* Wali Kelas Dashboard */}
-        <Route
-          path="/wakel/dashboard"
-          element={
-            currentUser?.role === "wakel" ? (
-              <DashboardWalliKelas user={currentUser} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+          {/* Wali Kelas Dashboard */}
+          <Route
+            path="/wakel/dashboard"
+            element={
+              currentUser?.role === "wakel" ? (
+                <DashboardWalliKelas user={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
 
-        {/* 404 - Not Found */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+          {/* 404 - Not Found */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </PopupProvider>

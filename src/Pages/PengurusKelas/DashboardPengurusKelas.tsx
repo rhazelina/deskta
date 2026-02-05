@@ -7,6 +7,8 @@ import openBook from "../../assets/Icon/open-book.png";
 import INO from "../../assets/Icon/INO.png";
 import RASI from "../../assets/Icon/RASI.png";
 import { Modal } from "../../component/Shared/Modal";
+import { dashboardService } from "../../services/dashboard";
+import QRGenerateButton from "../../component/PengurusKelas/QRGenerateButton";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -83,6 +85,41 @@ export default function DashboardPengurusKelas({
   const [currentTime, setCurrentTime] = useState("");
   const [isMapelModalOpen, setIsMapelModalOpen] = useState(false);
 
+  // API data states
+  const [classInfo, setClassInfo] = useState<any>(null);
+  const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
+  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch API data on mount
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [classData, schedulesData, summaryData] = await Promise.all([
+          dashboardService.getMyClass(),
+          dashboardService.getMyClassSchedules(),
+          dashboardService.getMyAttendanceSummary(),
+        ]);
+
+        setClassInfo(classData);
+
+        // Filter today's schedules
+        const today = new Date().getDay();
+        const todaySchedule = schedulesData.filter((s: any) => s.day === today);
+        setTodaySchedules(todaySchedule);
+
+        setAttendanceSummary(summaryData);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
@@ -105,30 +142,14 @@ export default function DashboardPengurusKelas({
   }, []);
 
   const schedules = useMemo<ScheduleItem[]>(
-    () => [
-      {
-        id: "1",
-        mapel: "Matematika",
-        guru: "Ewit Erniyah S.Pd",
-        start: "07:00",
-        end: "08:30",
-      },
-      {
-        id: "2",
-        mapel: "Bahasa Indonesia",
-        guru: "Budi Santoso S.Pd",
-        start: "08:30",
-        end: "10:00",
-      },
-      {
-        id: "3",
-        mapel: "Bahasa Inggris",
-        guru: "Siti Nurhaliza S.Pd",
-        start: "10:15",
-        end: "11:45",
-      },
-    ],
-    []
+    () => todaySchedules.map((s: any) => ({
+      id: s.id?.toString() || '',
+      mapel: s.subject_name || s.subject || 'N/A',
+      guru: s.teacher_name || s.teacher || 'N/A',
+      start: s.start_time?.substring(0, 5) || '00:00',
+      end: s.end_time?.substring(0, 5) || '00:00',
+    })),
+    [todaySchedules]
   );
 
   const handleMenuClick = (page: string) => {
@@ -521,6 +542,11 @@ export default function DashboardPengurusKelas({
           />
         </>
       )}
+
+      {/* QR Generate Button - Floating Action Button */}
+      {currentPage === "Beranda" && (
+        <QRGenerateButton schedules={schedules} />
+      )}
     </PengurusKelasLayout>
   );
 }
@@ -654,7 +680,7 @@ function MonthlyLineChart({
         cornerRadius: 8,
         displayColors: true,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';

@@ -95,37 +95,21 @@ const BREAKPOINTS = {
   desktop: 1400,
 };
 
-// Dummy data - Nanti diganti dengan API call
-const DUMMY_SCHEDULE: ScheduleItem[] = [
-  {
-    id: "1",
-    subject: "Matematika",
-    className: "XII Mekatronika 2",
-    jurusan: "XII Mekatronika 2",
-    jam: "1-4 (07.00-09.40)",
-  },
-  {
-    id: "2",
-    subject: "Fisika",
-    className: "XII Mekatronika 1",
-    jurusan: "XII Mekatronika 1",
-    jam: "5-8 (10.00-12.20)",
-  },
-  {
-    id: "3",
-    subject: "Kimia",
-    className: "XI Mekatronika 2",
-    jurusan: "XI Mekatronika 2",
-    jam: "9-10 (13.00-14.30)",
-  },
-  {
-    id: "4",
-    subject: "Biologi",
-    className: "X Mekatronika 1",
-    jurusan: "X Mekatronika 1",
-    jam: "11-12 (14.40-16.00)",
-  },
-];
+// Helper function to format schedule data from API
+const formatScheduleFromAPI = (schedule: any): ScheduleItem => {
+  const timeSlot = schedule.time_slot;
+  const startTime = timeSlot?.start_time || '00:00';
+  const endTime = timeSlot?.end_time || '00:00';
+  const slotNumber = timeSlot?.slot_number || 0;
+
+  return {
+    id: schedule.id.toString(),
+    subject: schedule.subject?.name || 'Mata Pelajaran',
+    className: schedule.class?.name || 'Kelas',
+    jurusan: schedule.class?.name || '',
+    jam: `${slotNumber} (${startTime}-${endTime})`,
+  };
+};
 
 // ==================== STYLES ==================== //
 const styles = {
@@ -323,6 +307,10 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   const [currentTimeStr, setCurrentTimeStr] = useState("");
   const [iconStates, setIconStates] = useState<Record<string, "qr" | "eye">>({});
 
+  // API Data State
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+
   // ========== EFFECTS ==========
   useEffect(() => {
     const updateDateTime = () => {
@@ -350,6 +338,26 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
       clearInterval(interval);
       window.removeEventListener("resize", handleResize);
     };
+  }, []);
+
+  // ========== FETCH SCHEDULES ==========
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const data = await dashboardService.getMySchedules({ date: today });
+        const formattedSchedules = data.map(formatScheduleFromAPI);
+        setSchedules(formattedSchedules);
+      } catch (error) {
+        console.error('Failed to fetch schedules:', error);
+        // Keep empty array on error
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    fetchSchedules();
   }, []);
 
   // ========== NAVIGATION HANDLERS ==========
@@ -665,7 +673,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
                     </div>
                   </div>
                   <div style={styles.totalBadge(isMobile)}>
-                    {DUMMY_SCHEDULE.length} Kelas
+                    {isLoadingSchedules ? 'Memuat...' : `${schedules.length} Kelas`}
                   </div>
                 </div>
               </div>
@@ -676,139 +684,149 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
 
               {/* ========== SCHEDULE GRID ========== */}
               <div style={styles.scheduleGrid(isMobile)}>
-                {DUMMY_SCHEDULE.map((schedule) => {
-                  const jamParts = schedule.jam?.split("(") || [];
-                  const jamKe = jamParts[0]?.trim() || schedule.jam;
-                  const jamWaktu = jamParts.length > 1 ? `(${jamParts[1]}` : "";
+                {isLoadingSchedules ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                    Memuat jadwal...
+                  </div>
+                ) : schedules.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                    Tidak ada jadwal hari ini
+                  </div>
+                ) : (
+                  schedules.map((schedule) => {
+                    const jamParts = schedule.jam?.split("(") || [];
+                    const jamKe = jamParts[0]?.trim() || schedule.jam;
+                    const jamWaktu = jamParts.length > 1 ? `(${jamParts[1]}` : "";
 
-                  return (
-                    <div
-                      key={schedule.id}
-                      style={styles.scheduleCard(isMobile)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow =
-                          "0 6px 14px rgba(0, 0, 0, 0.15)";
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.backgroundColor = "#F9FAFB";
-                        e.currentTarget.style.borderColor = "#9CA3AF";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 8px rgba(0, 0, 0, 0.08)";
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.backgroundColor = "#FFFFFF";
-                        e.currentTarget.style.borderColor = "#D1D5DB";
-                      }}
-                    >
-                      {/* Icon Buku */}
-                      <div style={styles.bookIconWrapper(isMobile)}>
-                        <img
-                          src={BookIcon}
-                          alt="Book"
-                          style={{
-                            width: isMobile ? "18px" : "20px",
-                            height: isMobile ? "18px" : "20px",
-                            objectFit: "contain",
-                            filter: "brightness(0) invert(1)",
-                          }}
-                        />
-                      </div>
-
-                      {/* Mata Pelajaran & Jam */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: isMobile ? "15px" : "16px",
-                            fontWeight: 700,
-                            color: "#111827",
-                            marginBottom: 4,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {schedule.subject}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: isMobile ? "12px" : "13px",
-                            color: "#6B7280",
-                            fontWeight: 500,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          Jam ke {jamKe}
-                        </div>
-                      </div>
-
-                      {/* Kelas & Waktu */}
+                    return (
                       <div
-                        style={{
-                          flex: 1,
-                          textAlign: "left",
-                          paddingLeft: "24px",
-                          display: isMobile ? "none" : "block",
+                        key={schedule.id}
+                        style={styles.scheduleCard(isMobile)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 14px rgba(0, 0, 0, 0.15)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.backgroundColor = "#F9FAFB";
+                          e.currentTarget.style.borderColor = "#9CA3AF";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow =
+                            "0 2px 8px rgba(0, 0, 0, 0.08)";
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.backgroundColor = "#FFFFFF";
+                          e.currentTarget.style.borderColor = "#D1D5DB";
                         }}
                       >
-                        <div
-                          style={{
-                            fontSize: isMobile ? "14px" : "15px",
-                            fontWeight: 700,
-                            color: "#111827",
-                            marginBottom: 4,
-                          }}
-                        >
-                          {schedule.className}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: isMobile ? "12px" : "13px",
-                            color: "#6B7280",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {jamWaktu}
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 8,
-                          alignItems: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {/* Toggle Button */}
-                        <div
-                          onClick={(e) => handleActionClick(e, schedule)}
-                          style={styles.actionButton}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "#E5E7EB";
-                            e.currentTarget.style.transform = "scale(1.05)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "#F3F4F6";
-                            e.currentTarget.style.transform = "scale(1)";
-                          }}
-                        >
+                        {/* Icon Buku */}
+                        <div style={styles.bookIconWrapper(isMobile)}>
                           <img
-                            src={
-                              (iconStates[schedule.id] || "qr") === "qr"
-                                ? QRCodeIcon
-                                : EyeIcon
-                            }
-                            alt="Action"
-                            style={{ width: 18, height: 18 }}
+                            src={BookIcon}
+                            alt="Book"
+                            style={{
+                              width: isMobile ? "18px" : "20px",
+                              height: isMobile ? "18px" : "20px",
+                              objectFit: "contain",
+                              filter: "brightness(0) invert(1)",
+                            }}
                           />
                         </div>
+
+                        {/* Mata Pelajaran & Jam */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: isMobile ? "15px" : "16px",
+                              fontWeight: 700,
+                              color: "#111827",
+                              marginBottom: 4,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {schedule.subject}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: isMobile ? "12px" : "13px",
+                              color: "#6B7280",
+                              fontWeight: 500,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            Jam ke {jamKe}
+                          </div>
+                        </div>
+
+                        {/* Kelas & Waktu */}
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: "left",
+                            paddingLeft: "24px",
+                            display: isMobile ? "none" : "block",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: isMobile ? "14px" : "15px",
+                              fontWeight: 700,
+                              color: "#111827",
+                              marginBottom: 4,
+                            }}
+                          >
+                            {schedule.className}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: isMobile ? "12px" : "13px",
+                              color: "#6B7280",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {jamWaktu}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {/* Toggle Button */}
+                          <div
+                            onClick={(e) => handleActionClick(e, schedule)}
+                            style={styles.actionButton}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#E5E7EB";
+                              e.currentTarget.style.transform = "scale(1.05)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#F3F4F6";
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                          >
+                            <img
+                              src={
+                                (iconStates[schedule.id] || "qr") === "qr"
+                                  ? QRCodeIcon
+                                  : EyeIcon
+                              }
+                              alt="Action"
+                              style={{ width: 18, height: 18 }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 

@@ -12,6 +12,7 @@ import DetailKehadiranGuru from "./DetailKehadiranGuru";
 import RekapKehadiranSiswa from "./RekapKehadiranSiswa";
 import DaftarKetidakhadiran from "./DaftarKetidakhadiran";
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+import { dashboardService } from "../../services/dashboard";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -126,6 +127,35 @@ const COLORS = {
 export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) {
   const { confirm: popupConfirm } = usePopup();
   const [currentPage, setCurrentPage] = useState<WakaPage>("dashboard");
+  const [viewMode, setViewMode] = useState<"daily" | "monthly">("monthly");
+  const navigate = useNavigate();
+
+  // API data states
+  const [adminSummary, setAdminSummary] = useState<any>(null);
+  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [summary, attendance] = await Promise.all([
+          dashboardService.getAdminSummary(),
+          dashboardService.getWakaAttendanceSummary(),
+        ]);
+        setAdminSummary(summary);
+        setAttendanceSummary(attendance);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   const [selectedGuru, setSelectedGuru] = useState<string | null>(null);
   const [selectedKelas, setSelectedKelas] = useState<string | null>(null);
   const [selectedKelasId, setSelectedKelasId] = useState<string | null>(null);
@@ -140,8 +170,6 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
 
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -169,7 +197,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
 
   const handleMenuClick = (page: string, payload?: any) => {
     setCurrentPage(page as WakaPage);
-    
+
     // Handle payload untuk daftar-ketidakhadiran
     if (page === "daftar-ketidakhadiran" && payload) {
       setSelectedSiswa({

@@ -6,6 +6,7 @@ import JadwalSiswa from "./JadwalSiswa.tsx";
 import AbsensiSiswa from "./AbsensiSiswa";
 import logoSmk from "../../assets/Icon/logo smk.png";
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+import QRScanButton from "../../component/Siswa/QRScanButton";
 import {
   Bell,
   Megaphone,
@@ -61,22 +62,16 @@ interface DashboardSiswaProps {
   onLogout: () => void;
 }
 
-// Dummy data untuk statistik
-const monthlyTrendData = [
-  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2, dispen: 1 },
-  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3, dispen: 2 },
-  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2, dispen: 1 },
-  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1, dispen: 2 },
-  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1, dispen: 1 },
-  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1, dispen: 2 },
-];
-
-const weeklyStats = {
-  hadir: 80,
-  izin: 25,
-  sakit: 20,
-  alpha: 40,
-  dispen: 15,
+// Helper to format schedule from API
+const formatScheduleFromAPI = (schedule: any): ScheduleItem => {
+  const timeSlot = schedule.time_slot;
+  return {
+    id: schedule.id.toString(),
+    mapel: schedule.subject?.name || 'Mata Pelajaran',
+    guru: schedule.teacher?.name || 'Guru',
+    start: timeSlot?.start_time || '00:00',
+    end: timeSlot?.end_time || '00:00',
+  };
 };
 
 export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) {
@@ -86,6 +81,18 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
   const [currentTime, setCurrentTime] = useState("");
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+
+  // API Data State
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+  const [attendanceSummary, setAttendanceSummary] = useState({
+    hadir: 0,
+    izin: 0,
+    sakit: 0,
+    alpha: 0,
+    dispen: 0,
+  });
+  const [isLoadingAttendance, setIsLoadingAttendance] = useState(true);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -97,7 +104,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
         day: "numeric",
       };
       setCurrentDate(now.toLocaleDateString("id-ID", options));
-      
+
       // Format waktu dengan jam:menit:detik
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -111,14 +118,45 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
     return () => clearInterval(interval);
   }, []);
 
-  const schedules = useMemo<ScheduleItem[]>(
-    () => [
-      { id: "1", mapel: "Matematika", guru: "Ewit Erniyah S.Pd", start: "07:00", end: "08:30" },
-      { id: "2", mapel: "Bahasa Indonesia", guru: "Budi Santoso S.Pd", start: "08:30", end: "10:00" },
-      { id: "3", mapel: "Bahasa Inggris", guru: "Siti Nurhaliza S.Pd", start: "10:15", end: "11:45" },
-    ],
-    []
-  );
+  // Fetch schedules
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        const today = new Date().toISOString().split('T')[0];
+        const data = await dashboardService.getMySchedules({ date: today });
+        const formattedSchedules = data.map(formatScheduleFromAPI);
+        setSchedules(formattedSchedules);
+      } catch (error) {
+        console.error('Failed to fetch schedules:', error);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+    fetchSchedules();
+  }, []);
+
+  // Fetch attendance summary
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        const data = await dashboardService.getMyAttendanceSummary();
+        setAttendanceSummary({
+          hadir: data.present || 0,
+          izin: data.excused || 0,
+          sakit: data.sick || 0,
+          alpha: data.absent || 0,
+          dispen: data.dispensation || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch attendance:', error);
+      } finally {
+        setIsLoadingAttendance(false);
+      }
+    };
+    fetchAttendance();
+  }, []);
 
   const handleMenuClick = (page: string) => {
     setCurrentPage(page as SiswaPage);
@@ -447,7 +485,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       color: "#6B7280",
                       marginBottom: "20px"
                     }}>
-                      {schedules.length} mata pelajaran dijadwalkan
+                      {isLoadingSchedules ? 'Memuat...' : `${schedules.length} mata pelajaran dijadwalkan`}
                     </div>
                   </div>
                   <div style={{
@@ -526,93 +564,103 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                   gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                   gap: "16px",
                 }}>
-                  {schedules.map((schedule) => (
-                    <div
-                      key={schedule.id}
-                      onClick={() => handleScheduleClick(schedule)}
-                      style={{
-                        padding: "20px",
-                        borderRadius: "12px",
-                        border: "1px solid #E5E7EB",
-                        backgroundColor: "#F9FAFB",
-                        cursor: "pointer",
-                        transition: "all 0.3s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-4px)";
-                        e.currentTarget.style.backgroundColor = "#F0F9FF";
-                        e.currentTarget.style.borderColor = "#0EA5E9";
-                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(14, 165, 233, 0.15)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.backgroundColor = "#F9FAFB";
-                        e.currentTarget.style.borderColor = "#E5E7EB";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      <div style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "16px",
-                        marginBottom: "16px"
-                      }}>
+                  {isLoadingSchedules ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280', gridColumn: '1 / -1' }}>
+                      Memuat jadwal...
+                    </div>
+                  ) : schedules.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280', gridColumn: '1 / -1' }}>
+                      Tidak ada jadwal hari ini
+                    </div>
+                  ) : (
+                    schedules.map((schedule) => (
+                      <div
+                        key={schedule.id}
+                        onClick={() => handleScheduleClick(schedule)}
+                        style={{
+                          padding: "20px",
+                          borderRadius: "12px",
+                          border: "1px solid #E5E7EB",
+                          backgroundColor: "#F9FAFB",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-4px)";
+                          e.currentTarget.style.backgroundColor = "#F0F9FF";
+                          e.currentTarget.style.borderColor = "#0EA5E9";
+                          e.currentTarget.style.boxShadow = "0 8px 24px rgba(14, 165, 233, 0.15)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.backgroundColor = "#F9FAFB";
+                          e.currentTarget.style.borderColor = "#E5E7EB";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
                         <div style={{
-                          width: "48px",
-                          height: "48px",
-                          backgroundColor: "#EFF6FF",
-                          borderRadius: "10px",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "16px",
+                          marginBottom: "16px"
+                        }}>
+                          <div style={{
+                            width: "48px",
+                            height: "48px",
+                            backgroundColor: "#EFF6FF",
+                            borderRadius: "10px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "20px"
+                          }}>
+                            <BookOpenCheck size={20} color="#1D4ED8" />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{
+                              margin: "0 0 6px 0",
+                              fontSize: "17px",
+                              fontWeight: "600",
+                              color: "#001F3E"
+                            }}>
+                              {schedule.mapel}
+                            </h4>
+                            <p style={{
+                              margin: "0",
+                              fontSize: "14px",
+                              color: "#6B7280"
+                            }}>
+                              {schedule.guru}
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "20px"
+                          gap: "12px",
+                          padding: "10px 14px",
+                          backgroundColor: "#F3F4F6",
+                          borderRadius: "8px",
+                          border: "1px solid #E5E7EB"
                         }}>
-                          <BookOpenCheck size={20} color="#1D4ED8" />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{
-                            margin: "0 0 6px 0",
-                            fontSize: "17px",
-                            fontWeight: "600",
-                            color: "#001F3E"
-                          }}>
-                            {schedule.mapel}
-                          </h4>
-                          <p style={{
-                            margin: "0",
+                          <span style={{
                             fontSize: "14px",
-                            color: "#6B7280"
+                            color: "#6B7280",
+                            fontWeight: "500"
                           }}>
-                            {schedule.guru}
-                          </p>
+                            <Clock size={14} />
+                          </span>
+                          <span style={{
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            color: "#111827"
+                          }}>
+                            {schedule.start} - {schedule.end}
+                          </span>
                         </div>
                       </div>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "10px 14px",
-                        backgroundColor: "#F3F4F6",
-                        borderRadius: "8px",
-                        border: "1px solid #E5E7EB"
-                      }}>
-                        <span style={{
-                          fontSize: "14px",
-                          color: "#6B7280",
-                          fontWeight: "500"
-                        }}>
-                          <Clock size={14} />
-                        </span>
-                        <span style={{
-                          fontSize: "14px",
-                          fontWeight: "600",
-                          color: "#111827"
-                        }}>
-                          {schedule.start} - {schedule.end}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -667,7 +715,13 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       Grafik Kehadiran Bulanan
                     </h3>
                   </div>
-                  <MonthlyLineChart data={monthlyTrendData} />
+                  {isLoadingAttendance ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                      Memuat data kehadiran...
+                    </div>
+                  ) : (
+                    <WeeklyDonutChart data={attendanceSummary} />
+                  )}
                 </div>
 
                 {/* Weekly Statistics */}
@@ -714,7 +768,13 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                       Statistik Minggu Ini
                     </h3>
                   </div>
-                  <WeeklyDonutChart data={weeklyStats} />
+                  {isLoadingAttendance ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                      Memuat data kehadiran...
+                    </div>
+                  ) : (
+                    <WeeklyDonutChart data={attendanceSummary} />
+                  )}
                 </div>
               </div>
 
@@ -764,6 +824,13 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
               }}
               data={selectedSchedule}
             />
+            {/* QR Scan Button - Floating Action Button */}
+            {currentPage === "dashboard" && (
+              <QRScanButton onSuccess={() => {
+                // Refresh attendance data after successful scan
+                window.location.reload();
+              }} />
+            )}
           </SiswaLayout>
         );
     }
@@ -878,7 +945,7 @@ function MonthlyLineChart({
         cornerRadius: 8,
         displayColors: true,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';

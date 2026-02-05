@@ -44,6 +44,15 @@ export default function AdminDashboard({
   const [currentTime, setCurrentTime] = useState("");
   const [semester, setSemester] = useState("Semester Genap");
 
+  // API Data State
+  const [adminSummary, setAdminSummary] = useState({
+    total_classes: 0,
+    total_students: 0,
+    total_teachers: 0,
+    total_rooms: 0,
+  });
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
   // ==================== DATE & TIME HANDLER ====================
   const updateDateTime = () => {
     const now = new Date();
@@ -73,7 +82,7 @@ export default function AdminDashboard({
   useEffect(() => {
     updateDateTime(); // Update pertama kali
     const interval = setInterval(updateDateTime, 1000); // Update setiap detik
-    
+
     // Set semester berdasarkan bulan
     const month = new Date().getMonth();
     if (month >= 0 && month <= 5) {
@@ -81,8 +90,26 @@ export default function AdminDashboard({
     } else {
       setSemester("Semester Ganjil");
     }
-    
+
     return () => clearInterval(interval); // Cleanup interval
+  }, []);
+
+  // ==================== FETCH ADMIN SUMMARY ====================
+  useEffect(() => {
+    const fetchAdminSummary = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        const data = await dashboardService.getAdminSummary();
+        setAdminSummary(data);
+      } catch (error) {
+        console.error('Failed to fetch admin summary:', error);
+        // Keep default values on error
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchAdminSummary();
   }, []);
 
   // ==================== MENU NAVIGATION HANDLER ====================
@@ -269,7 +296,7 @@ export default function AdminDashboard({
                           borderRadius: "50%",
                         }}
                       />
-                      
+
                       <div
                         style={{
                           fontSize: "42px",
@@ -280,7 +307,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        19
+                        {isLoadingData ? '...' : adminSummary.total_classes}
                       </div>
                       <div
                         style={{
@@ -355,7 +382,7 @@ export default function AdminDashboard({
                           borderRadius: "50%",
                         }}
                       />
-                      
+
                       <div
                         style={{
                           fontSize: "42px",
@@ -366,7 +393,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        2,138
+                        {isLoadingData ? '...' : adminSummary.total_students.toLocaleString('id-ID')}
                       </div>
                       <div
                         style={{
@@ -441,7 +468,7 @@ export default function AdminDashboard({
                           borderRadius: "50%",
                         }}
                       />
-                      
+
                       <div
                         style={{
                           fontSize: "42px",
@@ -452,7 +479,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        515
+                        {isLoadingData ? '...' : adminSummary.total_teachers.toLocaleString('id-ID')}
                       </div>
                       <div
                         style={{
@@ -527,7 +554,7 @@ export default function AdminDashboard({
                           borderRadius: "50%",
                         }}
                       />
-                      
+
                       <div
                         style={{
                           fontSize: "42px",
@@ -538,7 +565,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        8
+                        {isLoadingData ? '...' : adminSummary.total_rooms}
                       </div>
                       <div
                         style={{
