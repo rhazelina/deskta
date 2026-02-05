@@ -156,7 +156,7 @@ export default function KehadiranGuru({
       },
       {
         key: "kehadiranJam",
-        label: <div style={{ textAlign: "center" }}>Status (Jadwal ke 1-10)</div>,
+        label: <div style={{ textAlign: "center" }}>Jadwal ke 1-10</div>,
         render: (value: StatusType[]) => renderStatusBar(value),
       },
       {
