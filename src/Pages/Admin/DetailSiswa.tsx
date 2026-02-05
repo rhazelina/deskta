@@ -2,6 +2,7 @@
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { EditSiswaForm } from '../../component/Shared/EditSiswa';
 import { Edit, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 interface User {
   role: string;
@@ -70,6 +71,7 @@ export default function DetailSiswa({
   siswaId,
   onUpdateSiswa,
 }: DetailSiswaProps) {
+  const { alert: popupAlert } = usePopup();
   const [siswaData, setSiswaData] = useState<Siswa>(defaultSiswaData);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [dataUpdated, setDataUpdated] = useState(false);
@@ -128,7 +130,7 @@ export default function DetailSiswa({
   }, [siswaId]);
 
   // Handler untuk submit edit
-  const handleEditSubmit = (data: {
+  const handleEditSubmit = async (data: {
     jenisKelamin: string;
     noTelp: string;
     jurusanId: string;
@@ -163,13 +165,13 @@ export default function DetailSiswa({
       onUpdateSiswa(updatedSiswa);
     }
     
-    alert('✓ Data siswa berhasil diperbarui!');
+    await popupAlert('✓ Data siswa berhasil diperbarui!');
   };
 
   // Handler untuk tombol kembali
-  const handleBack = () => {
+  const handleBack = async () => {
     if (dataUpdated) {
-      alert('✅ Data telah diperbarui! Kembali ke halaman daftar siswa.');
+      await popupAlert('✅ Data telah diperbarui! Kembali ke halaman daftar siswa.');
     }
     onMenuClick('siswa');
   };
@@ -516,3 +518,4 @@ export default function DetailSiswa({
     </AdminLayout>
   );
 }
+

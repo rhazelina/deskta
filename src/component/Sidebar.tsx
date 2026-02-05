@@ -50,8 +50,9 @@ const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
 
 //wali kelas
 const MENU_ITEMS_WALIKELAS: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
-  { id: "kehadiran-siswa", label: "Kehadiran Siswa", icon: <Calendar size={20} /> },
+  { id: "Dashboard", label: "Beranda", icon: <Home size={20} /> },
+   { id: "jadwal-pengurus", label: "Jadwal Kelas", icon: <Home size={20} /> },
+
 ];
 
 // Menu untuk Guru
@@ -671,4 +672,3 @@ export default function Sidebar({
 //     </aside>
 //   );
 // }
-

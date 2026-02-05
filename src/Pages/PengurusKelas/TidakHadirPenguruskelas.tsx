@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Modal } from "../../component/Shared/Modal";
+import PengurusKelasLayout from "../../component/PengurusKelas/PengurusKelasLayout";
 import { Select } from "../../component/Shared/Select";
+import { Modal } from "../../component/Shared/Modal";
 
 interface AbsensiRecord {
   id: string;
@@ -8,8 +9,10 @@ interface AbsensiRecord {
   jamPelajaran: string;
   mataPelajaran: string;
   guru: string;
-  status: "alpha" | "izin" | "sakit" | "izin-sakit" | "pulang";
-  keterangan?: string;
+  status: "alpha" | "izin" | "sakit" | "hadir" | "pulang";
+  keterangan?: string; // Tambahan untuk izin/sakit/pulang
+  namaSiswa?: string;
+  nis?: string;
 }
 
 // Dummy data - nanti dari API
@@ -21,6 +24,8 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
     status: "alpha",
+    namaSiswa: "Ahmad Fauzi",
+    nis: "20250001",
   },
   {
     id: "2",
@@ -29,6 +34,8 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
     status: "alpha",
+    namaSiswa: "Budi Santoso",
+    nis: "20250002",
   },
   {
     id: "3",
@@ -36,8 +43,10 @@ const dummyData: AbsensiRecord[] = [
     jamPelajaran: "1-4",
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
-    status: "izin-sakit",
-    keterangan: "Sakit demam",
+    status: "izin",
+    keterangan: "Ijin tidak masuk karena ada keperluan keluarga",
+    namaSiswa: "Citra Dewi",
+    nis: "20250003",
   },
   {
     id: "4",
@@ -45,8 +54,10 @@ const dummyData: AbsensiRecord[] = [
     jamPelajaran: "1-4",
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
-    status: "izin-sakit",
-    keterangan: "Sakit perut",
+    status: "sakit",
+    keterangan: "Demam tinggi dan dokter menyarankan istirahat",
+    namaSiswa: "Dewi Lestari",
+    nis: "20250004",
   },
   {
     id: "5",
@@ -55,6 +66,8 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
     status: "alpha",
+    namaSiswa: "Eko Pratama",
+    nis: "20250005",
   },
   {
     id: "6",
@@ -63,6 +76,8 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Matematika",
     guru: "Alifah Diantebes Aindra S.pd",
     status: "alpha",
+    namaSiswa: "Fitri Amelia",
+    nis: "20250006",
   },
   {
     id: "7",
@@ -71,7 +86,9 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Bahasa Indonesia",
     guru: "Budi Santoso S.Pd",
     status: "izin",
-    keterangan: "Acara keluarga",
+    keterangan: "Menghadiri acara keluarga",
+    namaSiswa: "Gunawan Setiawan",
+    nis: "20250007",
   },
   {
     id: "8",
@@ -80,24 +97,38 @@ const dummyData: AbsensiRecord[] = [
     mataPelajaran: "Bahasa Inggris",
     guru: "Siti Nurhaliza S.Pd",
     status: "sakit",
-    keterangan: "Flu berat",
+    keterangan: "Flu berat dan batuk",
+    namaSiswa: "Hana Putri",
+    nis: "20250008",
   },
   {
     id: "9",
+    tanggal: "26-05-2025",
+    jamPelajaran: "1-4",
+    mataPelajaran: "Matematika",
+    guru: "Alifah Diantebes Aindra S.pd",
+    status: "hadir",
+    namaSiswa: "Irfan Maulana",
+    nis: "20250009",
+  },
+  {
+    id: "10",
     tanggal: "26-05-2025",
     jamPelajaran: "5-8",
     mataPelajaran: "Bahasa Inggris",
     guru: "Siti Nurhaliza S.Pd",
     status: "pulang",
     keterangan: "Pulang lebih awal karena sakit perut",
+    namaSiswa: "Joko Widodo",
+    nis: "20250010",
   },
 ];
 
 function CalendarIcon() {
   return (
     <svg
-      width="20"
-      height="20"
+      width="22"
+      height="22"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -134,6 +165,7 @@ function CalendarIcon() {
   );
 }
 
+// Icon mata untuk lihat detail
 function EyeIcon({ size = 16 }: { size?: number }) {
   return (
     <svg
@@ -162,7 +194,49 @@ function EyeIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export default function TidakHadirPenguruskelas() {
+// Icon X untuk tombol close
+function XIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "inline-block", verticalAlign: "middle" }}
+    >
+      <path
+        d="M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 6L18 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// Interface untuk props
+interface TidakHadirPenguruskelasProps {
+  user?: { name: string; phone: string; role?: string };
+  currentPage?: string;
+  onMenuClick?: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export default function TidakHadirPenguruskelas({
+  user = { name: "Pengurus Kelas", phone: "", role: "pengurus-kelas" },
+  currentPage = "tidak-hadir",
+  onMenuClick = () => { },
+  onLogout = () => { },
+}: TidakHadirPenguruskelasProps) {
   const [startDate, setStartDate] = useState("2025-05-24");
   const [endDate, setEndDate] = useState("2025-05-26");
   const [statusFilter, setStatusFilter] = useState<string>("semua");
@@ -175,26 +249,24 @@ export default function TidakHadirPenguruskelas() {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-    // Set end date to end of day to include the full day
     end.setHours(23, 59, 59, 999);
 
     return dummyData.filter((item) => {
-      // Convert DD-MM-YYYY to Date object
       const [day, month, year] = item.tanggal.split("-").map(Number);
       const itemDate = new Date(year, month - 1, day);
 
-      // Filter by date range
       const inDateRange = itemDate >= start && itemDate <= end;
 
-      // Filter by status
       let statusMatch = true;
       if (statusFilter !== "semua") {
         if (statusFilter === "izin/sakit") {
-          statusMatch = item.status === "izin" || item.status === "sakit" || item.status === "izin-sakit";
+          statusMatch = item.status === "izin" || item.status === "sakit";
         } else if (statusFilter === "alpha") {
           statusMatch = item.status === "alpha";
         } else if (statusFilter === "pulang") {
           statusMatch = item.status === "pulang";
+        } else if (statusFilter === "hadir") {
+          statusMatch = item.status === "hadir";
         }
       }
 
@@ -204,40 +276,43 @@ export default function TidakHadirPenguruskelas() {
 
   // Hitung summary berdasarkan data filtered
   const summary = useMemo(() => {
+    const hadir = filteredData.filter((d) => d.status === "hadir").length;
     const pulang = filteredData.filter((d) => d.status === "pulang").length;
     const izin = filteredData.filter((d) => d.status === "izin").length;
-    const sakit = filteredData.filter((d) => d.status === "sakit" || d.status === "izin-sakit").length;
+    const sakit = filteredData.filter((d) => d.status === "sakit").length;
     const alpha = filteredData.filter((d) => d.status === "alpha").length;
 
-    return { pulang, izin, sakit, alpha, total: filteredData.length };
+    return { hadir, pulang, izin, sakit, alpha, total: filteredData.length };
   }, [filteredData]);
 
-  // Helper custom untuk warna status
-  const getStatusColor = (status: string) => {
-    if (status === "izin" || status === "izin-sakit") return "#F59E0B";
-    if (status === "sakit") return "#3B82F6";
-    if (status === "pulang") return "#10B981";
-    return "#EF4444"; // Alpha
-  };
-
-  const getStatusText = (status: string) => {
-    if (status === "izin" || status === "izin-sakit") return "Izin";
-    if (status === "sakit") return "Sakit";
-    if (status === "pulang") return "Pulang";
-    return "Alpha";
-  };
-
+  // Fungsi untuk membuka modal detail - SEMUA STATUS bisa diklik
   const handleStatusClick = (record: AbsensiRecord, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log("Status diklik:", record);
     setSelectedRecord(record);
     setIsModalOpen(true);
   };
 
-  // Custom Status Renderer
+  // Custom Status Renderer dengan icon mata - SEMUA STATUS bisa diklik
   const StatusButton = ({ status, row }: { status: string; row: AbsensiRecord }) => {
-    const color = getStatusColor(status);
-    const label = getStatusText(status);
+    let bgColor = "#D90000"; // MERAH - Tidak Hadir
+    let label = "Tidak Hadir";
+    let textColor = "#FFFFFF";
+
+    if (status === "izin") {
+      bgColor = "#ACA40D"; // KUNING - Izin
+      label = "Izin";
+    } else if (status === "sakit") {
+      bgColor = "#520C8F"; // UNGU - Sakit
+      label = "Sakit";
+    } else if (status === "pulang") {
+      bgColor = "#2F85EB"; // BIRU - Pulang
+      label = "Pulang";
+    } else if (status === "hadir") {
+      bgColor = "#1FA83D"; // HIJAU - Hadir
+      label = "Hadir";
+    }
 
     return (
       <div
@@ -246,18 +321,19 @@ export default function TidakHadirPenguruskelas() {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
+          gap: "6px",
           minWidth: "100px",
-          padding: "6px 12px",
+          padding: "8px 14px",
           borderRadius: "20px",
           fontSize: "12px",
           fontWeight: 600,
-          color: "#FFFFFF",
-          backgroundColor: color,
-          textAlign: "center",
-          cursor: "pointer",
-          gap: "6px",
+          color: textColor,
+          backgroundColor: bgColor,
+          cursor: "pointer", // SEMUA STATUS bisa diklik
           transition: "all 0.2s ease",
+          border: "none",
           boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          minHeight: "36px",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.opacity = "0.9";
@@ -270,7 +346,7 @@ export default function TidakHadirPenguruskelas() {
           e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
         }}
       >
-        <EyeIcon size={14} />
+        <EyeIcon size={14} /> {/* SEMUA STATUS ada ikon mata */}
         <span>{label}</span>
       </div>
     );
@@ -278,42 +354,81 @@ export default function TidakHadirPenguruskelas() {
 
   const columns = [
     {
+      key: "no",
+      label: "No",
+      width: "60px",
+      align: "center" as const,
+    },
+    {
       key: "tanggal",
       label: "Tanggal",
-      width: "120px",
+      width: "130px",
+      align: "center" as const,
     },
     {
       key: "jamPelajaran",
       label: "Jam Pelajaran",
-      width: "120px",
+      width: "130px",
+      align: "center" as const,
     },
     {
       key: "mataPelajaran",
       label: "Mata Pelajaran",
-      width: "200px",
+      width: "180px",
     },
     {
       key: "guru",
       label: "Guru",
-      width: "250px",
+      width: "280px",
+      align: "center" as const,
     },
     {
       key: "status",
       label: "Status",
       render: (_: any, row: AbsensiRecord) => <StatusButton status={row.status} row={row} />,
       align: "center" as const,
-      width: "100px",
+      width: "140px",
     },
   ];
 
-  // Status filter options
+  // Status filter options - Alpha diubah jadi Tidak Hadir
   const statusOptions = [
     { label: "Semua Status", value: "semua" },
-    { label: "Alpha", value: "alpha" },
-    { label: "Izin", value: "izin/sakit" },
-    { label: "Sakit", value: "sakit" },
+    { label: "Hadir", value: "hadir" },
+    { label: "Tidak Hadir", value: "alpha" },
+    { label: "Izin/Sakit", value: "izin/sakit" },
     { label: "Pulang", value: "pulang" },
   ];
+
+  // Fungsi untuk mendapatkan teks status
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "alpha":
+        return "Siswa tidak hadir tanpa keterangan";
+      case "izin":
+        return "Siswa izin dengan keterangan";
+      case "sakit":
+        return "Siswa sakit dengan surat dokter";
+      case "hadir":
+        return "Siswa hadir tepat waktu";
+      case "pulang":
+        return "Siswa pulang lebih awal karena ada kepentingan";
+      default:
+        return status;
+    }
+  };
+
+  // Helper function untuk warna status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "alpha": return "#D90000"; // MERAH - Tidak Hadir
+      case "izin": return "#ACA40D"; // KUNING - Izin
+      case "sakit": return "#520C8F"; // UNGU - Sakit
+      case "hadir": return "#1FA83D"; // HIJAU - Hadir
+      case "pulang": return "#2F85EB"; // BIRU - Pulang
+      default: return "#6B7280";
+    }
+  };
 
   // Total Card
   const TotalCard = () => (
@@ -355,423 +470,527 @@ export default function TidakHadirPenguruskelas() {
   );
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "1400px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-        padding: "20px",
-      }}
-    >
-      {/* Header Section */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "16px",
-          alignItems: "stretch", // Stretch height
-        }}
+    <>
+      <PengurusKelasLayout
+        pageTitle="Daftar Ketidakhadiran"
+        currentPage={currentPage}
+        onMenuClick={onMenuClick}
+        user={user}
+        onLogout={onLogout}
       >
-        {/* Date Range Picker - Compact */}
         <div
           style={{
-            background: "#0B2948",
-            borderRadius: "8px",
-            padding: "8px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            color: "white",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <CalendarIcon />
-            {/* Removed the word "Periode :" to clear space, icon is enough */}
-          </div>
-
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}>
-            <div
-              style={{
-                background: "#FFFFFF",
-                borderRadius: "6px",
-                padding: "6px 10px",
-                color: "#0F172A",
-                fontWeight: "600",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  color: "#0F172A",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  outline: "none",
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                  colorScheme: "light",
-                }}
-              />
-            </div>
-
-            <span style={{ fontWeight: "bold", color: "#FFFFFF", fontSize: "14px" }}>-</span>
-
-            <div
-              style={{
-                background: "#FFFFFF",
-                borderRadius: "6px",
-                padding: "6px 10px",
-                color: "#0F172A",
-                fontWeight: "600",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  color: "#0F172A",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  outline: "none",
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                  colorScheme: "light",
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Status Filter */}
-        <div
-          style={{
-            background: "#FFFFFF",
-            borderRadius: "8px",
-            padding: "8px 12px",
-            border: "1px solid #E2E8F0",
-            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
-            minWidth: "180px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-            placeholder="Filter Status"
-          />
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <TotalCard />
-        <SummaryCard label="Alpha" value={summary.alpha} color="#EF4444" />
-        <SummaryCard label="Izin" value={summary.izin} color="#F59E0B" />
-        <SummaryCard label="Sakit" value={summary.sakit} color="#3B82F6" />
-        <SummaryCard label="Pulang" value={summary.pulang} color="#10B981" />
-      </div>
-
-      {/* Tabel Absensi - MAIN CONTENT */}
-      <div style={{
-        position: "relative",
-        backgroundColor: "#FFFFFF",
-        borderRadius: "12px",
-        overflow: "hidden",
-        boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
-        border: "1px solid #E2E8F0",
-      }}>
-        <div style={{
-          padding: "20px 24px",
-          borderBottom: "1px solid #E2E8F0",
-          backgroundColor: "#F8FAFC",
-        }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: "18px",
-            fontWeight: 700,
-            color: "#0F172A",
-          }}>
-            Daftar Ketidakhadiran
-          </h3>
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          {filteredData.length > 0 ? (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                minWidth: "800px",
-              }}
-            >
-              <thead>
-                <tr style={{ backgroundColor: "#F1F5F9" }}>
-                  {columns.map((col) => (
-                    <th
-                      key={col.key}
-                      style={{
-                        padding: "16px 24px",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#475569",
-                        borderBottom: "2px solid #E2E8F0",
-                        width: col.width || "auto",
-                      }}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((row) => (
-                  <tr
-                    key={row.id}
-                    style={{
-                      borderBottom: "1px solid #E2E8F0",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#F8FAFC";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        style={{
-                          padding: "16px 24px",
-                          fontSize: "14px",
-                          color: "#334155",
-                          verticalAlign: "middle",
-                          textAlign: col.align || "left",
-                        }}
-                      >
-                        {col.render
-                          ? col.render(row[col.key as keyof AbsensiRecord], row)
-                          : row[col.key as keyof AbsensiRecord]}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div style={{
-              padding: "60px 24px",
-              textAlign: "center",
-              color: "#64748B",
-              fontSize: "16px",
-            }}>
-              Tidak ada data ketidakhadiran untuk periode yang dipilih
-            </div>
-          )}
-        </div>
-
-        {/* Footer with pagination info */}
-        {filteredData.length > 0 && (
-          <div style={{
-            padding: "16px 24px",
-            borderTop: "1px solid #E2E8F0",
-            backgroundColor: "#F8FAFC",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "14px",
-            color: "#64748B",
-          }}>
-            <span>Menampilkan {filteredData.length} dari {dummyData.length} data</span>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#475569",
-                }}
-              >
-                Sebelumnya
-              </button>
-              <span style={{ padding: "6px 12px" }}>1</span>
-              <button
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  background: "#FFFFFF",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#475569",
-                }}
-              >
-                Selanjutnya
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        {selectedRecord && (
-          <div style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            overflow: "hidden",
             width: "100%",
-            maxWidth: "500px",
-            margin: "0 20px",
-          }}>
-            {/* Header Modal */}
-            <div style={{
-              backgroundColor: "#0B2948",
-              padding: "20px 24px",
-              textAlign: "center",
-            }}>
-              <h3 style={{
-                margin: 0,
-                fontSize: "18px",
-                fontWeight: 600,
+            maxWidth: "1400px",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+            padding: "20px",
+          }}
+        >
+          {/* Header Section */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "24px",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {/* Date Range Picker */}
+            <div
+              style={{
+                background: "#0B2948",
+                borderRadius: "8px",
+                padding: "8px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
                 color: "white",
-              }}>
-                Detail Kehadiran
-              </h3>
-            </div>
-
-            {/* Content Modal */}
-            <div style={{
-              padding: "24px",
-              maxHeight: "calc(100vh - 200px)",
-              overflowY: "auto"
-            }}>
-              {/* Info Detail */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "20px" }}>
-                <DetailRow label="Tanggal" value={selectedRecord.tanggal} />
-                <DetailRow label="Jam Pelajaran" value={selectedRecord.jamPelajaran} />
-                <DetailRow label="Mata Pelajaran" value={selectedRecord.mataPelajaran} />
-                <DetailRow label="Nama guru" value={selectedRecord.guru} />
-
-                {/* Status */}
-                <div style={{
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <div
+                style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "12px 16px",
-                  backgroundColor: "#F9FAFB",
-                  borderRadius: "8px",
-                  border: "1px solid #E5E7EB",
-                  marginBottom: "16px"
-                }}>
-                  <span style={{ fontWeight: "600", color: "#374151", fontSize: "14px" }}>
-                    Status
-                  </span>
-                  <div style={{
+                  gap: "6px",
+                }}
+              >
+                <CalendarIcon />
+              </div>
+
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}>
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    color: "#0F172A",
+                    fontWeight: "600",
+                    fontSize: "14px",
                     display: "flex",
                     alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 12px",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color: "#FFFFFF",
-                    backgroundColor: getStatusColor(selectedRecord.status),
-                  }}>
-                    {getStatusText(selectedRecord.status)}
-                  </div>
+                  }}
+                >
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "#0F172A",
+                      fontWeight: "600",
+                      fontSize: "13px",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      colorScheme: "light",
+                    }}
+                  />
                 </div>
 
-                {/* Keterangan */}
-                <div>
-                  <label style={{
-                    display: "block",
-                    fontSize: "14px",
+                <span style={{ fontWeight: "bold", color: "#FFFFFF", fontSize: "14px" }}>-</span>
+
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    color: "#0F172A",
                     fontWeight: "600",
-                    color: "#374151",
-                    marginBottom: "8px"
-                  }}>
-                    Keterangan
-                  </label>
-                  <div style={{
-                    padding: "12px 16px",
-                    backgroundColor: "#F3F4F6",
-                    borderRadius: "8px",
-                    border: "1px solid #E5E7EB",
-                    color: "#4B5563",
                     fontSize: "14px",
-                    lineHeight: "1.5",
-                    minHeight: "60px"
-                  }}>
-                    {selectedRecord.keterangan || "Tidak ada keterangan tambahan."}
-                  </div>
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "#0F172A",
+                      fontWeight: "600",
+                      fontSize: "13px",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      colorScheme: "light",
+                    }}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Footer Modal */}
-            <div style={{
-              padding: "16px 24px",
-              borderTop: "1px solid #E5E7EB",
+            {/* Status Filter */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "8px",
+                padding: "6px 12px",
+                border: "1px solid #E2E8F0",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+                minWidth: "200px",
+              }}
+            >
+              <Select
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={statusOptions}
+                placeholder="Filter Status"
+              />
+            </div>
+          </div>
+
+          {/* Summary Cards */}
+          <div
+            style={{
               display: "flex",
-              justifyContent: "flex-end",
-              backgroundColor: "#F9FAFB"
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <TotalCard />
+            <SummaryCard label="Hadir" value={summary.hadir} color="#1FA83D" />
+            <SummaryCard label="Tidak Hadir" value={summary.alpha} color="#D90000" />
+            <SummaryCard label="Izin" value={summary.izin} color="#ACA40D" />
+            <SummaryCard label="Sakit" value={summary.sakit} color="#520C8F" />
+            <SummaryCard label="Pulang" value={summary.pulang} color="#2F85EB" />
+          </div>
+
+          {/* Tabel Absensi - MAIN CONTENT */}
+          <div style={{
+            position: "relative",
+            backgroundColor: "#FFFFFF",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 4px 12px rgba(15, 23, 42, 0.08)",
+            border: "1px solid #E2E8F0",
+          }}>
+            <div style={{
+              padding: "20px 24px",
+              borderBottom: "1px solid #E2E8F0",
+              backgroundColor: "#F8FAFC",
             }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#0F172A",
+              }}>
+                Daftar Ketidakhadiran
+              </h3>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  minWidth: "800px", // SAMA PERSIS dengan siswa
+                }}
+              >
+                <thead>
+                  <tr style={{ backgroundColor: "#F1F5F9" }}>
+                    {columns.map((col) => (
+                      <th
+                        key={col.key}
+                        style={{
+                          padding: "16px 24px",
+                          textAlign: col.align || "left",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          borderBottom: "2px solid #E2E8F0",
+                          width: col.width || "auto",
+                        }}
+                      >
+                        {col.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.length > 0 ? (
+                    filteredData.map((row, index) => (
+                      <tr
+                        key={row.id}
+                        style={{
+                          borderBottom: "1px solid #E2E8F0",
+                          transition: "background-color 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#F8FAFC";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        {columns.map((col) => (
+                          <td
+                            key={col.key}
+                            style={{
+                              padding: "16px 24px",
+                              fontSize: "14px",
+                              color: "#334155",
+                              verticalAlign: "middle",
+                              textAlign: col.align || "left",
+                            }}
+                          >
+                            {col.key === "no" 
+                              ? index + 1
+                              : col.render
+                              ? col.render(row[col.key as keyof AbsensiRecord], row)
+                              : row[col.key as keyof AbsensiRecord]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          padding: "60px 24px",
+                          textAlign: "center",
+                          color: "#64748B",
+                          fontSize: "16px",
+                        }}
+                      >
+                        Tidak ada data ketidakhadiran untuk periode yang dipilih
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer with pagination info */}
+            {filteredData.length > 0 && (
+              <div style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #E2E8F0",
+                backgroundColor: "#F8FAFC",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "14px",
+                color: "#64748B",
+              }}>
+                <span>Menampilkan {filteredData.length} dari {dummyData.length} data</span>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <button
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      color: "#475569",
+                    }}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span style={{ padding: "6px 12px" }}>1</span>
+                  <button
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      color: "#475569",
+                    }}
+                  >
+                    Selanjutnya
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </PengurusKelasLayout>
+
+      {/* Modal Detail Kehadiran */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        {selectedRecord && (
+          <div style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: "12px",
+            width: "100%",
+            maxWidth: "420px",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            overflow: "hidden",
+            maxHeight: "90vh",
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            {/* Header Modal */}
+            <div style={{
+              backgroundColor: "#0B2948",
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              color: "#FFFFFF",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <EyeIcon size={24} />
+                <h3 style={{
+                  margin: 0,
+                  fontSize: "18px",
+                  fontWeight: 700,
+                }}>
+                  Detail Kehadiran
+                </h3>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 style={{
-                  padding: "10px 24px",
-                  backgroundColor: "#0B2948",
-                  color: "white",
+                  background: "none",
                   border: "none",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  fontWeight: 600,
                   cursor: "pointer",
-                  transition: "background 0.2s"
+                  color: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: 0,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#0B2948"}
               >
-                Tutup
+                <XIcon size={24} />
               </button>
+            </div>
+
+            {/* Content Modal */}
+            <div style={{ 
+              padding: 24,
+              overflowY: "auto",
+              flex: 1,
+            }}>
+              {/* Row Nama Siswa */}
+              <DetailRow label="Nama Siswa" value={selectedRecord.namaSiswa || "-"} />
+
+              {/* Row NIS */}
+              <DetailRow label="NIS" value={selectedRecord.nis || "-"} />
+
+              {/* Row Tanggal */}
+              <DetailRow label="Tanggal" value={selectedRecord.tanggal} />
+
+              {/* Row Jam Pelajaran */}
+              <DetailRow label="Jam Pelajaran" value={selectedRecord.jamPelajaran} />
+
+              {/* Row Mata Pelajaran */}
+              <DetailRow label="Mata pelajaran" value={selectedRecord.mataPelajaran} />
+
+              {/* Row Nama Guru */}
+              <DetailRow label="Nama guru" value={selectedRecord.guru} />
+
+              {/* Row Status */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 24,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+              }}>
+                <div style={{ fontWeight: 600, color: "#374151" }}>Status :</div>
+                <div>
+                  <span style={{
+                    backgroundColor: getStatusColor(selectedRecord.status),
+                    color: "#FFFFFF",
+                    padding: "4px 16px",
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}>
+                    {selectedRecord.status === "alpha" ? "Tidak Hadir" :
+                      selectedRecord.status === "sakit" ? "Sakit" :
+                        selectedRecord.status === "izin" ? "Izin" :
+                          selectedRecord.status === "hadir" ? "Hadir" :
+                            "Pulang"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Info Box - Ditampilkan untuk SEMUA status */}
+              <div style={{
+                backgroundColor: "#EFF6FF",
+                border: "1px solid #BFDBFE",
+                borderRadius: 8,
+                padding: 16,
+                textAlign: "center",
+                marginBottom: (selectedRecord.status === "izin" || selectedRecord.status === "sakit" || selectedRecord.status === "pulang") && selectedRecord.keterangan ? 24 : 0,
+              }}>
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#1E40AF",
+                }}>
+                  {getStatusText(selectedRecord.status)}
+                </div>
+              </div>
+
+              {/* Keterangan untuk izin, sakit, DAN PULANG */}
+              {(selectedRecord.status === "izin" || selectedRecord.status === "sakit" || selectedRecord.status === "pulang") && selectedRecord.keterangan && (
+                <div>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#374151",
+                    marginBottom: 12,
+                  }}>
+                    Keterangan :
+                  </div>
+                  <div style={{
+                    padding: "12px 16px",
+                    backgroundColor: "#F9FAFB",
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 14,
+                      color: "#6B7280",
+                      lineHeight: 1.5,
+                    }}>
+                      {selectedRecord.keterangan}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Area Bukti Foto untuk izin, sakit, DAN PULANG */}
+              {(selectedRecord.status === "izin" || selectedRecord.status === "sakit" || selectedRecord.status === "pulang") && (
+                <div style={{ marginTop: selectedRecord.keterangan ? 24 : 0 }}>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#374151",
+                    marginBottom: 12,
+                  }}>
+                    Bukti Foto :
+                  </div>
+                  <div style={{
+                    padding: "40px 16px",
+                    backgroundColor: "#F9FAFB",
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                    minHeight: 100,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 14,
+                      color: "#9CA3AF",
+                      textAlign: "center",
+                    }}>
+                      {selectedRecord.status === "hadir" 
+                        ? "Tidak ada bukti foto yang diperlukan" 
+                        : "[Area untuk menampilkan bukti foto]"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Catatan untuk status Hadir */}
+              {selectedRecord.status === "hadir" && (
+                <div style={{ 
+                  marginTop: 24,
+                  padding: "12px 16px",
+                  backgroundColor: "#F0FDF4",
+                  borderRadius: 8,
+                  border: "1px solid #BBF7D0",
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: "#166534",
+                    lineHeight: 1.5,
+                    textAlign: "center",
+                    fontWeight: 500,
+                  }}>
+                    ✓ Siswa hadir tepat waktu sesuai jadwal pelajaran
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
       </Modal>
-    </div>
+    </>
   );
 }
 
@@ -820,12 +1039,14 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div style={{
       display: "flex",
       justifyContent: "space-between",
-      alignItems: "center",
-      paddingBottom: "12px",
-      borderBottom: "1px dashed #E5E7EB",
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottom: "1px solid #E5E7EB",
     }}>
-      <span style={{ fontSize: "14px", color: "#6B7280" }}>{label}</span>
-      <span style={{ fontSize: "14px", fontWeight: 600, color: "#111827", textAlign: "right" }}>{value}</span>
+      <div style={{ fontWeight: 600, color: "#374151" }}>{label} :</div>
+      <div style={{ fontWeight: 500, color: "#1F2937" }}>
+        {value}
+      </div>
     </div>
   );
 }

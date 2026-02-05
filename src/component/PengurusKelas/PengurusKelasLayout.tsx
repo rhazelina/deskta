@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 import Sidebar from "../Sidebar";
 import { useLocalLenis } from "../Shared/SmoothScroll";
+import LogoSchool from "../../assets/Icon/logo smk.png";
 
 interface PengurusKelasLayoutProps {
   user: { name: string; phone: string; role?: string };
@@ -134,21 +135,19 @@ export default function PengurusKelasLayout({
                 Pengurus Kelas
               </div>
             </div>
-            <div style={{
-              width: "48px",
-              height: "48px",
-              backgroundColor: "#3B82F6",
-              borderRadius: "12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: "20px",
-              fontWeight: "bold",
-              boxShadow: "0 2px 8px rgba(59, 130, 246, 0.3)"
-            }}>
-              {user.name.charAt(0)}
-            </div>
+            <img
+              src={LogoSchool}
+              alt="Logo SMK"
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                padding: "4px",
+                backgroundColor: "white",
+                border: "1px solid #E5E7EB",
+              }}
+            />
           </div>
         </header>
 

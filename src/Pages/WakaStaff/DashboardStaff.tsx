@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import JadwalKelasStaff from "./JadwalKelasStaff";
@@ -9,6 +9,9 @@ import KehadiranGuru from "./KehadiranGuru";
 import KehadiranSiswa from "./KehadiranSiswa";
 import DetailSiswaStaff from "./DetailSiswaStaff";
 import DetailKehadiranGuru from "./DetailKehadiranGuru";
+import RekapKehadiranSiswa from "./RekapKehadiranSiswa";
+import DaftarKetidakhadiran from "./DaftarKetidakhadiran";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -50,7 +53,9 @@ type WakaPage =
   | "lihat-guru"
   | "lihat-kelas"
   | "detail-siswa-staff"
-  | "detail-kehadiran-guru";
+  | "detail-kehadiran-guru"
+  | "rekap-kehadiran-siswa"
+  | "daftar-ketidakhadiran";
 
 const PAGE_TITLES: Record<WakaPage, string> = {
   dashboard: "Dashboard",
@@ -63,6 +68,8 @@ const PAGE_TITLES: Record<WakaPage, string> = {
   "lihat-kelas": "Detail Kelas",
   "detail-siswa-staff": "Detail Siswa Staff",
   "detail-kehadiran-guru": "Detail Kehadiran Guru",
+  "rekap-kehadiran-siswa": "Rekap Kehadiran Siswa",
+  "daftar-ketidakhadiran": "Daftar Ketidakhadiran",
 };
 
 // Dummy data updated for Monthly view (Mon-Fri) with 5 categories sesuai gambar
@@ -85,11 +92,11 @@ const monthlyAttendance = [
 ];
 
 const statCards = [
-  { label: "Tepat Waktu", value: "2100", color: "#10B981" },
-  { label: "Terlambat", value: "10", color: "#F59E0B" },
-  { label: "Izin", value: "18", color: "#3B82F6" },
-  { label: "Sakit", value: "5", color: "#EF4444" },
-  { label: "Pulang", value: "3", color: "#8B5CF6" },
+  { label: "Tepat Waktu", value: "2100", color: "#1FA83D" },
+  { label: "Terlambat", value: "10", color: "#ACA40D" },
+  { label: "Izin", value: "18", color: "#520C8F" },
+  { label: "Sakit", value: "5", color: "#D90000" },
+  { label: "Pulang", value: "3", color: "#2F85EB" },
 ];
 
 const historyInfo = {
@@ -107,20 +114,29 @@ const cardStyle: React.CSSProperties = {
   border: "1px solid #E5E7EB",
 };
 
-// Warna sesuai gambar
+// Warna sesuai format revisi
 const COLORS = {
-  HADIR: "#10B981",      // Hijau
-  IZIN: "#3B82F6",       // Biru
-  PULANG: "#8B5CF6",     // Ungu
-  TIDAK_HADIR: "#EF4444", // Merah
-  SAKIT: "#F59E0B",      // Kuning/Orange
+  HADIR: "#1FA83D",      // HIJAU - Hadir
+  IZIN: "#ACA40D",       // KUNING - Izin
+  PULANG: "#2F85EB",     // BIRU - Pulang
+  TIDAK_HADIR: "#D90000", // MERAH - Tidak Hadir
+  SAKIT: "#520C8F",      // UNGU - Sakit
 };
 
 export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) {
+  const { confirm: popupConfirm } = usePopup();
   const [currentPage, setCurrentPage] = useState<WakaPage>("dashboard");
   const [selectedGuru, setSelectedGuru] = useState<string | null>(null);
   const [selectedKelas, setSelectedKelas] = useState<string | null>(null);
   const [selectedKelasId, setSelectedKelasId] = useState<string | null>(null);
+  const [selectedKelasInfo, setSelectedKelasInfo] = useState<{
+    namaKelas: string;
+    waliKelas: string;
+  } | null>(null);
+  const [selectedSiswa, setSelectedSiswa] = useState<{
+    name: string;
+    identitas: string;
+  } | null>(null);
 
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
@@ -151,10 +167,20 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
     return () => clearInterval(interval);
   }, []);
 
-  const handleMenuClick = (page: string) => setCurrentPage(page as WakaPage);
+  const handleMenuClick = (page: string, payload?: any) => {
+    setCurrentPage(page as WakaPage);
+    
+    // Handle payload untuk daftar-ketidakhadiran
+    if (page === "daftar-ketidakhadiran" && payload) {
+      setSelectedSiswa({
+        name: payload.siswaName,
+        identitas: payload.siswaIdentitas,
+      });
+    }
+  };
 
-  const handleLogout = () => {
-    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+  const handleLogout = async () => {
+    if (await popupConfirm("Apakah Anda yakin ingin keluar?")) {
       onLogout();
       navigate("/");
     }
@@ -213,8 +239,9 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
         return (
           <KehadiranSiswa
             {...commonProps}
-            onNavigateToDetail={(kelasId: string) => {
+            onNavigateToDetail={(kelasId: string, kelasInfo: { namaKelas: string; waliKelas: string }) => {
               setSelectedKelasId(kelasId);
+              setSelectedKelasInfo(kelasInfo);
               handleMenuClick("detail-siswa-staff");
             }}
           />
@@ -244,6 +271,26 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
           <DetailKehadiranGuru
             {...commonProps}
             onBack={() => handleMenuClick("kehadiran-guru")}
+          />
+        );
+
+      case "rekap-kehadiran-siswa":
+        return (
+          <RekapKehadiranSiswa
+            {...commonProps}
+            namaKelas={selectedKelasInfo?.namaKelas || "X Mekatronika 1"}
+            waliKelas={selectedKelasInfo?.waliKelas || "Ewit Erniyah S.pd"}
+            onBack={() => handleMenuClick("detail-siswa-staff")}
+          />
+        );
+
+      case "daftar-ketidakhadiran":
+        return (
+          <DaftarKetidakhadiran
+            {...commonProps}
+            siswaName={selectedSiswa?.name}
+            siswaIdentitas={selectedSiswa?.identitas}
+            onBack={() => handleMenuClick("rekap-kehadiran-siswa")}
           />
         );
 
@@ -786,3 +833,4 @@ function ComingSoon({ title }: { title: string }) {
     </div>
   );
 }
+

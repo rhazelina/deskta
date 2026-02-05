@@ -166,13 +166,18 @@ export default function DaftarMapel() {
         ))}
       </div>
 
-      {/* Modal QR - SEDERHANA */}
+      {/* Modal QR - DENGAN BACKGROUND PUTIH */}
       <Modal 
         isOpen={isQrModalOpen} 
         onClose={() => setIsQrModalOpen(false)}
         maxWidth="380px"
       >
-        <div style={{ padding: "24px" }}>
+        <div style={{ 
+          padding: "24px",
+          background: "#FFFFFF",
+          borderRadius: "16px",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+        }}>
           {/* Header */}
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <h3 style={{ 
@@ -209,7 +214,10 @@ export default function DaftarMapel() {
           <div style={{ 
             padding: 20,
             marginBottom: 24,
-            textAlign: "center"
+            textAlign: "center",
+            background: "#F8FAFC",
+            borderRadius: "12px",
+            border: "1px solid #E5E7EB"
           }}>
             {selectedMapel && (
               <img 
@@ -237,7 +245,9 @@ export default function DaftarMapel() {
                 borderRadius: 10,
                 fontWeight: 800,
                 cursor: "pointer",
-                fontSize: 15
+                fontSize: 15,
+                width: "100%",
+                maxWidth: "200px"
               }}
             >
               Tutup

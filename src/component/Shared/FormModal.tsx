@@ -1,5 +1,4 @@
 ﻿import { type ReactNode } from "react";
-import { Modal } from "./Modal";
 
 interface FormModalProps {
   isOpen: boolean;
@@ -12,6 +11,9 @@ interface FormModalProps {
   titleStyle?: React.CSSProperties;
   showSubmitButton?: boolean;
   style?: React.CSSProperties;
+  maxHeight?: string;
+  topOffset?: string;
+  bottomMargin?: string; // ⬅️ TAMBAH PROP BARU untuk margin bawah
 }
 
 export function FormModal({
@@ -25,6 +27,12 @@ export function FormModal({
   titleStyle = {},
   showSubmitButton = true,
   style,
+  // ⬇️ JARAK ATAS: TETAP atau SEDIKIT DITAMBAH
+  topOffset = "14vh",
+  // ⬇️ TINGGI MODAL: DITAMBAH BANYAK untuk lebih panjang ke bawah
+  maxHeight = "83vh", // ⬅️ DARI 55vh KE 85vh (30% lebih tinggi!)
+  // ⬇️ MARGIN BAWAH: TAMBAH untuk ruang di bawah modal
+  bottomMargin = "20px",
 }: FormModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +41,43 @@ export function FormModal({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <div
+      style={{
+        position: "fixed",
+        top: "0",
+        left: "0",
+        right: "0",
+        bottom: "0",
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        display: "flex",
+        alignItems: "flex-start", // ⬅️ PENTING: flex-start
+        justifyContent: "center",
+        zIndex: 9999,
+        // ⬇️ JARAK ATAS: TETAP, TAMBAH MARGIN BAWAH
+        padding: `${topOffset} 20px ${bottomMargin} 20px`, // ⬅️ Tambah bottomMargin
+        overflowY: "auto",
+      }}
+      onClick={onClose}
+    >
       <div
         style={{
+          width: "100%",
+          maxWidth: "500px",
+          // ⬇️ TINGGI: DITAMBAH BANYAK!
+          maxHeight: maxHeight, // ⬅️ SEKARANG 85vh (sangat tinggi!)
+          display: "flex",
+          flexDirection: "column",
           border: "3px solid #1e40af",
           borderRadius: "16px",
           overflow: "hidden",
+          backgroundColor: "white",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
           ...style,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -52,9 +88,18 @@ export function FormModal({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexShrink: 0,
+            borderBottom: "3px solid #1e40af",
           }}
         >
-          <h2 style={{ fontSize: "18px", fontWeight: "bold", margin: 0, ...titleStyle }}>
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: "bold",
+              margin: 0,
+              ...titleStyle,
+            }}
+          >
             {title}
           </h2>
           <button
@@ -78,65 +123,81 @@ export function FormModal({
           </button>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ padding: "24px", backgroundColor: "white" }}>
-            {children}
-          </div>
-
-          {/* Footer */}
-          <div
-            style={{
-              padding: "16px 24px",
+        {/* Scrollable Content - AREA KONTEN LEBIH BESAR */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            // ⬇️ AREA KONTEN: DITAMBAH KARENA MODAL LEBIH TINGGI
+            maxHeight: `calc(${maxHeight} - 130px)`, // ⬅️ Untuk header+footer
+          }}
+        >
+          <form onSubmit={handleSubmit}>
+            <div style={{ 
+              padding: "24px", 
               backgroundColor: "white",
-              display: "flex",
-              gap: "12px",
-              justifyContent: "center",
+              // ⬇️ MINIMAL HEIGHT: TAMBAH agar konten cukup panjang
+              minHeight: "350px",
+            }}>
+              {children}
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: "16px 24px",
+            backgroundColor: "white",
+            display: "flex",
+            gap: "12px",
+            justifyContent: "center",
+            borderTop: "1px solid #e5e7eb",
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            style={{
+              padding: "10px 24px",
+              borderRadius: "8px",
+              border: "2px solid #1e40af",
+              backgroundColor: "white",
+              color: "#1e40af",
+              fontWeight: "600",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              minWidth: "100px",
+              opacity: isSubmitting ? 0.5 : 1,
             }}
           >
+            Batal
+          </button>
+          {showSubmitButton && (
             <button
-              type="button"
-              onClick={onClose}
+              type="submit"
+              onClick={handleSubmit}
               disabled={isSubmitting}
               style={{
                 padding: "10px 24px",
                 borderRadius: "8px",
-                border: "2px solid #1e40af",
-                backgroundColor: "white",
-                color: "#1e40af",
+                border: "none",
+                backgroundColor: "#1e40af",
+                color: "white",
                 fontWeight: "600",
                 cursor: isSubmitting ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 minWidth: "100px",
-                opacity: isSubmitting ? 0.5 : 1,
+                opacity: isSubmitting ? 0.7 : 1,
               }}
             >
-              Batal
+              {isSubmitting ? "Menyimpan..." : submitLabel}
             </button>
-            {showSubmitButton && (
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#1e40af",
-                  color: "white",
-                  fontWeight: "600",
-                  cursor: isSubmitting ? "not-allowed" : "pointer",
-                  fontSize: "14px",
-                  minWidth: "100px",
-                  opacity: isSubmitting ? 0.7 : 1,
-                }}
-              >
-                {isSubmitting ? "Menyimpan..." : submitLabel}
-              </button>
-            )}
-          </div>
-        </form>
+          )}
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }
-

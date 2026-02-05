@@ -4,6 +4,8 @@ import SiswaLayout from "../../component/Siswa/SiswaLayout";
 import { Modal } from "../../component/Shared/Modal";
 import JadwalSiswa from "./JadwalSiswa.tsx";
 import AbsensiSiswa from "./AbsensiSiswa";
+import logoSmk from "../../assets/Icon/logo smk.png";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 import {
   Bell,
   Megaphone,
@@ -78,6 +80,7 @@ const weeklyStats = {
 };
 
 export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) {
+  const { alert: popupAlert } = usePopup();
   const [currentPage, setCurrentPage] = useState<SiswaPage>("dashboard");
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
@@ -94,11 +97,16 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
         day: "numeric",
       };
       setCurrentDate(now.toLocaleDateString("id-ID", options));
-      setCurrentTime(now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+      
+      // Format waktu dengan jam:menit:detik
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      setCurrentTime(`${hours}:${minutes}:${seconds}`);
     };
 
     updateDateTime();
-    const interval = setInterval(updateDateTime, 60000);
+    const interval = setInterval(updateDateTime, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -290,7 +298,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                         {currentDate || "Memuat..."}
                       </div>
                       <div style={{ fontSize: "20px", color: "#0C4A6E", fontWeight: "700" }}>
-                        {currentTime || "00:00"}
+                        {currentTime || "00:00:00"}
                       </div>
                     </div>
                     <div style={{
@@ -319,11 +327,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
               }}>
                 {/* User Info Card */}
                 <div style={{
-                  backgroundColor: "#1E40AF",
+                  backgroundColor: "#001F3F",
                   borderRadius: "16px",
                   padding: "24px",
-                  boxShadow: "0 4px 20px rgba(30, 64, 175, 0.2)",
-                  border: "1px solid #1E40AF",
+                  boxShadow: "0 4px 20px rgba(0, 31, 63, 0.2)",
+                  border: "1px solid #001F3F",
                   display: "flex",
                   alignItems: "center",
                   gap: "20px",
@@ -332,11 +340,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                 }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(30, 64, 175, 0.3)";
+                    e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 31, 63, 0.3)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(30, 64, 175, 0.2)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 31, 63, 0.2)";
                   }}>
                   <div style={{
                     width: "64px",
@@ -347,9 +355,10 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "28px",
-                    color: "white"
+                    color: "white",
+                    overflow: "hidden"
                   }}>
-                    <GraduationCap size={28} />
+                    <img src={logoSmk} alt="Logo SMK" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{
@@ -775,12 +784,12 @@ function MonthlyLineChart({
       {
         label: "Hadir",
         data: data.map((d) => d.hadir),
-        borderColor: "#10B981",
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        borderColor: "#1FA83D", // REVISI: Hadir > #1FA83D
+        backgroundColor: "rgba(31, 168, 61, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#10B981",
+        pointBackgroundColor: "#1FA83D",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -789,12 +798,12 @@ function MonthlyLineChart({
       {
         label: "Izin",
         data: data.map((d) => d.izin),
-        borderColor: "#F59E0B",
-        backgroundColor: "rgba(245, 158, 11, 0.1)",
+        borderColor: "#ACA40D", // REVISI: Izin > #ACA40D
+        backgroundColor: "rgba(172, 164, 13, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#F59E0B",
+        pointBackgroundColor: "#ACA40D",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -803,40 +812,40 @@ function MonthlyLineChart({
       {
         label: "Sakit",
         data: data.map((d) => d.sakit),
-        borderColor: "#3B82F6",
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        borderColor: "#520C8F", // REVISI: Sakit > #520C8F
+        backgroundColor: "rgba(82, 12, 143, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#3B82F6",
+        pointBackgroundColor: "#520C8F",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
         fill: true,
       },
       {
-        label: "Alpha",
+        label: "Tidak Hadir",
         data: data.map((d) => d.alpha),
-        borderColor: "#EF4444",
-        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        borderColor: "#D90000", // REVISI: Tidak Hadir > #D90000
+        backgroundColor: "rgba(217, 0, 0, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#EF4444",
+        pointBackgroundColor: "#D90000",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
         fill: true,
       },
       {
-        label: "Dispen",
+        label: "Pulang", // Mengganti Dispen dengan Pulang
         data: data.map((d) => d.dispen),
-        borderColor: "#6B7280",
-        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        borderColor: "#2F85EB", // REVISI: Pulang > #2F85EB
+        backgroundColor: "rgba(47, 133, 235, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#6B7280",
+        pointBackgroundColor: "#2F85EB",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -929,11 +938,17 @@ function WeeklyDonutChart({
   data: { hadir: number; izin: number; sakit: number; alpha: number; dispen: number };
 }) {
   const chartData = {
-    labels: ["Hadir", "Izin", "Sakit", "Alpha", "Dispen"],
+    labels: ["Hadir", "Izin", "Sakit", "Tidak Hadir", "Pulang"], // Mengganti Dispen dengan Pulang
     datasets: [
       {
         data: [data.hadir, data.izin, data.sakit, data.alpha, data.dispen],
-        backgroundColor: ["#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#6B7280"],
+        backgroundColor: [
+          "#1FA83D", // REVISI: Hadir > #1FA83D
+          "#ACA40D", // REVISI: Izin > #ACA40D
+          "#520C8F", // REVISI: Sakit > #520C8F
+          "#D90000", // REVISI: Tidak Hadir > #D90000
+          "#2F85EB", // REVISI: Pulang > #2F85EB
+        ],
         borderColor: "#ffffff",
         borderWidth: 2,
       },
@@ -1125,8 +1140,8 @@ function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
           </button>
           <button
             type="button"
-            onClick={() => {
-              alert("Pengingat ditambahkan!");
+            onClick={async () => {
+              await popupAlert("Pengingat ditambahkan!");
               onClose();
             }}
             style={{
@@ -1199,3 +1214,4 @@ function TimePill({ label }: { label: string }) {
     </div>
   );
 }
+

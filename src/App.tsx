@@ -14,6 +14,7 @@ import DashboardSiswa from "./Pages/Siswa/DashboardSiswa";
 import DashboardPengurusKelas from "./Pages/PengurusKelas/DashboardPengurusKelas";
 import DashboardWalliKelas from "./Pages/WaliKelas/DashboardWalliKelas";
 import { SmoothScroll } from "./component/Shared/SmoothScroll";
+import { PopupProvider } from "./component/Shared/Popup/PopupProvider";
 // import { SmoothScroll } from "./Shared/SmoothScroll";
 
 
@@ -137,9 +138,10 @@ export default function App() {
   ].includes(currentUser.role);
 
   return (
-    <Router>
-      <SmoothScroll />
-      <Routes>
+    <PopupProvider>
+      <Router>
+        <SmoothScroll />
+        <Routes>
         {/* Role Selector */}
         <Route
           path="/"
@@ -244,7 +246,8 @@ export default function App() {
 
         {/* 404 - Not Found */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </PopupProvider>
   );
 } 

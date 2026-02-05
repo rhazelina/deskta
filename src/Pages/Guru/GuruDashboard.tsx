@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import GuruLayout from "../../component/Guru/GuruLayout";
 import DetailJadwalGuru from "./DetailJadwalGuru";
@@ -10,6 +10,7 @@ import QRCodeIcon from "../../assets/Icon/qr_code.png";
 import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
 import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 
 // Icon Components
@@ -305,6 +306,7 @@ const styles = {
 
 // ==================== MAIN COMPONENT ====================
 export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   // ========== STATE ==========
   const [currentPage, setCurrentPage] = useState<GuruPage>("dashboard");
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(
@@ -353,8 +355,8 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   // ========== NAVIGATION HANDLERS ==========
   const handleMenuClick = (page: string) => setCurrentPage(page as GuruPage);
 
-  const handleLogoutClick = () => {
-    if (window.confirm("Apakah Anda yakin ingin keluar?")) {
+  const handleLogoutClick = async () => {
+    if (await popupConfirm("Apakah Anda yakin ingin keluar?")) {
       onLogout();
       navigate("/");
     }
@@ -405,13 +407,13 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
     setCurrentPage("input-manual");
   };
 
-  const handleSubmitTidakBisaMengajar = (data: {
+  const handleSubmitTidakBisaMengajar = async (data: {
     alasan: string;
     keterangan?: string;
     foto1?: File;
   }) => {
     console.log("Data tidak bisa mengajar:", data);
-    alert(
+    await popupAlert(
       `Laporan berhasil dikirim!\nAlasan: ${data.alasan}\nKeterangan: ${data.keterangan || "-"
       }\nFoto: ${data.foto1 ? "Ada" : "Tidak ada"}`
     );
@@ -861,3 +863,4 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
 
   return renderPage();
 }
+

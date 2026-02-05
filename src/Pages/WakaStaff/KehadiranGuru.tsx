@@ -18,7 +18,7 @@ interface KehadiranGuruProps {
   onLogout: () => void;
   currentPage: string;
   onMenuClick: (page: string) => void;
-  onNavigateToDetail?: (guruId: string) => void;
+  onNavigateToDetail?: (guruId: string, guruName: string) => void;
 }
 
 interface KehadiranGuruRow {
@@ -79,59 +79,67 @@ export default function KehadiranGuru({
     );
   }, [rows, search]);
 
-  const renderStatusBar = (data: StatusType[]) => (
-    <div style={{ display: "flex", justifyContent: "center" }}>
-      <div
-        style={{
-          display: "flex",
-          width: 240,
-          height: 16,
-          borderRadius: 999,
-          overflow: "hidden",
-          border: "1px solid #1F2937",
-        }}
-      >
-        {Array.from({ length: 10 }).map((_, i) => {
-          const status = data[i];
-          let color = "#DC2626";
+  const renderStatusBar = (data: StatusType[]) => {
+    const statusColors: Record<string, string> = {
+      "hadir": "#1FA83D",          // HIJAU - Hadir
+      "terlambat": "#ACA40D",      // KUNING - Terlambat
+      "izin": "#ACA40D",           // KUNING - Izin
+      "sakit": "#520C8F",          // UNGU - Sakit
+      "tidak-hadir": "#D90000",    // MERAH - Tidak Hadir
+      "alpha": "#D90000",          // MERAH - Alpha
+    };
 
-          if (status === "hadir") color = "#22C55E";
-          else if (
-            status === "izin" ||
-            status === "sakit" ||
-            status === "terlambat"
-          )
-            color = "#FACC15";
+    return (
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            width: 240,
+            height: 16,
+            borderRadius: 999,
+            overflow: "hidden",
+            border: "1px solid #1F2937",
+          }}
+        >
+          {Array.from({ length: 10 }).map((_, i) => {
+            const status = data[i];
+            const color = statusColors[status] || "#D90000";
 
-          return (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                backgroundColor: color,
-                borderRight: i !== 9 ? "1px solid #1F2937" : "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#FFFFFF",
-              }}
-            >
-              {i + 1}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  backgroundColor: color,
+                  borderRight: i !== 9 ? "1px solid #1F2937" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "#000000",
+                }}
+              >
+                {i + 1}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const handleView = (row: KehadiranGuruRow) => {
     if (onNavigateToDetail) {
-      onNavigateToDetail(row.id);
+      onNavigateToDetail(row.id, row.namaGuru);
     } else {
       navigate(`/waka/kehadiran/detail/${row.id}`, {
-        state: { guru: row, selectedTanggal },
+        state: { 
+          guru: row, 
+          selectedTanggal,
+          guruId: row.id,
+          guruName: row.namaGuru 
+        },
       });
     }
   };
@@ -148,7 +156,7 @@ export default function KehadiranGuru({
       },
       {
         key: "kehadiranJam",
-        label: <div style={{ textAlign: "center" }}>Status</div>,
+        label: <div style={{ textAlign: "center" }}>Status (Jadwal ke 1-10)</div>,
         render: (value: StatusType[]) => renderStatusBar(value),
       },
       {

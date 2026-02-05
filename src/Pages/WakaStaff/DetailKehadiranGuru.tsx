@@ -1,11 +1,10 @@
 import { useMemo, useState } from "react";
-import { User, SquarePen, ArrowLeft } from "lucide-react";
+import { User, SquarePen, ArrowLeft, Eye, X } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { FormModal } from "../../component/Shared/FormModal";
 import { Select } from "../../component/Shared/Select";
-import { StatusBadge } from "../../component/Shared/StatusBadge";
 
-type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa";
+type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa" | "Tidak Hadir" | "Pulang";
 
 type RowKehadiran = {
   no: number;
@@ -16,13 +15,23 @@ type RowKehadiran = {
   status: StatusKehadiran;
 };
 
+interface DetailKehadiranGuruProps {
+  user: { name: string; role: string };
+  onLogout: () => void;
+  currentPage: string;
+  onMenuClick: (page: string) => void;
+  onBack?: () => void;
+  guruName?: string;
+}
+
 export default function DetailKehadiranGuru({
   user = { name: "Admin", role: "waka" },
   currentPage = "detail-kehadiran-guru",
   onMenuClick = () => {},
   onLogout = () => {},
   onBack = () => {},
-}) {
+  guruName = "Ewit Emiyah S.pd",
+}: DetailKehadiranGuruProps) {
   const [rows, setRows] = useState<RowKehadiran[]>([
     {
       no: 1,
@@ -48,19 +57,44 @@ export default function DetailKehadiranGuru({
       kelas: "XII Mekatronika 2",
       status: "Izin",
     },
+    {
+      no: 4,
+      tanggal: "25-05-2025",
+      jam: "1-2",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Pulang",
+    },
+    {
+      no: 5,
+      tanggal: "24-05-2025",
+      jam: "3-4",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Sakit",
+    },
+    {
+      no: 6,
+      tanggal: "25-05-2025",
+      jam: "5-6",
+      mapel: "Matematika",
+      kelas: "XII Mekatronika 2",
+      status: "Tidak Hadir",
+    },
   ]);
 
   const guruInfo = {
-    name: "Ewit Erniyah S.pd",
+    name: guruName,
     phone: "0918415784",
   };
 
   const statusOptions = useMemo(
     () => [
       { label: "Hadir", value: "Hadir" },
-      { label: "Sakit", value: "Sakit" },
       { label: "Izin", value: "Izin" },
-      { label: "Tidak Hadir", value: "Alfa" },
+      { label: "Sakit", value: "Sakit" },
+      { label: "Tidak Hadir", value: "Tidak Hadir" },
+      { label: "Pulang", value: "Pulang" },
     ],
     []
   );
@@ -70,10 +104,19 @@ export default function DetailKehadiranGuru({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State untuk modal detail
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<RowKehadiran | null>(null);
+
   const handleOpenEdit = (row: RowKehadiran) => {
     setEditingRow(row);
     setEditStatus(row.status);
     setIsEditOpen(true);
+  };
+
+  const handleOpenDetail = (row: RowKehadiran) => {
+    setSelectedDetail(row);
+    setIsDetailOpen(true);
   };
 
   const handleSubmitEdit = () => {
@@ -91,16 +134,22 @@ export default function DetailKehadiranGuru({
     }, 300);
   };
 
-  const mapStatusToBadge = (status: StatusKehadiran) => {
+  // Fungsi untuk mendapatkan warna status sesuai format yang diberikan
+  const getStatusColor = (status: StatusKehadiran) => {
     switch (status) {
       case "Hadir":
-        return "hadir";
+        return { bg: "#1FA83D", text: "#FFFFFF", border: "#1FA83D", shadow: "0 1px 3px rgba(31, 168, 61, 0.3)" };
       case "Izin":
-        return "izin";
+        return { bg: "#ACA40D", text: "#FFFFFF", border: "#ACA40D", shadow: "0 1px 3px rgba(172, 164, 13, 0.3)" };
       case "Sakit":
-        return "sakit";
+        return { bg: "#520C8F", text: "#FFFFFF", border: "#520C8F", shadow: "0 1px 3px rgba(82, 12, 143, 0.3)" };
+      case "Tidak Hadir":
+      case "Alfa":
+        return { bg: "#D90000", text: "#FFFFFF", border: "#D90000", shadow: "0 1px 3px rgba(217, 0, 0, 0.3)" };
+      case "Pulang":
+        return { bg: "#2F85EB", text: "#FFFFFF", border: "#2F85EB", shadow: "0 1px 3px rgba(47, 133, 235, 0.3)" };
       default:
-        return "tidak-hadir";
+        return { bg: "#6B7280", text: "#FFFFFF", border: "#6B7280", shadow: "0 1px 3px rgba(107, 114, 128, 0.3)" };
     }
   };
 
@@ -115,14 +164,16 @@ export default function DetailKehadiranGuru({
       {/* CARD GURU */}
       <div
         style={{
-          width: 420,
+          width: "100%",
+          maxWidth: 420,
           backgroundColor: "#062A4A",
           borderRadius: 10,
-          padding: 18,
+          padding: "18px 20px",
           display: "flex",
           gap: 16,
           color: "#fff",
           marginBottom: 24,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
         }}
       >
         <div
@@ -130,15 +181,16 @@ export default function DetailKehadiranGuru({
             width: 56,
             height: 56,
             borderRadius: "50%",
-            backgroundColor: "rgba(255,255,255,0.15)",
+            backgroundColor: "rgba(255,255,255,0.2)",
             display: "grid",
             placeItems: "center",
+            flexShrink: 0,
           }}
         >
-          <User size={30} />
+          <User size={30} color="#fff" />
         </div>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>
             {guruInfo.name}
           </div>
           <div style={{ fontSize: 15, opacity: 0.9 }}>
@@ -152,7 +204,7 @@ export default function DetailKehadiranGuru({
         style={{
           display: "flex",
           justifyContent: "flex-end",
-          marginBottom: 10,
+          marginBottom: 20,
         }}
       >
         <button
@@ -160,105 +212,221 @@ export default function DetailKehadiranGuru({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
-            padding: "8px 14px",
+            gap: 8,
+            padding: "10px 16px",
             borderRadius: 8,
-            backgroundColor: "#494a4b",
+            backgroundColor: "#4B5563",
             color: "#fff",
             border: "none",
             cursor: "pointer",
             fontSize: 14,
             fontWeight: 600,
+            transition: "background-color 0.2s",
           }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#374151"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#4B5563"}
         >
           <ArrowLeft size={16} />
           Kembali
         </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE CONTAINER - LEBIH RAPAT TANPA SPACE KOSONG */}
       <div
         style={{
           border: "1px solid #E5E7EB",
           borderRadius: 10,
           overflow: "hidden",
           backgroundColor: "#fff",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
         }}
       >
-        {/* HEADER */}
+        {/* HEADER - TANPA SPACE KOSONG DI TENGAH */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "70px 140px 140px 220px 200px 150px 90px",
-            backgroundColor: "#E5E7EB",
-            padding: "12px 0",
+            gridTemplateColumns: "50px 100px 60px minmax(160px, 1fr) 180px 110px 60px",
+            backgroundColor: "#F9FAFB",
+            padding: "14px 8px",
             fontWeight: 700,
-            fontSize: 14,
-            textAlign: "center",
+            fontSize: 13,
+            color: "#374151",
+            borderBottom: "2px solid #E5E7EB",
+            alignItems: "center",
+            gap: "4px",
+            letterSpacing: "0.2px",
           }}
         >
-          <div>No</div>
-          <div>Tanggal</div>
-          <div>Jam</div>
-          <div>Mapel</div>
-          <div>Kelas</div>
-          <div>Status</div>
-          <div style={{ textAlign: "right", paddingRight: 16 }}>
-            Aksi
-          </div>
+          <div style={{ textAlign: "center" }}>No</div>
+          <div style={{ textAlign: "left", paddingLeft: "2px" }}>Tanggal</div>
+          <div style={{ textAlign: "center" }}>Jam</div>
+          <div style={{ textAlign: "left", paddingLeft: "2px" }}>Mapel</div>
+          <div style={{ textAlign: "left", paddingLeft: "2px" }}>Kelas</div>
+          <div style={{ textAlign: "center" }}>Status</div>
+          <div style={{ textAlign: "center" }}>Aksi</div>
         </div>
 
-        {/* ROW */}
-        {rows.map((r, i) => (
-          <div
-            key={i}
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "70px 140px 140px 220px 200px 150px 90px",
-              padding: "12px 0",
-              fontSize: 14,
-              alignItems: "center",
-              textAlign: "center",
-              borderTop: "1px solid #E5E7EB",
-              backgroundColor: "#fff",
-            }}
-          >
-            <div>{r.no}</div>
-            <div>{r.tanggal}</div>
-            <div>{r.jam}</div>
-            <div>{r.mapel}</div>
-            <div>{r.kelas}</div>
-
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <StatusBadge status={mapStatusToBadge(r.status)} />
-            </div>
-
-            {/* AKSI */}
+        {/* ROWS - TANPA SPACE KOSONG DI TENGAH */}
+        {rows.map((r, i) => {
+          const statusColor = getStatusColor(r.status);
+          return (
             <div
+              key={i}
               style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                paddingRight: 16,
+                display: "grid",
+                gridTemplateColumns: "50px 100px 60px minmax(160px, 1fr) 180px 110px 60px",
+                padding: "12px 8px",
+                fontSize: 13,
+                alignItems: "center",
+                borderBottom: i === rows.length - 1 ? "none" : "1px solid #F3F4F6",
+                backgroundColor: i % 2 === 0 ? "#FFFFFF" : "#F9FAFB",
+                transition: "background-color 0.2s",
+                gap: "4px",
+                minHeight: "48px",
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F3F4F6"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = i % 2 === 0 ? "#FFFFFF" : "#F9FAFB"}
             >
-              <button
-                onClick={() => handleOpenEdit(r)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <SquarePen size={20} />
-              </button>
+              {/* NO */}
+              <div style={{ 
+                textAlign: "center", 
+                fontWeight: 600, 
+                color: "#374151",
+              }}>
+                {r.no}
+              </div>
+              
+              {/* TANGGAL - DIKANANKAN */}
+              <div style={{ 
+                fontWeight: 500, 
+                color: "#1F2937",
+                textAlign: "left",
+                paddingLeft: "4px",
+                whiteSpace: "nowrap",
+              }}>
+                {r.tanggal}
+              </div>
+              
+              {/* JAM - DIKANANKAN */}
+              <div style={{ 
+                textAlign: "center", 
+                fontWeight: 500,
+                color: "#1F2937",
+                paddingLeft: "2px",
+              }}>
+                {r.jam}
+              </div>
+              
+              {/* MAPEL - DIKANANKAN */}
+              <div style={{ 
+                fontWeight: 500, 
+                color: "#1F2937",
+                textAlign: "left",
+                paddingLeft: "4px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {r.mapel}
+              </div>
+              
+              {/* KELAS */}
+              <div style={{ 
+                fontWeight: 500, 
+                color: "#1F2937",
+                textAlign: "left",
+                paddingLeft: "4px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {r.kelas}
+              </div>
+
+              {/* STATUS DENGAN TOMBOL EYE */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: statusColor.bg,
+                      color: statusColor.text,
+                      padding: "5px 12px",
+                      borderRadius: "20px", // OVAL
+                      fontSize: 12,
+                      fontWeight: 700,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      border: `1px solid ${statusColor.border}`,
+                      boxShadow: statusColor.shadow,
+                      minWidth: 90,
+                      maxWidth: 100,
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      letterSpacing: "0.2px",
+                    }}
+                    onClick={() => handleOpenDetail(r)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 3px 6px rgba(0, 0, 0, 0.15)";
+                      e.currentTarget.style.filter = "brightness(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = statusColor.shadow;
+                      e.currentTarget.style.filter = "brightness(1)";
+                    }}
+                  >
+                    <Eye size={12} color="#FFFFFF" />
+                    <span>{r.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TOMBOL EDIT */}
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <button
+                  onClick={() => handleOpenEdit(r)}
+                  style={{
+                    background: "#F3F4F6",
+                    border: "1px solid #D1D5DB",
+                    cursor: "pointer",
+                    padding: "7px",
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                    width: "32px",
+                    height: "32px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E5E7EB";
+                    e.currentTarget.style.borderColor = "#9CA3AF";
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#F3F4F6";
+                    e.currentTarget.style.borderColor = "#D1D5DB";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  title="Edit Status"
+                >
+                  <SquarePen size={16} color="#4B5563" />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL EDIT */}
       <FormModal
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
@@ -273,6 +441,310 @@ export default function DetailKehadiranGuru({
           options={statusOptions}
         />
       </FormModal>
+
+      {/* MODAL DETAIL */}
+      {selectedDetail && (
+        <ModalDetailKehadiranGuru
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          data={{
+            tanggal: selectedDetail.tanggal,
+            jamPelajaran: selectedDetail.jam,
+            mataPelajaran: selectedDetail.mapel,
+            namaGuru: guruInfo.name,
+            kelas: selectedDetail.kelas,
+            status: selectedDetail.status,
+          }}
+        />
+      )}
     </StaffLayout>
+  );
+}
+
+// Komponen Modal Detail Kehadiran Guru
+interface ModalDetailKehadiranGuruProps {
+  isOpen: boolean;
+  onClose: () => void;
+  data: {
+    tanggal: string;
+    jamPelajaran: string;
+    mataPelajaran: string;
+    namaGuru: string;
+    kelas: string;
+    status: "Hadir" | "Izin" | "Sakit" | "Alfa" | "Tidak Hadir" | "Pulang";
+  };
+}
+
+function ModalDetailKehadiranGuru({
+  isOpen,
+  onClose,
+  data,
+}: ModalDetailKehadiranGuruProps) {
+  if (!isOpen) return null;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Hadir":
+        return { bg: "#1FA83D", text: "#FFFFFF", border: "#1FA83D", shadow: "0 1px 3px rgba(31, 168, 61, 0.3)" };
+      case "Izin":
+        return { bg: "#ACA40D", text: "#FFFFFF", border: "#ACA40D", shadow: "0 1px 3px rgba(172, 164, 13, 0.3)" };
+      case "Sakit":
+        return { bg: "#520C8F", text: "#FFFFFF", border: "#520C8F", shadow: "0 1px 3px rgba(82, 12, 143, 0.3)" };
+      case "Tidak Hadir":
+      case "Alfa":
+        return { bg: "#D90000", text: "#FFFFFF", border: "#D90000", shadow: "0 1px 3px rgba(217, 0, 0, 0.3)" };
+      case "Pulang":
+        return { bg: "#2F85EB", text: "#FFFFFF", border: "#2F85EB", shadow: "0 1px 3px rgba(47, 133, 235, 0.3)" };
+      default:
+        return { bg: "#6B7280", text: "#FFFFFF", border: "#6B7280", shadow: "0 1px 3px rgba(107, 114, 128, 0.3)" };
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    return status === "Alfa" ? "Tidak Hadir" : status;
+  };
+
+  const getStatusDescription = (status: string) => {
+    switch (status) {
+      case "Hadir":
+        return "Guru hadir tepat waktu";
+      case "Izin":
+        return "Guru izin dengan keterangan";
+      case "Sakit":
+        return "Guru sakit dengan surat dokter";
+      case "Tidak Hadir":
+      case "Alfa":
+        return "Guru tidak hadir tanpa keterangan";
+      case "Pulang":
+        return "Guru sudah pulang dari sekolah";
+      default:
+        return "";
+    }
+  };
+
+  const statusColor = getStatusColor(data.status);
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Modal */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: 12,
+            width: "100%",
+            maxWidth: 440,
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              backgroundColor: "#2563EB",
+              padding: "16px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              color: "#FFFFFF",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Eye size={24} />
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+                Detail Kehadiran
+              </h3>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                padding: 4,
+                borderRadius: 4,
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div style={{ padding: 24 }}>
+            {/* Row Tanggal */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>Tanggal :</div>
+              <div style={{ fontWeight: 500, color: "#1F2937" }}>
+                {data.tanggal}
+              </div>
+            </div>
+
+            {/* Row Jam Pelajaran */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>
+                Jam Pelajaran :
+              </div>
+              <div style={{ fontWeight: 500, color: "#1F2937" }}>
+                {data.jamPelajaran}
+              </div>
+            </div>
+
+            {/* Row Mata Pelajaran */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>
+                Mata pelajaran :
+              </div>
+              <div style={{ fontWeight: 500, color: "#1F2937" }}>
+                {data.mataPelajaran}
+              </div>
+            </div>
+
+            {/* Row Kelas */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>
+                Kelas :
+              </div>
+              <div style={{ fontWeight: 500, color: "#1F2937" }}>
+                {data.kelas}
+              </div>
+            </div>
+
+            {/* Row Nama Guru */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 16,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>
+                Nama guru :
+              </div>
+              <div style={{ fontWeight: 500, color: "#1F2937" }}>
+                {data.namaGuru}
+              </div>
+            </div>
+
+            {/* Row Status */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "140px 1fr",
+                marginBottom: 24,
+                paddingBottom: 12,
+                borderBottom: "1px solid #E5E7EB",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontWeight: 600, color: "#374151" }}>Status :</div>
+              <div>
+                <div
+                  style={{
+                    backgroundColor: statusColor.bg,
+                    color: statusColor.text,
+                    padding: "8px 20px",
+                    borderRadius: "20px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    border: `1px solid ${statusColor.border}`,
+                    boxShadow: statusColor.shadow,
+                    width: "fit-content",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  <Eye size={16} color="#FFFFFF" />
+                  <span>{getStatusText(data.status)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div
+              style={{
+                backgroundColor: "#F3F4F6",
+                border: "1px solid #E5E7EB",
+                borderRadius: 8,
+                padding: 16,
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#374151",
+                }}
+              >
+                {getStatusDescription(data.status)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

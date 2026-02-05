@@ -23,6 +23,7 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,6 +39,9 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
 
     if (isDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Tidak perlu mengatur overflow di body karena dropdown akan scroll internal
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
@@ -81,6 +85,8 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          padding: '20px',
+          boxSizing: 'border-box',
         }}
       >
         {/* Logo SMK */}
@@ -147,7 +153,7 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
 
           {/* FORM */}
           <div style={{ width: '100%', maxWidth: '400px' }}>
-            <div ref={dropdownRef} style={{ marginBottom: '24px' }}>
+            <div ref={dropdownRef} style={{ marginBottom: '24px', position: 'relative' }}>
               <button
                 ref={buttonRef}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -155,30 +161,39 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
                   width: '100%',
                   padding: '14px 20px',
                   borderRadius: '12px',
-                  border: selectedRole
-                    ? '2px solid #1E3A8A'
-                    : '3px solid rgba(37, 99, 235, 0.8)',
-                  backgroundColor: selectedRole ? '#0B2948' : '#ffffff',
-                  color: selectedRole ? '#ffffff' : '#0F172A',
+                  border: '2px solid rgba(30, 58, 138, 0.8)',
+                  backgroundColor: '#001F3F', // Navy color
+                  color: '#ffffff', // White text
                   fontSize: '16px',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 }}
               >
-                {selectedRoleLabel}
-                <span>{isDropdownOpen ? '▲' : '▼'}</span>
+                <span>{selectedRoleLabel}</span>
+                <span style={{ marginLeft: '10px' }}>{isDropdownOpen ? '▲' : '▼'}</span>
               </button>
 
               {isDropdownOpen && (
                 <div
+                  ref={dropdownContentRef}
                   style={{
-                    border: '2px solid rgba(37, 99, 235, 0.6)',
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    border: '2px solid rgba(30, 58, 138, 0.6)',
                     borderRadius: '12px',
                     marginTop: '8px',
-                    overflow: 'hidden',
                     backgroundColor: '#ffffff',
+                    zIndex: 1000,
+                    maxHeight: 'calc(100vh - 300px)', // Responsif terhadap tinggi layar
+                    overflowY: 'auto', // Scroll internal
+                    overflowX: 'hidden',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   {ROLES.map(role => (
@@ -192,13 +207,24 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
                         width: '100%',
                         padding: '12px 20px',
                         border: 'none',
-                        backgroundColor:
-                          selectedRole === role.value ? '#1D4ED8' : '#ffffff',
-                        color:
-                          selectedRole === role.value ? '#ffffff' : '#0F172A',
+                        borderBottom: '1px solid #f1f1f1',
+                        backgroundColor: selectedRole === role.value ? '#1D4ED8' : '#ffffff',
+                        color: selectedRole === role.value ? '#ffffff' : '#0F172A',
                         fontWeight: 600,
                         cursor: 'pointer',
                         textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                        fontSize: '15px',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedRole !== role.value) {
+                          e.currentTarget.style.backgroundColor = '#f8fafc';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedRole !== role.value) {
+                          e.currentTarget.style.backgroundColor = '#ffffff';
+                        }
                       }}
                     >
                       {role.label}
@@ -208,27 +234,80 @@ export default function LandingPage({ onRoleSelect }: LandingPageProps) {
               )}
             </div>
 
-            
-            <button
-              onClick={handleContinue}
-              disabled={!selectedRole}
-              style={{
-                width: '100%',
-                padding: '16px',
-                borderRadius: '12px',
-                border: 'none',
-                fontSize: '18px',
-                fontWeight: 700,
-                color: '#001F3E',
-                backgroundColor: '#ffffff',
-                cursor: selectedRole ? 'pointer' : 'not-allowed',
-              }}
-            >
-              Lanjutkan
-            </button>
+            {/* Button Lanjutkan - hanya muncul jika role dipilih */}
+            {selectedRole && (
+              <button
+                onClick={handleContinue}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  backgroundColor: '#001F3F', // Navy color
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  marginTop: '8px',
+                  boxShadow: '0 4px 12px rgba(0, 31, 63, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#002952';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 31, 63, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#001F3F';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 31, 63, 0.3)';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+              >
+                Lanjutkan
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* CSS untuk styling scrollbar dropdown */}
+      <style>{`
+        /* Scrollbar untuk dropdown */
+        div[style*="maxHeight: calc(100vh - 300px)"] {
+          scrollbar-width: thin;
+          scrollbar-color: #001F3F #f1f1f1;
+        }
+        
+        div[style*="maxHeight: calc(100vh - 300px)"]::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        div[style*="maxHeight: calc(100vh - 300px)"]::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 0 10px 10px 0;
+        }
+        
+        div[style*="maxHeight: calc(100vh - 300px)"]::-webkit-scrollbar-thumb {
+          background: #001F3F;
+          border-radius: 4px;
+        }
+        
+        div[style*="maxHeight: calc(100vh - 300px)"]::-webkit-scrollbar-thumb:hover {
+          background: #002952;
+        }
+        
+        /* Untuk Firefox */
+        div[style*="maxHeight: calc(100vh - 300px)"] {
+          scrollbar-width: thin;
+          scrollbar-color: #001F3F #f1f1f1;
+        }
+      `}</style>
     </>
   );
 }

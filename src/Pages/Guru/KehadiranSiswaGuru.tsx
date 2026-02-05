@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import GuruLayout from '../../component/Guru/GuruLayout.tsx';
 import CalendarIcon from '../../assets/Icon/calender.png';
 import EditIcon from '../../assets/Icon/Edit.png';
@@ -6,11 +6,11 @@ import ChalkboardIcon from '../../assets/Icon/Chalkboard.png';
 
 // STATUS COLOR PALETTE - High Contrast for Accessibility
 const STATUS_COLORS = {
-  hadir: '#15803d',   // Green 700 - Strong Green
-  izin: '#ca8a04',    // Yellow 600 - Dark Gold
-  sakit: '#c2410c',   // Orange 700 - Deep Orange (High Contrast)
-  alpha: '#b91c1c',   // Red 700 - Deep Red
-  pulang: '#1d4ed8',  // Blue 700 - Strong Blue
+  hadir: '#1FA83D',   // HIJAU - Hadir
+  izin: '#ACA40D',    // KUNING - Izin
+  sakit: '#520C8F',   // UNGU - Sakit
+  alpha: '#D90000',   // MERAH - Tidak Hadir
+  pulang: '#2F85EB',  // BIRU - Pulang
 };
 
 interface KehadiranSiswaGuruProps {
@@ -26,6 +26,11 @@ interface SiswaData {
   nama: string;
   mapel: string;
   status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'pulang';
+  keterangan?: string; // Tambahan untuk izin/sakit/pulang
+  tanggal?: string; // Tambahkan tanggal untuk konsistensi dengan AbsensiSiswa
+  jamPelajaran?: string; // Tambahkan jam pelajaran
+  guru?: string; // Tambahkan nama guru
+  waktuHadir?: string; // Tambahkan waktu hadir untuk status hadir
 }
 
 export default function KehadiranSiswaGuru({
@@ -38,15 +43,85 @@ export default function KehadiranSiswaGuru({
   const [selectedKelas] = useState('X Mekatronika 1');
   const [selectedMapel] = useState('Matematika (1-4)');
   const [editingSiswa, setEditingSiswa] = useState<SiswaData | null>(null);
+  const [selectedSiswa, setSelectedSiswa] = useState<SiswaData | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const [siswaList, setSiswaList] = useState<SiswaData[]>([
-    { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'hadir' },
-    { id: '2', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'hadir' },
-    { id: '3', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'izin' },
-    { id: '4', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'sakit' },
-    { id: '5', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'alpha' },
-    { id: '6', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'alpha' },
-    { id: '7', nisn: '1348576392', nama: 'Wito Suherman Suhermin', mapel: 'Matematika', status: 'pulang' },
+    { 
+      id: '1', 
+      nisn: '1348576392', 
+      nama: 'Wito Suherman Suhermin', 
+      mapel: 'Matematika', 
+      status: 'hadir',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd',
+      waktuHadir: '07:30 WIB'
+    },
+    { 
+      id: '2', 
+      nisn: '1348576393', 
+      nama: 'Budi Santoso', 
+      mapel: 'Matematika', 
+      status: 'hadir',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd',
+      waktuHadir: '07:25 WIB'
+    },
+    { 
+      id: '3', 
+      nisn: '1348576394', 
+      nama: 'Siti Nurhaliza', 
+      mapel: 'Matematika', 
+      status: 'izin',
+      keterangan: 'Ijin tidak masuk karena ada keperluan keluarga',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd'
+    },
+    { 
+      id: '4', 
+      nisn: '1348576395', 
+      nama: 'Andi Wijaya', 
+      mapel: 'Matematika', 
+      status: 'sakit',
+      keterangan: 'Demam tinggi dan dokter menyarankan istirahat',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd'
+    },
+    { 
+      id: '5', 
+      nisn: '1348576396', 
+      nama: 'Dewi Lestari', 
+      mapel: 'Matematika', 
+      status: 'alpha',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd'
+    },
+    { 
+      id: '6', 
+      nisn: '1348576397', 
+      nama: 'Rudi Hartono', 
+      mapel: 'Matematika', 
+      status: 'alpha',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd'
+    },
+    { 
+      id: '7', 
+      nisn: '1348576398', 
+      nama: 'Maya Sari', 
+      mapel: 'Matematika', 
+      status: 'pulang',
+      keterangan: 'Pulang lebih awal karena sakit perut',
+      tanggal: '25-01-2025',
+      jamPelajaran: '1-4',
+      guru: 'Alifah Diantebes Aindra S.pd'
+    },
   ]);
 
   const handleEditClick = (siswa: SiswaData) => {
@@ -64,29 +139,192 @@ export default function KehadiranSiswaGuru({
     setEditingSiswa(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#10B981';
-    const label = status.charAt(0).toUpperCase() + status.slice(1);
+  // Fungsi untuk membuka modal detail status - SEMUA STATUS BISA DIKLIK
+  const handleStatusClick = (siswa: SiswaData) => {
+    setSelectedSiswa(siswa);
+    setIsDetailModalOpen(true);
+  };
 
+  // Fungsi untuk mendapatkan teks status
+  const getStatusText = (status: string, waktuHadir?: string) => {
+    switch (status) {
+      case "alpha":
+        return "Siswa tidak hadir tanpa keterangan";
+      case "izin":
+        return "Siswa izin dengan keterangan";
+      case "sakit":
+        return "Siswa sakit dengan surat dokter";
+      case "hadir":
+        return waktuHadir ? `Siswa hadir tepat waktu pada ${waktuHadir}` : "Siswa hadir tepat waktu";
+      case "pulang":
+        return "Siswa pulang lebih awal karena ada kepentingan";
+      default:
+        return status;
+    }
+  };
+
+  // Custom Status Renderer dengan icon mata untuk SEMUA STATUS
+  const StatusButton = ({ status, siswa }: { status: string; siswa: SiswaData }) => {
+    const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#1FA83D';
+    const label = status === 'alpha' ? 'Tidak Hadir' : status.charAt(0).toUpperCase() + status.slice(1);
+    
     return (
-      <div style={{
-        backgroundColor: color,
-        color: 'white',
-        padding: '8px 20px',
-        borderRadius: '50px',
-        fontSize: '13px',
-        fontWeight: '700',
-        display: 'inline-block',
-        minWidth: '100px',
-        textAlign: 'center',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
-        border: '1px solid rgba(255,255,255,0.2)',
-        letterSpacing: '0.5px'
-      }}>
-        {label}
+      <div
+        onClick={() => handleStatusClick(siswa)}
+        style={{
+          backgroundColor: color,
+          color: 'white',
+          padding: '8px 20px',
+          borderRadius: '50px',
+          fontSize: '13px',
+          fontWeight: '700',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          minWidth: '100px',
+          textAlign: 'center',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          letterSpacing: '0.5px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = '0.9';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+          e.currentTarget.style.boxShadow = '0 6px 8px -1px rgba(0, 0, 0, 0.3)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.opacity = '1';
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.2)';
+        }}
+      >
+        <EyeIcon size={14} />
+        <span>{label}</span>
       </div>
     );
   };
+
+  // Icon mata untuk lihat detail
+  const EyeIcon = ({ size = 16 }: { size?: number }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <path
+        d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  // Icon X untuk tombol close modal
+  const XIcon = ({ size = 24 }: { size?: number }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <path
+        d="M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 6L18 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  // Icon check untuk status hadir
+  const CheckIcon = ({ size = 24 }: { size?: number }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <path
+        d="M20 6L9 17L4 12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  // Icon time untuk waktu hadir
+  const TimeIcon = ({ size = 16 }: { size?: number }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M12 7V12L15 15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+
+  // Fungsi helper untuk DetailRow
+  const DetailRow = ({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) => (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottom: '1px solid #E5E7EB',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {icon}
+        <div style={{ fontWeight: 600, color: '#374151' }}>{label} :</div>
+      </div>
+      <div style={{ fontWeight: 500, color: '#1F2937', textAlign: 'right' }}>
+        {value}
+      </div>
+    </div>
+  );
 
   return (
     <GuruLayout
@@ -163,18 +401,19 @@ export default function KehadiranSiswaGuru({
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead>
-                <tr style={{ backgroundColor: '#1E293B', color: 'white' }}>
+                <tr style={{ backgroundColor: '#1E293B', color: 'black' }}>
                   <th style={{ ...styles.th, color: 'black' }}>No</th>
                   <th style={{ ...styles.th, color: 'black' }}>NISN</th>
                   <th style={{ ...styles.th, color: 'black' }}>Nama Siswa</th>
                   <th style={{ ...styles.th, color: 'black' }}>Mata Pelajaran</th>
+                  <th style={{ ...styles.th, color: 'black' }}>Guru</th>
                   <th style={{ ...styles.th, textAlign: 'center', color: 'black' }}>Status</th>
                   <th style={{ ...styles.th, textAlign: 'center', color: 'black' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {siswaList.map((siswa, index) => (
-                  <tr key={index} style={{
+                  <tr key={siswa.id} style={{
                     borderBottom: '1px solid #E2E8F0',
                     backgroundColor: index % 2 === 0 ? '#F8FAFC' : 'white'
                   }}>
@@ -182,8 +421,9 @@ export default function KehadiranSiswaGuru({
                     <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: '15px' }}>{siswa.nisn}</td>
                     <td style={{ ...styles.td, fontWeight: '700', color: '#111827' }}>{siswa.nama}</td>
                     <td style={styles.td}>{siswa.mapel}</td>
+                    <td style={styles.td}>{siswa.guru || '-'}</td>
                     <td style={{ ...styles.td, textAlign: 'center' }}>
-                      {getStatusBadge(siswa.status)}
+                      <StatusButton status={siswa.status} siswa={siswa} />
                     </td>
                     <td style={{ ...styles.td, textAlign: 'center' }}>
                       <button
@@ -232,13 +472,13 @@ export default function KehadiranSiswaGuru({
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: '0', // Remove padding from container to handle sections
+            padding: '0',
             borderRadius: '16px',
             width: '90%',
             maxWidth: '400px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             border: '1px solid rgba(255,255,255,0.1)',
-            overflow: 'hidden' // Ensure children respect border radius
+            overflow: 'hidden'
           }}>
             {/* Header */}
             <div style={{
@@ -308,7 +548,7 @@ export default function KehadiranSiswaGuru({
                       backgroundColor: 'white',
                       cursor: 'pointer',
                       outline: 'none',
-                      appearance: 'none', // Remove default arrow
+                      appearance: 'none',
                       backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                       backgroundPosition: 'right 1rem center',
                       backgroundRepeat: 'no-repeat',
@@ -316,11 +556,11 @@ export default function KehadiranSiswaGuru({
                       paddingRight: '2.5rem'
                     }}
                   >
-                    {Object.keys(STATUS_COLORS).map((status) => (
-                      <option key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </option>
-                    ))}
+                    <option value="hadir">Hadir</option>
+                    <option value="izin">Izin</option>
+                    <option value="sakit">Sakit</option>
+                    <option value="alpha">Tidak Hadir</option>
+                    <option value="pulang">Pulang</option>
                   </select>
                 </div>
               </div>
@@ -373,6 +613,233 @@ export default function KehadiranSiswaGuru({
           </div>
         </div>
       )}
+
+      {/* Detail Status Modal - UNTUK SEMUA STATUS */}
+      {isDetailModalOpen && selectedSiswa && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '420px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {/* Header Modal */}
+            <div style={{
+              backgroundColor: '#0B2948',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              color: '#FFFFFF',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <EyeIcon size={24} />
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: 700,
+                }}>
+                  Detail Kehadiran
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0,
+                }}
+              >
+                <XIcon size={24} />
+              </button>
+            </div>
+
+            {/* Content Modal */}
+            <div style={{ 
+              padding: 24,
+              overflowY: 'auto',
+              flex: 1,
+            }}>
+              {/* Row Tanggal */}
+              <DetailRow 
+                label="Tanggal" 
+                value={selectedSiswa.tanggal || currentDate} 
+                icon={<img src={CalendarIcon} alt="Calendar" style={{ width: 16, height: 16, opacity: 0.7 }} />}
+              />
+
+              {/* Row Jam Pelajaran */}
+              <DetailRow 
+                label="Jam Pelajaran" 
+                value={selectedSiswa.jamPelajaran || '1-4'} 
+              />
+
+              {/* Row Nama Siswa */}
+              <DetailRow 
+                label="Nama Siswa" 
+                value={selectedSiswa.nama} 
+              />
+
+              {/* Row NISN */}
+              <DetailRow 
+                label="NISN" 
+                value={selectedSiswa.nisn} 
+              />
+
+              {/* Row Mata Pelajaran */}
+              <DetailRow 
+                label="Mata Pelajaran" 
+                value={selectedSiswa.mapel} 
+              />
+
+              {/* Row Guru */}
+              <DetailRow 
+                label="Guru" 
+                value={selectedSiswa.guru || '-'} 
+              />
+
+              {/* Row Waktu Hadir (khusus untuk status hadir) */}
+              {selectedSiswa.status === 'hadir' && selectedSiswa.waktuHadir && (
+                <DetailRow 
+                  label="Waktu Hadir" 
+                  value={selectedSiswa.waktuHadir} 
+                  icon={<TimeIcon size={16} />}
+                />
+              )}
+
+              {/* Row Status */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 24,
+                paddingBottom: 12,
+                borderBottom: '1px solid #E5E7EB',
+              }}>
+                <div style={{ fontWeight: 600, color: '#374151', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {selectedSiswa.status === 'hadir' && <CheckIcon size={18} color="#1FA83D" />}
+                  Status :
+                </div>
+                <div>
+                  <span style={{
+                    backgroundColor: STATUS_COLORS[selectedSiswa.status],
+                    color: '#FFFFFF',
+                    padding: '4px 16px',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}>
+                    {selectedSiswa.status === 'alpha' ? 'Tidak Hadir' :
+                     selectedSiswa.status === 'sakit' ? 'Sakit' :
+                     selectedSiswa.status === 'izin' ? 'Izin' :
+                     selectedSiswa.status === 'hadir' ? 'Hadir' :
+                     'Pulang'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Info Box - Ditampilkan untuk SEMUA status */}
+              <div style={{
+                backgroundColor: selectedSiswa.status === 'hadir' ? '#F0FDF4' : '#EFF6FF',
+                border: `1px solid ${selectedSiswa.status === 'hadir' ? '#BBF7D0' : '#BFDBFE'}`,
+                borderRadius: 8,
+                padding: 16,
+                textAlign: 'center',
+                marginBottom: (selectedSiswa.status === 'izin' || selectedSiswa.status === 'sakit' || selectedSiswa.status === 'pulang') && selectedSiswa.keterangan ? 24 : 0,
+              }}>
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: selectedSiswa.status === 'hadir' ? '#166534' : '#1E40AF',
+                }}>
+                  {getStatusText(selectedSiswa.status, selectedSiswa.waktuHadir)}
+                </div>
+              </div>
+
+              {/* Keterangan untuk izin, sakit, DAN PULANG */}
+              {(selectedSiswa.status === 'izin' || selectedSiswa.status === 'sakit' || selectedSiswa.status === 'pulang') && selectedSiswa.keterangan && (
+                <div>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: 12,
+                  }}>
+                    Keterangan :
+                  </div>
+                  <div style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: 8,
+                    border: '1px solid #E5E7EB',
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 14,
+                      color: '#6B7280',
+                      lineHeight: 1.5,
+                    }}>
+                      {selectedSiswa.keterangan}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Area Bukti Foto untuk izin, sakit, DAN PULANG */}
+              {(selectedSiswa.status === 'izin' || selectedSiswa.status === 'sakit' || selectedSiswa.status === 'pulang') && (
+                <div style={{ marginTop: selectedSiswa.keterangan ? 24 : 0 }}>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: 12,
+                  }}>
+                    Bukti Foto :
+                  </div>
+                  <div style={{
+                    padding: '40px 16px',
+                    backgroundColor: '#F9FAFB',
+                    borderRadius: 8,
+                    border: '1px solid #E5E7EB',
+                    minHeight: 100,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 14,
+                      color: '#9CA3AF',
+                      textAlign: 'center',
+                    }}>
+                      [Area untuk menampilkan bukti foto]
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </GuruLayout>
   );
 }
@@ -383,7 +850,7 @@ const styles = {
     textAlign: 'left' as const,
     fontSize: '14px',
     fontWeight: '600',
-    color: '#374151',
+    color: '#FFFFFF',
     letterSpacing: '0.025em'
   },
   td: {

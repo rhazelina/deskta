@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import bgadmin from "../../assets/Background/";
 import AdminLayout from "../../component/Admin/AdminLayout";
 import JurusanAdmin from "./JurusanAdmin";
 import KelasAdmin from "./KelasAdmin";
@@ -9,6 +8,7 @@ import SiswaAdmin from "./SiswaAdmin";
 import DetailSiswa from "./DetailSiswa";
 import DetailGuru from "./DetailGuru";
 
+// ==================== INTERFACE DEFINITIONS ====================
 interface User {
   role: string;
   name: string;
@@ -30,21 +30,25 @@ type AdminPage =
   | "detail-siswa"
   | "detail-guru";
 
+// ==================== MAIN COMPONENT ====================
 export default function AdminDashboard({
   user,
   onLogout,
 }: AdminDashboardProps) {
+  // ==================== STATE MANAGEMENT ====================
   const [currentPage, setCurrentPage] = useState<AdminPage>("dashboard");
   const navigate = useNavigate();
   const [selectedSiswaId, setSelectedSiswaId] = useState<string | null>(null);
   const [selectedGuruId, setSelectedGuruId] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
+  const [semester, setSemester] = useState("Semester Genap");
 
-  /* ================= DATE & TIME ================= */
+  // ==================== DATE & TIME HANDLER ====================
   const updateDateTime = () => {
     const now = new Date();
 
+    // Format tanggal: "Senin, 7 Januari 2026"
     setCurrentDate(
       now.toLocaleDateString("id-ID", {
         weekday: "long",
@@ -54,30 +58,45 @@ export default function AdminDashboard({
       })
     );
 
+    // Format waktu: "08:00:01"
     setCurrentTime(
       now.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
+        hour12: false,
       })
     );
   };
 
+  // ==================== EFFECT FOR REAL-TIME CLOCK ====================
   useEffect(() => {
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-    return () => clearInterval(interval);
+    updateDateTime(); // Update pertama kali
+    const interval = setInterval(updateDateTime, 1000); // Update setiap detik
+    
+    // Set semester berdasarkan bulan
+    const month = new Date().getMonth();
+    if (month >= 0 && month <= 5) {
+      setSemester("Semester Genap");
+    } else {
+      setSemester("Semester Ganjil");
+    }
+    
+    return () => clearInterval(interval); // Cleanup interval
   }, []);
 
+  // ==================== MENU NAVIGATION HANDLER ====================
   const handleMenuClick = (page: string) => {
     setCurrentPage(page as AdminPage);
   };
 
+  // ==================== LOGOUT HANDLER ====================
   const handleLogout = () => {
     onLogout();
     navigate("/");
   };
 
+  // ==================== PAGE RENDERER ====================
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
@@ -89,41 +108,21 @@ export default function AdminDashboard({
             onMenuClick={handleMenuClick}
             user={user}
             onLogout={handleLogout}
-            hideBackground={false}
+            hideBackground={false} // UBAH INI: dari true ke false
           >
+            {/* ============ MAIN DASHBOARD CONTAINER ============ */}
             <div
               style={{
                 maxWidth: "1400px",
                 margin: "0 auto",
                 padding: "0 4px",
                 position: "relative",
+                minHeight: "calc(100vh - 100px)",
               }}
             >
-              {/* Background Image */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 0,
-                  pointerEvents: "none",
-                  opacity: 0.05,
-                }}
-              >
-                <img
-                  // src={bgadmin}
-                  alt="Background"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
-
+              {/* ============ CONTENT LAYER ============ */}
               <div style={{ position: "relative", zIndex: 1 }}>
-                {/* ===== WELCOME SECTION ===== */}
+                {/* ============ WELCOME SECTION ============ */}
                 <div
                   style={{
                     marginBottom: "32px",
@@ -131,285 +130,540 @@ export default function AdminDashboard({
                 >
                   <div
                     style={{
-                      backgroundColor: "white",
+                      background: "linear-gradient(135deg, #001F3E 0%, #0C4A6E 100%)", // Navy gradient
                       borderRadius: "16px",
                       padding: "28px 32px",
-                      boxShadow: "0 4px 20px rgba(0, 31, 62, 0.08)",
-                      border: "1px solid #E5E7EB",
+                      boxShadow: "0 8px 32px rgba(0, 31, 62, 0.3)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      color: "white",
                     }}
                   >
+                    {/* ============ WELCOME MESSAGE ============ */}
                     <div>
-                      <h2 style={{
-                        fontSize: "24px",
-                        fontWeight: "700",
-                        color: "#001F3E",
-                        margin: "0 0 8px 0"
-                      }}>
+                      <h2
+                        style={{
+                          fontSize: "24px",
+                          fontWeight: "700",
+                          color: "white",
+                          margin: "0 0 8px 0",
+                        }}
+                      >
                         Selamat Datang di Beranda, Admin
                       </h2>
-                      <p style={{
-                        fontSize: "16px",
-                        color: "#6B7280",
-                        margin: "0",
-                        maxWidth: "600px"
-                      }}>
+                      <p
+                        style={{
+                          fontSize: "16px",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          margin: "0",
+                          maxWidth: "600px",
+                        }}
+                      >
                         Kelola data sekolah, monitor aktivitas, dan pantau statistik secara real-time
                       </p>
                     </div>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                      padding: "12px 20px",
-                      backgroundColor: "#F0F9FF",
-                      borderRadius: "12px",
-                      border: "1px solid #BAE6FD"
-                    }}>
+
+                    {/* ============ DATE & TIME DISPLAY ============ */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: "8px",
+                      }}
+                    >
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "14px", color: "#0369A1", fontWeight: "600" }}>
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "rgba(255, 255, 255, 0.9)",
+                            fontWeight: "600",
+                          }}
+                        >
                           {currentDate}
                         </div>
-                        <div style={{ fontSize: "20px", color: "#0C4A6E", fontWeight: "700" }}>
+                        <div
+                          style={{
+                            fontSize: "28px",
+                            color: "white",
+                            fontWeight: "700",
+                            letterSpacing: "1px",
+                          }}
+                        >
                           {currentTime}
                         </div>
-                      </div>
-                      <div style={{
-                        width: "48px",
-                        height: "48px",
-                        backgroundColor: "#0EA5E9",
-                        borderRadius: "12px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                        fontSize: "20px",
-                        fontWeight: "bold"
-                      }}>
-                        🕒
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "rgba(255, 255, 255, 0.8)",
+                            fontWeight: "500",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {semester}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* ===== STATISTICS CARDS ===== */}
+                {/* ============ STATISTICS CARDS SECTION ============ */}
                 <div
                   style={{
                     marginBottom: "32px",
                   }}
                 >
-                  <h3 style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "#001F3E",
-                    margin: "0 0 20px 20px"
-                  }}>
+                  <h3
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "600",
+                      color: "#001F3E",
+                      margin: "0 0 20px 20px",
+                    }}
+                  >
                     Statistik Sekolah
                   </h3>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                      gap: "20px",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                      gap: "24px",
                     }}
                   >
-                    {[
-                      {
-                        value: "212",
-                        label: "Total Rombel (Rombongan Belajar)",
-                        icon: "🏫",
-                        color: "#3B82F6",
-                        bgColor: "#EFF6FF"
-                      },
-                      {
-                        value: "2,138",
-                        label: "Total Murid",
-                        icon: "👨‍🎓",
-                        color: "#10B981",
-                        bgColor: "#ECFDF5"
-                      },
-                      {
-                        value: "515",
-                        label: "Total Guru",
-                        icon: "👨‍🏫",
-                        color: "#8B5CF6",
-                        bgColor: "#F5F3FF"
-                      },
-                      {
-                        value: "8",
-                        label: "Total Lab",
-                        icon: "🔬",
-                        color: "#F59E0B",
-                        bgColor: "#FFFBEB"
-                      },
-                      {
-                        value: "24",
-                        label: "Ruang Teori",
-                        icon: "📚",
-                        color: "#EF4444",
-                        bgColor: "#FEF2F2"
-                      },
-                    ].map((item, index) => (
+                    {/* ============ STAT CARD 1: TOTAL ROMBEL ============ */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #001F3E 0%, #0C4A6E 100%)", // Navy
+                        borderRadius: "16px",
+                        padding: "28px",
+                        color: "white",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 8px 24px rgba(0, 31, 62, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-8px)";
+                        e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 31, 62, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 31, 62, 0.3)";
+                      }}
+                    >
+                      {/* Background Accent */}
                       <div
-                        key={index}
                         style={{
-                          backgroundColor: "white",
-                          borderRadius: "16px",
-                          padding: "24px",
-                          color: "#1F2937",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "20px",
-                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                          border: "1px solid #E5E7EB",
-                          transition: "all 0.3s ease",
-                          cursor: "pointer",
+                          position: "absolute",
+                          top: "-20px",
+                          right: "-20px",
+                          width: "80px",
+                          height: "80px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "50%",
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.05)";
+                      />
+                      
+                      <div
+                        style={{
+                          fontSize: "42px",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                          color: "white",
+                          marginBottom: "8px",
+                          textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        <div style={{
-                          width: "56px",
-                          height: "56px",
-                          backgroundColor: item.bgColor,
-                          borderRadius: "12px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "24px"
-                        }}>
-                          {item.icon}
+                        19
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontWeight: "600",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Total Rombel
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "10px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "20px",
+                          }}
+                        >
+                          🏫
                         </div>
-                        <div>
-                          <div
-                            style={{
-                              fontSize: "28px",
-                              fontWeight: 700,
-                              lineHeight: 1.2,
-                              color: item.color,
-                              marginBottom: "4px",
-                            }}
-                          >
-                            {item.value}
-                          </div>
-                          <div style={{
-                            fontSize: "14px",
-                            color: "#6B7280",
-                            fontWeight: "500"
-                          }}>
-                            {item.label}
-                          </div>
+                        <div
+                          style={{
+                            fontSize: "14px", // Diperbesar dari 12px
+                            color: "rgba(255, 255, 255, 0.9)", // Diperjelas
+                            fontWeight: "bold", // Ditambahkan bold
+                          }}
+                        >
+                          Rombongan Belajar
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* ============ STAT CARD 2: TOTAL MURID ============ */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #001F3E 0%, #0C4A6E 100%)", // Navy
+                        borderRadius: "16px",
+                        padding: "28px",
+                        color: "white",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 8px 24px rgba(0, 31, 62, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-8px)";
+                        e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 31, 62, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 31, 62, 0.3)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-20px",
+                          right: "-20px",
+                          width: "80px",
+                          height: "80px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "50%",
+                        }}
+                      />
+                      
+                      <div
+                        style={{
+                          fontSize: "42px",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                          color: "white",
+                          marginBottom: "8px",
+                          textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                        2,138
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontWeight: "600",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Total Murid
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "10px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "20px",
+                          }}
+                        >
+                          👨‍🎓
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "14px", // Diperbesar dari 12px
+                            color: "rgba(255, 255, 255, 0.9)", // Diperjelas
+                            fontWeight: "bold", // Ditambahkan bold
+                          }}
+                        >
+                          Siswa Aktif
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ============ STAT CARD 3: TOTAL GURU ============ */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #001F3E 0%, #0C4A6E 100%)", // Navy
+                        borderRadius: "16px",
+                        padding: "28px",
+                        color: "white",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 8px 24px rgba(0, 31, 62, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-8px)";
+                        e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 31, 62, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 31, 62, 0.3)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-20px",
+                          right: "-20px",
+                          width: "80px",
+                          height: "80px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "50%",
+                        }}
+                      />
+                      
+                      <div
+                        style={{
+                          fontSize: "42px",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                          color: "white",
+                          marginBottom: "8px",
+                          textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                        515
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontWeight: "600",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Total Guru
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "10px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "20px",
+                          }}
+                        >
+                          👨‍🏫
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "14px", // Diperbesar dari 12px
+                            color: "rgba(255, 255, 255, 0.9)", // Diperjelas
+                            fontWeight: "bold", // Ditambahkan bold
+                          }}
+                        >
+                          Tenaga Pendidik
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ============ STAT CARD 4: TOTAL LAB ============ */}
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #001F3E 0%, #0C4A6E 100%)", // Navy
+                        borderRadius: "16px",
+                        padding: "28px",
+                        color: "white",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "0 8px 24px rgba(0, 31, 62, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-8px)";
+                        e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 31, 62, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 31, 62, 0.3)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-20px",
+                          right: "-20px",
+                          width: "80px",
+                          height: "80px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "50%",
+                        }}
+                      />
+                      
+                      <div
+                        style={{
+                          fontSize: "42px",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                          color: "white",
+                          marginBottom: "8px",
+                          textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                        8
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "rgba(255, 255, 255, 0.9)",
+                          fontWeight: "600",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Total Lab
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            backgroundColor: "rgba(255, 255, 255, 0.2)",
+                            borderRadius: "10px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "20px",
+                          }}
+                        >
+                          🔬
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "14px", // Diperbesar dari 12px
+                            color: "rgba(255, 255, 255, 0.9)", // Diperjelas
+                            fontWeight: "bold", // Ditambahkan bold
+                          }}
+                        >
+                          Laboratorium
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* ===== QUICK ACCESS ===== */}
+                {/* ============ QUICK ACCESS SECTION ============ */}
                 <div>
-                  <h3 style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "#001F3E",
-                    margin: "0 0 20px 20px"
-                  }}>
+                  <h3
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "600",
+                      color: "#001F3E",
+                      margin: "0 0 20px 20px",
+                    }}
+                  >
                     Akses Cepat
                   </h3>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                      gap: "20px",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                      gap: "24px",
                     }}
                   >
-                    {[
-                      {
-                        title: "Data Siswa",
-                        description: "Kelola data siswa dan presensi",
-                        icon: "👨‍🎓",
-                        action: () => handleMenuClick("siswa"),
-                        color: "#10B981"
-                      },
-                      {
-                        title: "Data Guru",
-                        description: "Kelola data guru dan jadwal mengajar",
-                        icon: "👨‍🏫",
-                        action: () => handleMenuClick("guru"),
-                        color: "#8B5CF6"
-                      },
-                      {
-                        title: "Data Kelas",
-                        description: "Kelola kelas dan jurusan",
-                        icon: "🏫",
-                        action: () => handleMenuClick("kelas"),
-                        color: "#3B82F6"
-                      },
-                    ].map((item, index) => (
-                      <button
-                        key={index}
-                        onClick={item.action}
+                    {/* ============ QUICK ACCESS 1: DATA SISWA ============ */}
+                    <button
+                      onClick={() => handleMenuClick("siswa")}
+                      style={{
+                        background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)", // White gradient
+                        borderRadius: "16px",
+                        padding: "24px",
+                        border: "1px solid #E5E7EB",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "20px",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.15)";
+                        e.currentTarget.style.borderColor = "#10B981";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.08)";
+                        e.currentTarget.style.borderColor = "#E5E7EB";
+                      }}
+                    >
+                      <div
                         style={{
-                          backgroundColor: "white",
-                          borderRadius: "16px",
-                          padding: "24px",
-                          border: "1px solid #E5E7EB",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "20px",
-                          transition: "all 0.3s ease",
-                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
-                          e.currentTarget.style.borderColor = item.color;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.05)";
-                          e.currentTarget.style.borderColor = "#E5E7EB";
-                        }}
-                      >
-                        <div style={{
                           width: "56px",
                           height: "56px",
-                          backgroundColor: `${item.color}15`,
+                          background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
                           borderRadius: "12px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: "24px",
-                          color: item.color
-                        }}>
-                          {item.icon}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{
+                          color: "white",
+                          boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                        }}
+                      >
+                        👨‍🎓
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
                             fontSize: "18px",
                             fontWeight: "600",
                             color: "#001F3E",
-                            marginBottom: "4px"
-                          }}>
-                            {item.title}
-                          </div>
-                          <div style={{
-                            fontSize: "14px",
-                            color: "#6B7280"
-                          }}>
-                            {item.description}
-                          </div>
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Data Siswa
                         </div>
-                        <div style={{
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#000000", // Diubah dari #6B7280 menjadi hitam
+                            fontWeight: "500",
+                          }}
+                        >
+                          Kelola data siswa dan presensi
+                        </div>
+                      </div>
+                      <div
+                        style={{
                           width: "32px",
                           height: "32px",
                           backgroundColor: "#F3F4F6",
@@ -418,12 +672,174 @@ export default function AdminDashboard({
                           alignItems: "center",
                           justifyContent: "center",
                           color: "#6B7280",
-                          fontSize: "14px"
-                        }}>
-                          →
+                          fontSize: "14px",
+                        }}
+                      >
+                        →
+                      </div>
+                    </button>
+
+                    {/* ============ QUICK ACCESS 2: DATA GURU ============ */}
+                    <button
+                      onClick={() => handleMenuClick("guru")}
+                      style={{
+                        background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)", // White gradient
+                        borderRadius: "16px",
+                        padding: "24px",
+                        border: "1px solid #E5E7EB",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "20px",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.15)";
+                        e.currentTarget.style.borderColor = "#8B5CF6";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.08)";
+                        e.currentTarget.style.borderColor = "#E5E7EB";
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "56px",
+                          height: "56px",
+                          background: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                          borderRadius: "12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "24px",
+                          color: "white",
+                          boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)",
+                        }}
+                      >
+                        👨‍🏫
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: "600",
+                            color: "#001F3E",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Data Guru
                         </div>
-                      </button>
-                    ))}
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#000000", // Diubah dari #6B7280 menjadi hitam
+                            fontWeight: "500",
+                          }}
+                        >
+                          Kelola data guru dan jadwal mengajar
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          backgroundColor: "#F3F4F6",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#6B7280",
+                          fontSize: "14px",
+                        }}
+                      >
+                        →
+                      </div>
+                    </button>
+
+                    {/* ============ QUICK ACCESS 3: DATA KELAS ============ */}
+                    <button
+                      onClick={() => handleMenuClick("kelas")}
+                      style={{
+                        background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)", // White gradient
+                        borderRadius: "16px",
+                        padding: "24px",
+                        border: "1px solid #E5E7EB",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "20px",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.15)";
+                        e.currentTarget.style.borderColor = "#3B82F6";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.08)";
+                        e.currentTarget.style.borderColor = "#E5E7EB";
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "56px",
+                          height: "56px",
+                          background: "linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)",
+                          borderRadius: "12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "24px",
+                          color: "white",
+                          boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                        }}
+                      >
+                        🏫
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: "600",
+                            color: "#001F3E",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Data Kelas
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#000000", // Diubah dari #6B7280 menjadi hitam
+                            fontWeight: "500",
+                          }}
+                        >
+                          Kelola kelas dan jurusan
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          backgroundColor: "#F3F4F6",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#6B7280",
+                          fontSize: "14px",
+                        }}
+                      >
+                        →
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -431,7 +847,7 @@ export default function AdminDashboard({
           </AdminLayout>
         );
 
-      /* ===== PAGE LAIN ===== */
+      /* ============ PAGE JURUSAN ============ */
       case "jurusan":
         return (
           <JurusanAdmin
@@ -442,6 +858,7 @@ export default function AdminDashboard({
           />
         );
 
+      /* ============ PAGE KELAS ============ */
       case "kelas":
         return (
           <KelasAdmin
@@ -452,6 +869,7 @@ export default function AdminDashboard({
           />
         );
 
+      /* ============ PAGE SISWA ============ */
       case "siswa":
         return (
           <SiswaAdmin
@@ -466,6 +884,7 @@ export default function AdminDashboard({
           />
         );
 
+      /* ============ PAGE GURU ============ */
       case "guru":
         return (
           <GuruAdmin
@@ -480,6 +899,7 @@ export default function AdminDashboard({
           />
         );
 
+      /* ============ PAGE DETAIL SISWA ============ */
       case "detail-siswa":
         return selectedSiswaId ? (
           <DetailSiswa
@@ -491,6 +911,7 @@ export default function AdminDashboard({
           />
         ) : null;
 
+      /* ============ PAGE DETAIL GURU ============ */
       case "detail-guru":
         return selectedGuruId ? (
           <DetailGuru

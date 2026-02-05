@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { BookOpen, Users, Eye, QrCode } from "lucide-react";
 import WalikelasLayout from "../../component/Walikelas/layoutwakel";
 import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
+import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
 import { InputAbsenWalikelas } from "./InputAbsenWalikelas";
 import { KehadiranSiswaWakel } from "./KehadiranSiswaWakel";
 import JadwalPengurus from "./JadwalPengurus";
 import { RekapKehadiranSiswa } from "./RekapKehadiranSiswa";
+import DaftarKetidakhadiranWaliKelas from "./DaftarKetidakhadiranWaliKelas";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 // ==================== INTERFACES ====================
 interface DashboardWalliKelasProps {
@@ -21,7 +24,10 @@ type WalikelasPage =
   | "input-manual"
   | "kehadiran-siswa"
   | "jadwal-pengurus"
-  | "rekap-kehadiran-siswa";
+  | "rekap-kehadiran-siswa"
+  | "daftar-ketidakhadiran-walikelas";
+
+type ModalType = "schedule" | "metode" | "tidakBisa" | null;
 
 interface ScheduleItem {
   id: string;
@@ -39,6 +45,7 @@ const PAGE_TITLES: Record<WalikelasPage, string> = {
   "kehadiran-siswa": "Kehadiran Siswa",
   "jadwal-pengurus": "Jadwal Kelas",
   "rekap-kehadiran-siswa": "Rekap Kehadiran Siswa",
+  "daftar-ketidakhadiran-walikelas": "Daftar Ketidakhadiran",
 };
 
 const BREAKPOINTS = {
@@ -82,10 +89,9 @@ const styles = {
     minHeight: "100vh",
   }),
 
-  // ===== BAGIAN ATAS BARU =====
+  // ===== BAGIAN ATAS BARU (TETAP SEPERTI WALI KELAS) =====
   topInfoCard: (isMobile: boolean) => ({
     background: "white",
-    // color: "black",
     borderRadius: "12px",
     padding: isMobile ? "16px 20px" : "20px 24px",
     display: "flex",
@@ -125,18 +131,6 @@ const styles = {
   },
 
   // ===== CARD UNTUK SEMUA (KONSISTEN WARNA #06254D) =====
-  navyCard: (isMobile: boolean) => ({
-    background: "#06254D",
-    borderRadius: "14px",
-    padding: isMobile ? "16px" : "20px",
-    color: "white",
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "space-between",
-    boxShadow: "0 4px 12px rgba(6, 37, 77, 0.3)",
-  }),
-
-  // Card untuk tanggal & waktu (spesifik)
   dateTimeCard: (isMobile: boolean) => ({
     background: "#06254D",
     borderRadius: "14px",
@@ -159,7 +153,6 @@ const styles = {
     opacity: 0.9,
   },
 
-  // Card untuk statistik
   statCard: (isMobile: boolean) => ({
     background: "#06254D",
     borderRadius: "14px",
@@ -201,21 +194,9 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.25)",
   }),
 
-  statBadgeSmall: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: "10px",
-    padding: "8px 12px",
-    fontSize: "14px",
-    fontWeight: 700,
-    display: "inline-block",
-    width: "fit-content",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-  },
-
-  // Style untuk top grid
   topGrid: (isMobile: boolean) => ({
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
     gap: isMobile ? "12px" : "16px",
     marginBottom: "8px",
   }),
@@ -268,45 +249,40 @@ const styles = {
 
   scheduleDetail: {
     fontSize: "13px",
-    color: "rgba(255, 255, 255, 0.8)",
     fontWeight: 500,
+    color: "rgba(255, 255, 255, 0.85)",
+  },
+
+  scheduleActions: {
+    display: "flex",
+    gap: "8px",
+    alignItems: "center",
   },
 
   actionButton: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "10px",
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    width: "36px",
+    height: "36px",
+    borderRadius: "8px",
+    background: "rgba(255, 255, 255, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    transition: "all 0.3s",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-  },
-
-  actionIcon: {
-    color: "white",
+    transition: "all 0.2s ease",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
   },
 
   eyeButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: "10px",
-    width: "40px",
-    height: "40px",
+    width: "36px",
+    height: "36px",
+    borderRadius: "8px",
+    background: "rgba(255, 255, 255, 0.15)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    transition: "all 0.2s",
-    border: "1px solid rgba(255, 255, 255, 0.25)",
-  },
-
-  // Container untuk aksi di card jadwal
-  scheduleActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
+    transition: "all 0.2s ease",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
   },
 };
 
@@ -314,85 +290,126 @@ export default function DashboardWalliKelas({
   user,
   onLogout,
 }: DashboardWalliKelasProps) {
+  const { alert: popupAlert } = usePopup();
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.innerWidth < BREAKPOINTS.mobile
+  );
   const [currentPage, setCurrentPage] = useState<WalikelasPage>("Beranda");
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
-  const [activeModal, setActiveModal] = useState<"schedule" | "metode" | null>(null);
+  const [currentTime, setCurrentTime] = useState<string>("");
+  const [currentDate, setCurrentDate] = useState<string>("");
+  const [iconStates, setIconStates] = useState<Record<string, "qr" | "eye">>({});
+  
+  // State untuk menyimpan data siswa yang dipilih
+  const [siswaData, setSiswaData] = useState<{
+    siswaName?: string;
+    siswaIdentitas?: string;
+  } | null>(null);
 
-  const [currentDate, setCurrentDate] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
-
-  // Responsive handler
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < BREAKPOINTS.mobile);
+    };
 
-  const isMobile = windowWidth < BREAKPOINTS.mobile;
-
-  /* ================= DATE & TIME ================= */
-  const updateDateTime = () => {
-    const now = new Date();
-
-    setCurrentDate(
-      now.toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    );
-
-    setCurrentTime(
-      now.toLocaleTimeString("id-ID", {
+    const updateTime = () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-      })
-    );
-  };
+      });
+      const dateStr = now.toLocaleDateString("id-ID", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      setCurrentTime(timeStr);
+      setCurrentDate(dateStr);
+    };
 
-  useEffect(() => {
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-    return () => clearInterval(interval);
+    window.addEventListener("resize", handleResize);
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearInterval(timer);
+    };
   }, []);
 
-  const handleMenuClick = (page: string) => {
+  const handleMenuClick = (page: string, payload?: any) => {
     setCurrentPage(page as WalikelasPage);
+    
+    // Jika page adalah daftar-ketidakhadiran-walikelas, simpan data siswa
+    if (page === "daftar-ketidakhadiran-walikelas" && payload) {
+      setSiswaData(payload);
+    }
+    
+    setActiveModal(null);
   };
 
-  const handleEyeClick = () => {
-    setCurrentPage("kehadiran-siswa");
-  };
-
-  // ========== MODAL HANDLERS ==========
-  const handleQRClick = (e: React.MouseEvent, schedule: ScheduleItem) => {
-    e.stopPropagation();
-    setSelectedSchedule(schedule);
-    setActiveModal("metode");
-  };
-
-  // Handler untuk klik icon mata di card jadwal - langsung ke JadwalPengurus
-  const handleEyeScheduleClick = (e: React.MouseEvent, _schedule: ScheduleItem) => {
-    e.stopPropagation();
-    // Langsung navigasi ke halaman JadwalPengurus
-    setCurrentPage("jadwal-pengurus");
-  };
-
-  const handlePilihQR = () => {
+  const handleScheduleClick = (item: ScheduleItem) => {
+    setSelectedSchedule(item);
     setActiveModal("schedule");
   };
 
+  const handleActionClick = (e: React.MouseEvent, item: ScheduleItem) => {
+    e.stopPropagation();
+    const currentState = iconStates[item.id] || "qr";
+
+    if (currentState === "qr") {
+      setIconStates({ ...iconStates, [item.id]: "eye" });
+      setSelectedSchedule(item);
+      setActiveModal("metode");
+    } else {
+      console.log("Navigasi ke kehadiran siswa untuk:", item);
+      setCurrentPage("kehadiran-siswa");
+    }
+  };
+
+  const handleEyeClick = () => {
+    console.log("Navigasi ke Rekap Kehadiran");
+    setCurrentPage("rekap-kehadiran-siswa");
+  };
+
+  const handleMulaiAbsen = () => {
+    console.log("Mulai Absen diklik");
+    setActiveModal("metode");
+  };
+
+  const handleTidakBisaMengajar = () => {
+    console.log("Tidak Bisa Mengajar diklik");
+    setActiveModal("tidakBisa");
+  };
+
+  const handlePilihQR = async () => {
+    console.log("QR Code dipilih");
+    await popupAlert("QR Code Absen akan ditampilkan di sini.");
+    setActiveModal(null);
+  };
+
   const handlePilihManual = () => {
+    console.log("Input Manual dipilih");
     setActiveModal(null);
     setCurrentPage("input-manual");
   };
 
-  const handleMulaiAbsen = () => {
+  const handlePilihMetodeDariTidakBisaMengajar = () => {
+    setActiveModal("metode");
+  };
+
+  const handleSubmitTidakBisaMengajar = async (data: {
+    alasan: string;
+    keterangan?: string;
+    foto1?: File;
+  }) => {
+    console.log("Data tidak bisa mengajar:", data);
+    await popupAlert(
+      `Laporan berhasil dikirim!\nAlasan: ${data.alasan}\nKeterangan: ${data.keterangan || "-"}\nFoto: ${data.foto1 ? "Ada" : "Tidak ada"}`
+    );
     setActiveModal(null);
-    setCurrentPage("input-manual");
   };
 
   // ========== RENDER HALAMAN BERDASARKAN CURRENT PAGE ==========
@@ -418,7 +435,6 @@ export default function DashboardWalliKelas({
     );
   }
 
-  // Jika currentPage adalah "jadwal-pengurus", render komponen JadwalPengurus
   if (currentPage === "jadwal-pengurus") {
     return (
       <JadwalPengurus
@@ -441,6 +457,21 @@ export default function DashboardWalliKelas({
     );
   }
 
+  // ========== TAMBAHAN: RENDER HALAMAN DAFTAR KETIDAKHADIRAN ==========
+  if (currentPage === "daftar-ketidakhadiran-walikelas") {
+    return (
+      <DaftarKetidakhadiranWaliKelas
+        user={user}
+        currentPage={currentPage}
+        onMenuClick={handleMenuClick}
+        onLogout={onLogout}
+        siswaName={siswaData?.siswaName}
+        siswaIdentitas={siswaData?.siswaIdentitas}
+      />
+    );
+  }
+
+  // ========== RENDER HALAMAN BERANDA (DEFAULT) ==========
   return (
     <WalikelasLayout
       pageTitle={PAGE_TITLES[currentPage]}
@@ -450,7 +481,7 @@ export default function DashboardWalliKelas({
       onLogout={onLogout}
     >
       <div style={styles.mainContainer(isMobile)}>
-        {/* ===== BAGIAN ATAS BARU (Background Putih, Teks Rata Kiri) ===== */}
+        {/* ===== BAGIAN ATAS (SELAMAT DATANG) - TETAP SEPERTI WALI KELAS ===== */}
         <div style={styles.topInfoCard(isMobile)}>
           <div style={styles.iconContainer}>
             <svg
@@ -480,7 +511,7 @@ export default function DashboardWalliKelas({
           </div>
         </div>
 
-        {/* ===== TOP GRID (4 Column Layout) - SEMUA CARD WARNA NAVY ===== */}
+        {/* ===== TOP GRID (HARI/TANGGAL, WALI KELAS, TOTAL SISWA) - TETAP SEPERTI WALI KELAS ===== */}
         <div style={styles.topGrid(isMobile)}>
           {/* 1. Date & Time Card */}
           <div style={styles.dateTimeCard(isMobile)}>
@@ -534,7 +565,7 @@ export default function DashboardWalliKelas({
           </div>
         </div>
 
-        {/* ===== JADWAL KELAS - SEMUA CARD WARNA NAVY ===== */}
+        {/* ===== JADWAL KELAS - FLOW SAMA SEPERTI GURU ===== */}
         <div>
           <h3 style={styles.sectionTitle(isMobile)}>Jadwal Kelas Anda</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -568,11 +599,11 @@ export default function DashboardWalliKelas({
                   </div>
                 </div>
 
-                {/* Action Icons (Mata dan QR) */}
+                {/* Action Icons (Hanya QR/Eye Toggle) */}
                 <div style={styles.scheduleActions}>
-                  {/* Icon Mata - untuk melihat jadwal */}
+                  {/* Icon QR/Eye Toggle - untuk absensi - SAMA SEPERTI GURU */}
                   <div
-                    onClick={(e) => handleEyeScheduleClick(e, item)}
+                    onClick={(e) => handleActionClick(e, item)}
                     style={styles.actionButton}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
@@ -582,26 +613,17 @@ export default function DashboardWalliKelas({
                       e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
                       e.currentTarget.style.transform = "scale(1)";
                     }}
-                    title="Lihat Jadwal Kelas"
+                    title={
+                      (iconStates[item.id] || "qr") === "qr" 
+                        ? "Presensi Kelas" 
+                        : "Lihat Kehadiran Siswa"
+                    }
                   >
-                    <Eye size={20} color="white" strokeWidth={2} />
-                  </div>
-
-                  {/* Icon QR - untuk absensi */}
-                  <div
-                    onClick={(e) => handleQRClick(e, item)}
-                    style={styles.actionButton}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
-                      e.currentTarget.style.transform = "scale(1.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                    title="Absensi Kelas"
-                  >
-                    <QrCode size={20} color="white" />
+                    {(iconStates[item.id] || "qr") === "qr" ? (
+                      <QrCode size={20} color="white" />
+                    ) : (
+                      <Eye size={20} color="white" strokeWidth={2} />
+                    )}
                   </div>
                 </div>
               </div>
@@ -609,35 +631,55 @@ export default function DashboardWalliKelas({
           </div>
         </div>
 
-        {/* Modals */}
-        {activeModal === "metode" && (
-          <MetodeGuru
-            isOpen={true}
-            onClose={() => setActiveModal(null)}
-            onPilihQR={handlePilihQR}
-            onPilihManual={handlePilihManual}
-          />
-        )}
+        {/* ========== MODALS (SAMA SEPERTI GURU) ========== */}
+        
+        {/* Modal Jadwal */}
+        <JadwalModal
+          isOpen={activeModal === "schedule"}
+          onClose={() => setActiveModal(null)}
+          data={
+            selectedSchedule
+              ? {
+                subject: selectedSchedule.subject,
+                className: selectedSchedule.className,
+                jurusan: selectedSchedule.jurusan,
+                jam: selectedSchedule.jam,
+                statusGuru: "Hadir",
+              }
+              : null
+          }
+          onMulaiAbsen={handleMulaiAbsen}
+          onTidakBisaMengajar={handleTidakBisaMengajar}
+        />
 
-        {activeModal === "schedule" && (
-          <JadwalModal
-            isOpen={true}
-            onClose={() => setActiveModal(null)}
-            data={
-              selectedSchedule
-                ? {
-                  subject: selectedSchedule.subject,
-                  className: selectedSchedule.className,
-                  jurusan: selectedSchedule.jurusan,
-                  jam: selectedSchedule.jam,
-                  statusGuru: "Hadir",
-                }
-                : { subject: "", className: "" }
-            }
-            onMulaiAbsen={handleMulaiAbsen}
-          />
-        )}
+        {/* Modal Metode */}
+        <MetodeGuru
+          isOpen={activeModal === "metode"}
+          onClose={() => setActiveModal(null)}
+          onPilihQR={handlePilihQR}
+          onPilihManual={handlePilihManual}
+          onTidakBisaMengajar={handleTidakBisaMengajar}
+        />
+
+        {/* Modal Tidak Bisa Mengajar */}
+        <TidakBisaMengajar
+          isOpen={activeModal === "tidakBisa"}
+          onClose={() => setActiveModal(null)}
+          data={
+            selectedSchedule
+              ? {
+                subject: selectedSchedule.subject,
+                className: selectedSchedule.className,
+                jurusan: selectedSchedule.jurusan,
+                jam: selectedSchedule.jam,
+              }
+              : null
+          }
+          onSubmit={handleSubmitTidakBisaMengajar}
+          onPilihMetode={handlePilihMetodeDariTidakBisaMengajar}
+        />
       </div>
     </WalikelasLayout>
   );
 }
+

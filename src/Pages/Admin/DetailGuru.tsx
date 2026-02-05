@@ -2,6 +2,7 @@
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { EditGuruForm } from '../../component/Shared/EditGuru';
 import { Edit, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 interface User {
   role: string;
@@ -46,12 +47,13 @@ export default function DetailGuru({
   guruId: _guruId,
   onUpdateGuru,
 }: DetailGuruProps) {
+  const { alert: popupAlert } = usePopup();
   const [guruData, setGuruData] = useState<Guru>(defaultGuruData);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [dataUpdated, setDataUpdated] = useState(false);
 
   // Handler untuk submit edit
-  const handleEditSubmit = (data: {
+  const handleEditSubmit = async (data: {
     jenisKelamin: string;
     peran: string;
     noTelp: string;
@@ -74,13 +76,13 @@ export default function DetailGuru({
       onUpdateGuru(updatedGuru);
     }
 
-    alert('✓ Data guru berhasil diperbarui!');
+    await popupAlert('✓ Data guru berhasil diperbarui!');
   };
 
   // Handler untuk tombol kembali
-  const handleBack = () => {
+  const handleBack = async () => {
     if (dataUpdated) {
-      alert('✅ Data telah diperbarui! Kembali ke halaman daftar guru.');
+      await popupAlert('✅ Data telah diperbarui! Kembali ke halaman daftar guru.');
     }
     onMenuClick('guru');
   };
@@ -421,3 +423,4 @@ export default function DetailGuru({
     </AdminLayout>
   );
 }
+

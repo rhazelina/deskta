@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState, useEffect } from "react";
 import AdminLayout from "../../component/Admin/AdminLayout";
 import { Button } from "../../component/Shared/Button";
 import { SearchBox } from "../../component/Shared/Search";
@@ -7,6 +7,7 @@ import { JurusanForm } from "../../component/Shared/Form/JurusanForm";
 import AWANKIRI from "../../assets/Icon/AWANKIRI.png";
 import AwanBawahkanan from "../../assets/Icon/AwanBawahkanan.png";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 /* ===================== INTERFACE ===================== */
 interface User {
@@ -29,11 +30,11 @@ interface KonsentrasiKeahlianAdminProps {
 
 /* ===================== DUMMY DATA ===================== */
 const dummyData: KonsentrasiKeahlian[] = [
-  { id: "1", kode: "0874621525", nama: "Rekayasa Perangkat Lunak" },
-  { id: "2", kode: "0874621525", nama: "Elektronika Industri" },
-  { id: "3", kode: "0874621525", nama: "Mekatronika" },
-  { id: "4", kode: "0874621525", nama: "Animasi" },
-  { id: "5", kode: "0874621525", nama: "Desain Komunikasi Visual" },
+  { id: "1", kode: "RPL001", nama: "Rekayasa Perangkat Lunak" },
+  { id: "2", kode: "EI002", nama: "Elektronika Industri" },
+  { id: "3", kode: "MKT003", nama: "Mekatronika" },
+  { id: "4", kode: "ANM004", nama: "Animasi" },
+  { id: "5", kode: "DKV005", nama: "Desain Komunikasi Visual" },
 ];
 
 /* ===================== COMPONENT ===================== */
@@ -43,23 +44,26 @@ export default function KonsentrasiKeahlianAdmin({
   currentPage,
   onMenuClick,
 }: KonsentrasiKeahlianAdminProps) {
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [konsentrasiKeahlianList, setKonsentrasiKeahlianList] = useState<KonsentrasiKeahlian[]>(dummyData);
   const [editingKonsentrasiKeahlian, setEditingKonsentrasiKeahlian] = useState<KonsentrasiKeahlian | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [formData, setFormData] = useState({ namaJurusan: "", kodeJurusan: "" });
 
   /* ===================== FILTER ===================== */
   const filteredData = konsentrasiKeahlianList.filter(
     (k) =>
-      k.kode.includes(searchValue) ||
+      k.kode.toLowerCase().includes(searchValue.toLowerCase()) ||
       k.nama.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  const handleDelete = (row: KonsentrasiKeahlian) => {
-    if (confirm(`Hapus "${row.nama}"?`)) {
+  const handleDelete = async (row: KonsentrasiKeahlian) => {
+    if (await popupConfirm(`Hapus "${row.nama}"?`)) {
       setKonsentrasiKeahlianList((prev) => prev.filter((k) => k.id !== row.id));
+      setOpenActionId(null);
     }
   };
 
@@ -67,6 +71,10 @@ export default function KonsentrasiKeahlianAdmin({
   const handleEditKonsentrasi = (konsentrasi: KonsentrasiKeahlian) => {
     setEditingKonsentrasiKeahlian(konsentrasi);
     setIsEditMode(true);
+    setFormData({
+      namaJurusan: konsentrasi.nama,
+      kodeJurusan: konsentrasi.kode
+    });
     setIsModalOpen(true);
     setOpenActionId(null);
   };
@@ -74,10 +82,11 @@ export default function KonsentrasiKeahlianAdmin({
   const handleTambahKonsentrasi = () => {
     setEditingKonsentrasiKeahlian(null);
     setIsEditMode(false);
+    setFormData({ namaJurusan: "", kodeJurusan: "" });
     setIsModalOpen(true);
   };
 
-  const handleSubmitKonsentrasi = (data: { namaJurusan: string; kodeJurusan: string }) => {
+  const handleSubmitKonsentrasi = async (data: { namaJurusan: string; kodeJurusan: string }) => {
     if (isEditMode && editingKonsentrasiKeahlian) {
       // Mode ubah: update data konsentrasi keahlian
       setKonsentrasiKeahlianList((prev) =>
@@ -87,7 +96,7 @@ export default function KonsentrasiKeahlianAdmin({
             : k
         )
       );
-      alert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil diperbarui!`);
+      await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil diperbarui!`);
     } else {
       // Mode tambah: tambah konsentrasi keahlian baru
       setKonsentrasiKeahlianList((prev) => [
@@ -98,19 +107,31 @@ export default function KonsentrasiKeahlianAdmin({
           kode: data.kodeJurusan,
         },
       ]);
-      alert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil ditambahkan!`);
+      await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil ditambahkan!`);
     }
     
     setIsModalOpen(false);
     setEditingKonsentrasiKeahlian(null);
     setIsEditMode(false);
+    setFormData({ namaJurusan: "", kodeJurusan: "" });
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingKonsentrasiKeahlian(null);
     setIsEditMode(false);
+    setFormData({ namaJurusan: "", kodeJurusan: "" });
   };
+
+  // Update form data when editing data changes
+  useEffect(() => {
+    if (editingKonsentrasiKeahlian && isEditMode) {
+      setFormData({
+        namaJurusan: editingKonsentrasiKeahlian.nama,
+        kodeJurusan: editingKonsentrasiKeahlian.kode
+      });
+    }
+  }, [editingKonsentrasiKeahlian, isEditMode]);
 
   /* ===================== TABLE ===================== */
   const columns = [
@@ -129,6 +150,17 @@ export default function KonsentrasiKeahlianAdmin({
               border: "none",
               background: "transparent",
               cursor: "pointer",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#F3F4F6";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
             <MoreVertical size={22} strokeWidth={1.5} />
@@ -152,7 +184,7 @@ export default function KonsentrasiKeahlianAdmin({
             >
               {/* UBAH */}
               <button
-                onClick={() => handleEditKonsentrasi(row)} // GANTI INI
+                onClick={() => handleEditKonsentrasi(row)}
                 style={actionItemStyle}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "#F0F4FF";
@@ -199,8 +231,8 @@ export default function KonsentrasiKeahlianAdmin({
       onLogout={onLogout}
       hideBackground
     >
-      <img src={AWANKIRI} style={bgLeft} />
-      <img src={AwanBawahkanan} style={bgRight} />
+      <img src={AWANKIRI} style={bgLeft} alt="Background kiri" />
+      <img src={AwanBawahkanan} style={bgRight} alt="Background kanan" />
 
       <div
         style={{
@@ -213,6 +245,8 @@ export default function KonsentrasiKeahlianAdmin({
           display: "flex",
           flexDirection: "column",
           gap: 24,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {/* HEADER */}
@@ -230,7 +264,6 @@ export default function KonsentrasiKeahlianAdmin({
               onChange={setSearchValue}
             />
           </div>
-          {/* GANTI ONCLICK TOMBOL TAMBAHKAN */}
           <Button label="Tambahkan" onClick={handleTambahKonsentrasi} />
         </div>
 
@@ -246,19 +279,12 @@ export default function KonsentrasiKeahlianAdmin({
         </div>
       </div>
 
-      {/* GANTI TAMBAHJURUSANFORM MENJADI JURUSANFORM */}
+      {/* FORM MODAL */}
       <JurusanForm
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleSubmitKonsentrasi}
-        initialData={
-          editingKonsentrasiKeahlian
-            ? {
-                namaJurusan: editingKonsentrasiKeahlian.nama,
-                kodeJurusan: editingKonsentrasiKeahlian.kode,
-              }
-            : undefined
-        }
+        initialData={formData}
         isEdit={isEditMode}
       />
     </AdminLayout>
@@ -289,6 +315,7 @@ const bgLeft: React.CSSProperties = {
   left: 0,
   width: 220,
   zIndex: 0,
+  pointerEvents: "none",
 };
 
 const bgRight: React.CSSProperties = {
@@ -297,4 +324,6 @@ const bgRight: React.CSSProperties = {
   right: 0,
   width: 220,
   zIndex: 0,
+  pointerEvents: "none",
 };
+

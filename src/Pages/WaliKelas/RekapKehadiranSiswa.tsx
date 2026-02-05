@@ -1,6 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
-import WalikelasLayout from '../../component/Walikelas/layoutwakel';
-import { Calendar, Download, ChevronLeft, Search, CheckCircle } from 'lucide-react';
+﻿import { useState, useMemo, useEffect } from "react";
+import { Eye, FileDown, Calendar, ArrowLeft, Search } from "lucide-react";
+import WalikelasLayout from "../../component/Walikelas/layoutwakel";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+
+interface RekapKehadiranSiswaProps {
+  user: { name: string; role: string };
+  onLogout: () => void;
+  currentPage: string;
+  onMenuClick: (page: string, payload?: any) => void;
+}
 
 interface RekapRow {
   id: string;
@@ -8,17 +16,11 @@ interface RekapRow {
   nisn: string;
   namaSiswa: string;
   hadir: number;
-  sakitIzin: number;
-  alpha: number;
+  izin: number;
+  sakit: number;
+  tidakHadir: number;
   pulang: number;
   status: 'aktif' | 'non-aktif';
-}
-
-interface RekapKehadiranSiswaProps {
-  user: { name: string; role: string };
-  onLogout: () => void;
-  currentPage: string;
-  onMenuClick: (page: string) => void;
 }
 
 export function RekapKehadiranSiswa({
@@ -27,12 +29,10 @@ export function RekapKehadiranSiswa({
   currentPage,
   onMenuClick,
 }: RekapKehadiranSiswaProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const { alert: popupAlert } = usePopup();
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Data periode
-  const [periodeMulai, setPeriodeMulai] = useState('25-01-2025');
-  const [periodeSelesai, setPeriodeSelesai] = useState('25-01-2025');
+  const [periodeMulai, setPeriodeMulai] = useState('2026-02-03');
+  const [periodeSelesai, setPeriodeSelesai] = useState('2026-02-03');
 
   // Data kelas
   const kelasInfo = {
@@ -40,23 +40,52 @@ export function RekapKehadiranSiswa({
     waliKelas: 'Ewiti Erniyah S.pd',
   };
 
-  // Data dummy berdasarkan gambar
+  // Warna sesuai revisi
+  const COLORS = {
+    HADIR: "#1FA83D",
+    IZIN: "#ACA40D",
+    PULANG: "#2F85EB",
+    TIDAK_HADIR: "#D90000",
+    SAKIT: "#520C8F"
+  };
+
+  // Data dummy
   const [rows] = useState<RekapRow[]>([
-    { id: '1', no: 1, nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', hadir: 23, sakitIzin: 5, alpha: 2, pulang: 2, status: 'aktif' },
-    { id: '2', no: 2, nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', hadir: 25, sakitIzin: 3, alpha: 0, pulang: 1, status: 'aktif' },
-    { id: '3', no: 3, nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', hadir: 20, sakitIzin: 7, alpha: 1, pulang: 0, status: 'aktif' },
-    { id: '4', no: 4, nisn: '1348576395', namaSiswa: 'Budi Santoso', hadir: 22, sakitIzin: 4, alpha: 2, pulang: 3, status: 'aktif' },
-    { id: '5', no: 5, nisn: '1348576396', namaSiswa: 'Dewi Sartika', hadir: 24, sakitIzin: 3, alpha: 1, pulang: 1, status: 'aktif' },
-    { id: '6', no: 6, nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', hadir: 21, sakitIzin: 5, alpha: 2, pulang: 2, status: 'aktif' },
-    { id: '7', no: 7, nisn: '1348576398', namaSiswa: 'Fitri Handayani', hadir: 26, sakitIzin: 2, alpha: 0, pulang: 0, status: 'aktif' },
-    { id: '8', no: 8, nisn: '1348576399', namaSiswa: 'Andi Wijaya', hadir: 19, sakitIzin: 8, alpha: 1, pulang: 1, status: 'aktif' },
-    { id: '9', no: 9, nisn: '1348576400', namaSiswa: 'Rina Pratiwi', hadir: 23, sakitIzin: 4, alpha: 1, pulang: 2, status: 'aktif' },
+    { id: '1', no: 1, nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '2', no: 2, nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '3', no: 3, nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '4', no: 4, nisn: '1348576395', namaSiswa: 'Budi Santoso', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '5', no: 5, nisn: '1348576396', namaSiswa: 'Dewi Sartika', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '6', no: 6, nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '7', no: 7, nisn: '1348576398', namaSiswa: 'Fitri Handayani', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '8', no: 8, nisn: '1348576399', namaSiswa: 'Andi Wijaya', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
+    { id: '9', no: 9, nisn: '1348576400', namaSiswa: 'Rina Pratiwi', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
   ]);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Inject CSS untuk ubah icon kalender jadi putih
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .custom-date-input::-webkit-calendar-picker-indicator {
+        filter: invert(1) brightness(100) !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+      }
+      .custom-date-input::-webkit-inner-spin-button,
+      .custom-date-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .custom-date-input {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   // Filter rows berdasarkan pencarian
@@ -72,21 +101,230 @@ export function RekapKehadiranSiswa({
 
   // Hitung total
   const totalHadir = useMemo(() => filteredRows.reduce((sum, row) => sum + row.hadir, 0), [filteredRows]);
-  const totalSakitIzin = useMemo(() => filteredRows.reduce((sum, row) => sum + row.sakitIzin, 0), [filteredRows]);
-  const totalAlpha = useMemo(() => filteredRows.reduce((sum, row) => sum + row.alpha, 0), [filteredRows]);
+  const totalIzin = useMemo(() => filteredRows.reduce((sum, row) => sum + row.izin, 0), [filteredRows]);
+  const totalSakit = useMemo(() => filteredRows.reduce((sum, row) => sum + row.sakit, 0), [filteredRows]);
+  const totalTidakHadir = useMemo(() => filteredRows.reduce((sum, row) => sum + row.tidakHadir, 0), [filteredRows]);
   const totalPulang = useMemo(() => filteredRows.reduce((sum, row) => sum + row.pulang, 0), [filteredRows]);
+
+  // Handler untuk klik tombol aksi (mata) - navigasi ke DaftarKetidakhadiranWaliKelas
+  const handleViewDetail = (row: RekapRow) => {
+    onMenuClick("daftar-ketidakhadiran-walikelas", {
+      siswaName: row.namaSiswa,
+      siswaIdentitas: row.nisn,
+    });
+  };
 
   const handleBack = () => {
     onMenuClick('kehadiran-siswa');
   };
 
+  const formatDisplayDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
+  // Fungsi untuk mengekspor Excel (CSV)
+  const handleExportExcel = async () => {
+    try {
+      // Buat data untuk Excel
+      const headers = ["No", "NISN", "Nama Siswa", "Hadir", "Izin", "Sakit", "Tidak Hadir", "Pulang", "Status"];
+      const rowsData = filteredRows.map((row) => [
+        row.no,
+        row.nisn,
+        row.namaSiswa,
+        row.hadir,
+        row.izin,
+        row.sakit,
+        row.tidakHadir,
+        row.pulang,
+        row.status === 'aktif' ? 'Aktif' : 'Non-Aktif'
+      ]);
 
-  const handleDateChange = (type: 'mulai' | 'selesai', value: string) => {
-    if (type === 'mulai') {
-      setPeriodeMulai(value);
-    } else {
-      setPeriodeSelesai(value);
+      // Tambahkan baris total
+      rowsData.push([
+        'TOTAL',
+        '',
+        'Total Keseluruhan',
+        totalHadir,
+        totalIzin,
+        totalSakit,
+        totalTidakHadir,
+        totalPulang,
+        ''
+      ]);
+
+      // Gabungkan headers dan rows
+      const csvContent = [
+        headers.join(","),
+        ...rowsData.map((row) => row.join(",")),
+      ].join("\n");
+
+      // Tambahkan BOM untuk support Unicode di Excel
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+
+      // Buat download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Rekap_Kehadiran_${kelasInfo.namaKelas.replace(/\s+/g, '_')}_${periodeMulai}_${periodeSelesai}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      await popupAlert("✅ File Excel berhasil diunduh!");
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      await popupAlert("❌ Terjadi kesalahan saat mengekspor Excel");
+    }
+  };
+
+  // Fungsi untuk mengekspor PDF
+  const handleExportPDF = async () => {
+    try {
+      // Import jsPDF secara dinamis
+      const { jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+
+      // Buat dokumen PDF dengan orientasi landscape
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Header - Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REKAP KEHADIRAN SISWA', pageWidth / 2, 15, { align: 'center' });
+
+      // Info Kelas
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Kelas: ${kelasInfo.namaKelas}`, 14, 25);
+      doc.text(`Wali Kelas: ${kelasInfo.waliKelas}`, 14, 31);
+      
+      // Periode (kanan atas)
+      doc.text(`Periode: ${formatDisplayDate(periodeMulai)} - ${formatDisplayDate(periodeSelesai)}`, pageWidth - 14, 25, { align: 'right' });
+
+      // Garis pemisah
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(14, 35, pageWidth - 14, 35);
+
+      // Tabel Data Siswa
+      const tableData = filteredRows.map(row => [
+        row.no.toString(),
+        row.nisn,
+        row.namaSiswa,
+        row.hadir.toString(),
+        row.izin.toString(),
+        row.sakit.toString(),
+        row.tidakHadir.toString(),
+        row.pulang.toString(),
+        row.status === 'aktif' ? 'Aktif' : 'Non-Aktif'
+      ]);
+
+      // Add summary row
+      tableData.push([
+        'TOTAL',
+        '',
+        'Total Keseluruhan',
+        totalHadir.toString(),
+        totalIzin.toString(),
+        totalSakit.toString(),
+        totalTidakHadir.toString(),
+        totalPulang.toString(),
+        ''
+      ]);
+
+      (doc as any).autoTable({
+        startY: 40,
+        head: [['No', 'NISN', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Tidak Hadir', 'Pulang', 'Status']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: {
+          fontSize: 8,
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 25, halign: 'left' },
+          2: { cellWidth: 60, halign: 'left' },
+          3: { cellWidth: 18, halign: 'center' },
+          4: { cellWidth: 18, halign: 'center' },
+          5: { cellWidth: 18, halign: 'center' },
+          6: { cellWidth: 25, halign: 'center' },
+          7: { cellWidth: 18, halign: 'center' },
+          8: { cellWidth: 22, halign: 'center' }
+        },
+        alternateRowStyles: {
+          fillColor: [249, 250, 251]
+        },
+        margin: { left: 14, right: 14 },
+        footStyles: {
+          fillColor: [59, 130, 246],
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        didParseCell: function(data: any) {
+          // Highlight total row
+          if (data.row.index === filteredRows.length) {
+            data.cell.styles.fillColor = [59, 130, 246];
+            data.cell.styles.textColor = 255;
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      });
+
+      // Footer - Timestamp
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      const timestamp = new Date().toLocaleString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      doc.text(`Dicetak pada: ${timestamp}`, 14, pageHeight - 10);
+
+      // Nomor halaman
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(
+          `Halaman ${i} dari ${pageCount}`,
+          pageWidth - 14,
+          pageHeight - 10,
+          { align: 'right' }
+        );
+      }
+
+      // Download PDF - langsung download otomatis
+      const filename = `Rekap_Kehadiran_${kelasInfo.namaKelas.replace(/\s+/g, '_')}_${periodeMulai}_${periodeSelesai}.pdf`;
+      
+      // Simpan dan download langsung
+      doc.save(filename);
+      
+      await popupAlert("✅ File PDF berhasil diunduh!");
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      await popupAlert("❌ Terjadi kesalahan saat mengekspor PDF. Pastikan library jsPDF sudah terinstall.\n\nJalankan: npm install jspdf jspdf-autotable");
     }
   };
 
@@ -98,47 +336,106 @@ export function RekapKehadiranSiswa({
       user={user}
       onLogout={onLogout}
     >
-      <div style={{
-        position: 'relative',
-        minHeight: '100%',
-        backgroundColor: '#FFFFFF',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        padding: isMobile ? '16px' : '24px',
-        border: '1px solid #E5E7EB',
-      }}>
-        {/* Header dengan tombol kembali */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}>
-          <button
-            onClick={handleBack}
+      {/* Button Kembali */}
+      <div style={{ marginBottom: 16 }}>
+        <button
+          onClick={handleBack}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 16px",
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #D1D5DB",
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+            color: "#374151",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#F3F4F6";
+            e.currentTarget.style.borderColor = "#9CA3AF";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#FFFFFF";
+            e.currentTarget.style.borderColor = "#D1D5DB";
+          }}
+        >
+          <ArrowLeft size={16} />
+          Kembali
+        </button>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderRadius: 12,
+          padding: 32,
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        }}
+      >
+        {/* Header Section */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 24,
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          {/* Kelas Info - KIRI */}
+          <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              backgroundColor: 'transparent',
-              color: '#1E40AF',
-              border: 'none',
-              padding: '8px 0',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
+              backgroundColor: "#062A4A",
+              borderRadius: 12,
+              padding: "14px 20px",
+              color: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
             }}
           >
-            <ChevronLeft size={16} />
-            Kembali
-          </button>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg 
+                width="22" 
+                height="22" 
+                viewBox="0 0 24 24" 
+                fill="white" 
+                stroke="white" 
+                strokeWidth="0.5"
+              >
+                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>
+                {kelasInfo.namaKelas}
+              </div>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>
+                {kelasInfo.waliKelas}
+              </div>
+            </div>
+          </div>
 
-          {/* Search bar */}
+          {/* Search Bar */}
           <div style={{
             position: 'relative',
-            width: isMobile ? '100%' : '300px',
+            width: '300px',
           }}>
             <Search size={18} style={{
               position: 'absolute',
@@ -165,133 +462,222 @@ export function RekapKehadiranSiswa({
           </div>
         </div>
 
-        {/* Informasi Kelas dan Wali Kelas */}
+        {/* Periode dan Export */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 24,
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          {/* Periode Box - Navy Style */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              backgroundColor: "#062A4A",
+              padding: "10px 16px",
+              borderRadius: 10,
+              color: "#FFFFFF",
+            }}
+          >
+            {/* Icon Kalender */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                backgroundColor: "rgba(255,255,255,0.15)",
+                borderRadius: 6,
+              }}
+            >
+              <Calendar size={18} />
+            </div>
+
+            {/* Label Periode */}
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Periode:</span>
+
+            {/* Start Date */}
+            <input
+              type="date"
+              value={periodeMulai}
+              onChange={(e) => setPeriodeMulai(e.target.value)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 6,
+                border: "1px solid rgba(255,255,255,0.3)",
+                backgroundColor: "rgba(255,255,255,0.1)",
+                color: "#FFFFFF",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                colorScheme: "dark",
+              }}
+              className="custom-date-input"
+            />
+
+            {/* Separator */}
+            <span style={{ fontWeight: 600, fontSize: 16 }}>—</span>
+
+            {/* End Date */}
+            <input
+              type="date"
+              value={periodeSelesai}
+              onChange={(e) => setPeriodeSelesai(e.target.value)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 6,
+                border: "1px solid rgba(255,255,255,0.3)",
+                backgroundColor: "rgba(255,255,255,0.1)",
+                color: "#FFFFFF",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                colorScheme: "dark",
+              }}
+              className="custom-date-input"
+            />
+          </div>
+
+          {/* Export Buttons */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+            }}
+          >
+            <button
+              onClick={handleExportExcel}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "10px 16px",
+                backgroundColor: "#10B981",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#059669"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#10B981"}
+            >
+              <FileDown size={16} />
+              Unduh Excel
+            </button>
+
+            <button
+              onClick={handleExportPDF}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "10px 16px",
+                backgroundColor: "#EF4444",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#DC2626"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#EF4444"}
+            >
+              <FileDown size={16} />
+              Unduh PDF
+            </button>
+          </div>
+        </div>
+
+        {/* Statistik Total */}
         <div style={{
-          marginBottom: '24px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}>
-          <div style={{
-            fontSize: '20px',
+          <h3 style={{
+            fontSize: '16px',
             fontWeight: '700',
             color: '#111827',
-            marginBottom: '4px',
+            marginBottom: '16px',
           }}>
-            {kelasInfo.namaKelas}
-          </div>
+            Total Keseluruhan
+          </h3>
           <div style={{
-            fontSize: '14px',
-            color: '#6B7280',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: '16px',
           }}>
-            {kelasInfo.waliKelas}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px', fontWeight: '600' }}>Hadir</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.HADIR }}>{totalHadir}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px', fontWeight: '600' }}>Izin</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.IZIN }}>{totalIzin}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px', fontWeight: '600' }}>Sakit</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.SAKIT }}>{totalSakit}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px', fontWeight: '600' }}>Tidak Hadir</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.TIDAK_HADIR }}>{totalTidakHadir}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px', fontWeight: '600' }}>Pulang</div>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: COLORS.PULANG }}>{totalPulang}</div>
+            </div>
           </div>
         </div>
-
-        {/* Periode */}
-        <div style={{
-          backgroundColor: '#F9FAFB',
-          borderRadius: '8px',
-          padding: '16px',
-          marginBottom: '24px',
-          border: '1px solid #E5E7EB',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-          }}>
-            <Calendar size={18} color="#374151" />
-            <span style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#374151',
-            }}>
-              Periode:
-            </span>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap',
-          }}>
-            <input
-              type="text"
-              value={periodeMulai}
-              onChange={(e) => handleDateChange('mulai', e.target.value)}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '6px',
-                fontSize: '14px',
-                width: '120px',
-                textAlign: 'center',
-                backgroundColor: '#FFFFFF',
-                color: '#111827',
-              }}
-            />
-            <span style={{
-              fontSize: '14px',
-              color: '#6B7280',
-              fontWeight: '500',
-            }}>
-              ---
-            </span>
-            <input
-              type="text"
-              value={periodeSelesai}
-              onChange={(e) => handleDateChange('selesai', e.target.value)}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #D1D5DB',
-                borderRadius: '6px',
-                fontSize: '14px',
-                width: '120px',
-                textAlign: 'center',
-                backgroundColor: '#FFFFFF',
-                color: '#111827',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Garis pemisah */}
-        <div style={{
-          height: '1px',
-          backgroundColor: '#E5E7EB',
-          marginBottom: '24px',
-        }}></div>
 
         {/* Tabel Rekap Kehadiran */}
         <div style={{
+          backgroundColor: '#FFFFFF',
           border: '1px solid #E5E7EB',
-          borderRadius: '8px',
+          borderRadius: '12px',
           overflow: 'hidden',
-          marginBottom: '24px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
         }}>
           {/* Header Tabel */}
           <div style={{
             backgroundColor: '#F9FAFB',
-            padding: '12px 16px',
-            borderBottom: '1px solid #E5E7EB',
+            padding: '14px 20px',
+            borderBottom: '2px solid #E5E7EB',
           }}>
             <div style={{
-              display: isMobile ? 'flex' : 'grid',
-              flexDirection: isMobile ? 'column' : 'row',
-              gridTemplateColumns: isMobile ? '1fr' : '40px 120px minmax(200px, 1fr) 80px 100px 80px 80px 60px',
+              display: 'grid',
+              gridTemplateColumns: '50px 130px minmax(180px, 1fr) 80px 80px 80px 100px 80px 80px',
               gap: '12px',
-              fontSize: '12px',
-              fontWeight: '600',
+              fontSize: '13px',
+              fontWeight: '700',
               color: '#374151',
+              letterSpacing: '0.3px',
             }}>
               <div>No</div>
               <div>NISN</div>
               <div>Nama Siswa</div>
               <div style={{ textAlign: 'center' }}>Hadir</div>
-              <div style={{ textAlign: 'center' }}>Sakit/Izin</div>
-              <div style={{ textAlign: 'center' }}>Alpha</div>
+              <div style={{ textAlign: 'center' }}>Izin</div>
+              <div style={{ textAlign: 'center' }}>Sakit</div>
+              <div style={{ textAlign: 'center' }}>Tidak Hadir</div>
               <div style={{ textAlign: 'center' }}>Pulang</div>
-              <div style={{ textAlign: 'center' }}>Status</div>
+              <div style={{ textAlign: 'center' }}>Aksi</div>
             </div>
           </div>
 
@@ -299,267 +685,96 @@ export function RekapKehadiranSiswa({
           <div>
             {filteredRows.length === 0 ? (
               <div style={{
-                padding: '40px 20px',
+                padding: '60px 20px',
                 textAlign: 'center',
-                color: '#6B7280',
+                color: '#9CA3AF',
                 fontSize: '14px',
               }}>
-                Tidak ada data yang ditemukan
+                <div style={{
+                  fontSize: '48px',
+                  marginBottom: '16px',
+                  opacity: 0.3,
+                }}>
+                  📋
+                </div>
+                <p style={{ margin: 0, fontWeight: '500' }}>
+                  Belum ada data kehadiran siswa.
+                </p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#B9B9B9' }}>
+                  Data rekap kehadiran akan muncul di sini setelah Anda menginput kehadiran.
+                </p>
               </div>
             ) : (
-              filteredRows.map((row) => (
+              filteredRows.map((row, idx) => (
                 <div
                   key={row.id}
                   style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #F3F4F6',
-                    display: isMobile ? 'flex' : 'grid',
-                    flexDirection: isMobile ? 'column' : 'row',
-                    gridTemplateColumns: isMobile ? '1fr' : '40px 120px minmax(200px, 1fr) 80px 100px 80px 80px 60px',
+                    display: 'grid',
+                    gridTemplateColumns: '50px 130px minmax(180px, 1fr) 80px 80px 80px 100px 80px 80px',
                     gap: '12px',
-                    alignItems: 'center',
+                    padding: '14px 20px',
                     fontSize: '14px',
-                    color: '#111827',
+                    borderBottom: idx < filteredRows.length - 1 ? '1px solid #F3F4F6' : 'none',
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC',
+                    transition: 'background-color 0.2s',
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F3F4F6'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC'}
                 >
-                  <span style={{ fontWeight: '500' }}>{row.no}.</span>
-                  <span>{row.nisn}</span>
-                  <span>{row.namaSiswa}</span>
-                  <span style={{ textAlign: 'center', fontWeight: '600' }}>{row.hadir}</span>
-                  <span style={{ textAlign: 'center', fontWeight: '600' }}>{row.sakitIzin}</span>
-                  <span style={{ textAlign: 'center', fontWeight: '600' }}>{row.alpha}</span>
-                  <span style={{ textAlign: 'center', fontWeight: '600' }}>{row.pulang}</span>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: row.status === 'aktif' ? '#D1FAE5' : '#FEE2E2',
-                      color: row.status === 'aktif' ? '#059669' : '#DC2626',
-                    }}>
-                      {row.status === 'aktif' ? (
-                        <CheckCircle size={14} />
-                      ) : (
-                        <div style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: '#DC2626',
-                        }}></div>
-                      )}
-                    </div>
+                  <div style={{ color: '#6B7280', fontWeight: '500' }}>{row.no}</div>
+                  <div style={{ color: '#374151', fontWeight: '500' }}>{row.nisn}</div>
+                  <div style={{ color: '#111827', fontWeight: '600' }}>{row.namaSiswa}</div>
+                  <div style={{ textAlign: 'center', color: COLORS.HADIR, fontWeight: '700' }}>{row.hadir}</div>
+                  <div style={{ textAlign: 'center', color: COLORS.IZIN, fontWeight: '700' }}>{row.izin}</div>
+                  <div style={{ textAlign: 'center', color: COLORS.SAKIT, fontWeight: '700' }}>{row.sakit}</div>
+                  <div style={{ textAlign: 'center', color: COLORS.TIDAK_HADIR, fontWeight: '700' }}>{row.tidakHadir}</div>
+                  <div style={{ textAlign: 'center', color: COLORS.PULANG, fontWeight: '700' }}>{row.pulang}</div>
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <button
+                      onClick={() => handleViewDetail(row)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        transition: 'all 0.2s',
+                        color: '#374151',
+                        fontWeight: '500',
+                        fontSize: '13px',
+                        gap: '6px',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#F3F4F6';
+                        e.currentTarget.style.color = '#1E40AF';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = '#374151';
+                      }}
+                      title="Lihat detail ketidakhadiran"
+                    >
+                      <Eye size={16} />
+                      <span>Lihat</span>
+                    </button>
                   </div>
                 </div>
               ))
             )}
           </div>
         </div>
-
-        {/* Garis pemisah */}
-        <div style={{
-          height: '1px',
-          backgroundColor: '#E5E7EB',
-          marginBottom: '24px',
-        }}></div>
-
-        {/* Tombol Ekspor */}
-        {/* Tombol Ekspor */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '12px',
-        }}>
-          {/* Export PDF Button */}
-          <button
-            onClick={() => {
-              try {
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                  printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                      <head>
-                        <title>Rekap Kehadiran Siswa</title>
-                        <style>
-                          body { font-family: Arial, sans-serif; padding: 20px; }
-                          h1 { color: #0B2948; }
-                          h2, h3 { color: #374151; }
-                          table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                          th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                          th { background-color: #2563EB; color: white; }
-                          tr:nth-child(even) { background-color: #f2f2f2; }
-                          .summary { margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-                          .summary-item { padding: 10px; background: #f3f4f6; border-radius: 6px; text-align: center; }
-                        </style>
-                      </head>
-                      <body>
-                        <h1>Rekap Kehadiran Siswa</h1>
-                        <h2>${kelasInfo.namaKelas}</h2>
-                        <p><strong>Periode:</strong> ${periodeMulai} - ${periodeSelesai}</p>
-                        <p><strong>Wali Kelas:</strong> ${kelasInfo.waliKelas}</p>
-                        
-                        <div class="summary">
-                          <div class="summary-item"><strong>Hadir:</strong> ${totalHadir}</div>
-                          <div class="summary-item"><strong>Sakit/Izin:</strong> ${totalSakitIzin}</div>
-                          <div class="summary-item"><strong>Alpha:</strong> ${totalAlpha}</div>
-                          <div class="summary-item"><strong>Pulang:</strong> ${totalPulang}</div>
-                        </div>
-
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>No</th>
-                              <th>NISN</th>
-                              <th>Nama Siswa</th>
-                              <th>Hadir</th>
-                              <th>Sakit/Izin</th>
-                              <th>Alpha</th>
-                              <th>Pulang</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            ${filteredRows.map(row => `
-                              <tr>
-                                <td>${row.no}</td>
-                                <td>${row.nisn}</td>
-                                <td>${row.namaSiswa}</td>
-                                <td>${row.hadir}</td>
-                                <td>${row.sakitIzin}</td>
-                                <td>${row.alpha}</td>
-                                <td>${row.pulang}</td>
-                                <td>${row.status}</td>
-                              </tr>
-                            `).join('')}
-                          </tbody>
-                        </table>
-                        <p style="margin-top: 20px; font-size: 12px; color: #6B7280;">
-                          Dicetak pada: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')}
-                        </p>
-                      </body>
-                    </html>
-                  `);
-                  printWindow.document.close();
-                  printWindow.print();
-                }
-              } catch (error) {
-                console.error('Error exporting PDF:', error);
-                alert('Terjadi kesalahan saat mengekspor PDF.');
-              }
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              backgroundColor: '#FFFFFF',
-              color: '#DC2626',
-              border: '1px solid #DC2626',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#FEF2F2';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#FFFFFF';
-            }}
-          >
-            <Download size={16} />
-            Export PDF
-          </button>
-
-          {/* Export CSV Button */}
-          <button
-            onClick={() => {
-              let csvContent = 'data:text/csv;charset=utf-8,';
-              csvContent += 'REKAP KEHADIRAN SISWA\n';
-              csvContent += `Kelas: ${kelasInfo.namaKelas},Wali Kelas: ${kelasInfo.waliKelas}\n`;
-              csvContent += `Periode: ${periodeMulai} - ${periodeSelesai}\n\n`;
-              csvContent += 'Mo,NISN,Nama Siswa,Hadir,Sakit/Izin,Alpha,Pulang,Status\n';
-
-              filteredRows.forEach((row) => {
-                csvContent += `${row.no},${row.nisn},"${row.namaSiswa}",${row.hadir},${row.sakitIzin},${row.alpha},${row.pulang},${row.status}\n`;
-              });
-
-              csvContent += `\nTotal,,,${totalHadir},${totalSakitIzin},${totalAlpha},${totalPulang},\n`;
-
-              const encodedUri = encodeURI(csvContent);
-              const link = document.createElement('a');
-              link.setAttribute('href', encodedUri);
-              link.setAttribute('download', `Rekap_Kehadiran_${kelasInfo.namaKelas}_${periodeMulai}_${periodeSelesai}.csv`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
-          >
-            <Download size={16} />
-            Export CSV
-          </button>
-        </div>
-
-        {/* Total Rekap (opsional) */}
-        <div style={{
-          marginTop: '24px',
-          padding: '16px',
-          backgroundColor: '#F9FAFB',
-          borderRadius: '8px',
-          border: '1px solid #E5E7EB',
-        }}>
-          <div style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#374151',
-            marginBottom: '12px',
-          }}>
-            Total Rekap Kelas
-          </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-            gap: '16px',
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Hadir</div>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>{totalHadir}</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Sakit/Izin</div>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>{totalSakitIzin}</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Alpha</div>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>{totalAlpha}</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Pulang</div>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>{totalPulang}</div>
-            </div>
-          </div>
-        </div>
       </div>
     </WalikelasLayout>
   );
 }
+
+
+
+

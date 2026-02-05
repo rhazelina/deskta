@@ -48,7 +48,7 @@ export default function AdminLayout({
         display: "flex",
         height: "100vh",
         width: "100vw",
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#FFFFFF", // Ubah jadi putih solid
         overflow: "hidden",
       }}
     >
@@ -60,9 +60,19 @@ export default function AdminLayout({
             inset: 0,
             zIndex: 0,
             pointerEvents: "none",
-            opacity: 0.3,
+            overflow: "hidden",
           }}
         >
+          {/* Background warna dengan opacity rendah */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "#F8FAFC", // Warna background lembut
+            }}
+          />
+          
+          {/* Awan dan dekorasi */}
           <img
             src={AWANKIRI}
             alt="Awan Kiri Atas"
@@ -72,7 +82,8 @@ export default function AdminLayout({
               left: -30,
               width: 280,
               height: "auto",
-              filter: "brightness(1.2)",
+              filter: "brightness(1.1)",
+              opacity: 0.15, // Kurangi opacity agar tidak terlalu dominan
             }}
           />
           <img
@@ -84,7 +95,8 @@ export default function AdminLayout({
               right: -40,
               width: 300,
               height: "auto",
-              filter: "brightness(1.2)",
+              filter: "brightness(1.1)",
+              opacity: 0.15,
             }}
           />
           <img
@@ -96,7 +108,7 @@ export default function AdminLayout({
               left: -40,
               width: 260,
               height: "auto",
-              opacity: 0.4,
+              opacity: 0.1, // Sangat rendah agar subtle
             }}
           />
           <img
@@ -108,14 +120,14 @@ export default function AdminLayout({
               right: -30,
               width: 220,
               height: "auto",
-              opacity: 0.4,
+              opacity: 0.1,
             }}
           />
         </div>
       )}
 
       {/* Sidebar */}
-      <div style={{ position: "relative", zIndex: 10 }}>
+      <div style={{ position: "relative", zIndex: 20 }}>
         <Sidebar
           currentPage={currentPage}
           onMenuClick={onMenuClick}
@@ -130,7 +142,7 @@ export default function AdminLayout({
       <div
         style={{
           position: "relative",
-          zIndex: 1,
+          zIndex: 10,
           flex: 1,
           display: "flex",
           flexDirection: "column",
@@ -138,7 +150,7 @@ export default function AdminLayout({
           width: "100%",
         }}
       >
-        {/* Header */}
+        {/* Header - beri background putih solid */}
         <header
           style={{
             backgroundColor: "white",
@@ -151,7 +163,8 @@ export default function AdminLayout({
             boxShadow: "0 2px 12px rgba(0, 31, 62, 0.08)",
             borderBottom: "1px solid #E5E7EB",
             flexShrink: 0,
-            zIndex: 5,
+            zIndex: 15,
+            position: "relative", // Pastikan berada di atas background
           }}
         >
           <div style={{ flex: 1 }}>
@@ -211,32 +224,60 @@ export default function AdminLayout({
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
                 padding: "4px",
                 backgroundColor: "white",
+                border: "1px solid #E5E7EB",
               }}
             />
           </div>
         </header>
 
-        {/* Content */}
-        <main
+        {/* Content Area */}
+        <div
           style={{
             flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            padding: "28px",
-            display: "flex",
-            flexDirection: "column",
-            background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+            position: "relative",
+            overflow: "hidden",
+            backgroundColor: "transparent", // Transparan agar background dekorasi terlihat
           }}
         >
-          <div style={{ 
-            maxWidth: "1400px", 
-            width: "100%", 
-            margin: "0 auto",
-            flex: 1 
-          }}>
-            {children}
-          </div>
-        </main>
+          {/* Main Content Container */}
+          <main
+            style={{
+              position: "relative",
+              zIndex: 5,
+              height: "100%",
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Content Wrapper dengan background putih */}
+            <div
+              style={{
+                position: "relative",
+                zIndex: 5,
+                maxWidth: "1400px",
+                width: "100%",
+                margin: "0 auto",
+                flex: 1,
+              }}
+            >
+              {/* Konten utama dengan background putih dan sedikit transparansi */}
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 5,
+                  backgroundColor: "rgba(255, 255, 255, 0.7)", // Putih dengan transparansi
+                  borderRadius: "12px",
+                  padding: "0",
+                }}
+              >
+                {children}
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

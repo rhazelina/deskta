@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
 import { Select } from '../../component/Shared/Select';
@@ -7,6 +7,8 @@ import { TambahGuruForm } from '../../component/Shared/Form/TambahGuruForm';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
 import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
 import { MoreVertical, Edit, Trash2, Eye, Grid, FileDown, Upload, FileText, Download, Search } from 'lucide-react';
+import { saveAs } from "file-saver";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 interface User {
   role: string;
@@ -102,6 +104,7 @@ export default function GuruAdmin({
   onMenuClick,
   onNavigateToDetail,
 }: GuruAdminProps) {
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [searchValue, setSearchValue] = useState('');
   const [selectedMapel, setSelectedMapel] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -270,7 +273,7 @@ export default function GuruAdmin({
     },
   ];
 
-  const handleTambahGuru = (data: {
+  const handleTambahGuru = async (data: {
     kodeGuru: string;
     namaGuru: string;
     mataPelajaran: string;
@@ -292,10 +295,10 @@ export default function GuruAdmin({
     setGuruList([...guruList, newGuru]);
     setIsModalOpen(false);
     setEditingGuru(null);
-    alert(`✅ Guru "${data.namaGuru}" berhasil ditambahkan!`);
+    await popupAlert(`✅ Guru "${data.namaGuru}" berhasil ditambahkan!`);
   };
 
-  const handleEditGuru = (data: {
+  const handleEditGuru = async (data: {
     kodeGuru: string;
     namaGuru: string;
     mataPelajaran: string;
@@ -322,7 +325,7 @@ export default function GuruAdmin({
       setGuruList(updatedList);
       setEditingGuru(null);
       setIsModalOpen(false);
-      alert(`✅ Data guru "${data.namaGuru}" berhasil diperbarui!`);
+      await popupAlert(`✅ Data guru "${data.namaGuru}" berhasil diperbarui!`);
     }
   };
 
@@ -331,22 +334,22 @@ export default function GuruAdmin({
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (row: Guru) => {
-    const confirmDelete = window.confirm(
+  const handleDeleteClick = async (row: Guru) => {
+    const confirmDelete = await popupConfirm(
       `Apakah Anda yakin ingin menghapus guru "${row.namaGuru}"?`
     );
     if (confirmDelete) {
       const updatedList = guruList.filter((item) => item.id !== row.id);
       setGuruList(updatedList);
-      alert(`✅ Guru "${row.namaGuru}" berhasil dihapus!`);
+      await popupAlert(`✅ Guru "${row.namaGuru}" berhasil dihapus!`);
     }
   };
 
-  const handleViewDetail = (row: Guru) => {
+  const handleViewDetail = async (row: Guru) => {
     if (onNavigateToDetail) {
       onNavigateToDetail(row.id);
     } else {
-      alert(`Navigasi ke detail guru: ${row.namaGuru} (ID: ${row.id})`);
+      await popupAlert(`Navigasi ke detail guru: ${row.namaGuru} (ID: ${row.id})`);
     }
   };
 
@@ -362,12 +365,96 @@ export default function GuruAdmin({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Logika import file di sini
-    alert(`File "${file.name}" berhasil diimpor!`);
+
+    const isCsvFile =
+      file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv");
+    if (!isCsvFile) {
+      void popupAlert("Format file harus CSV.");
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (lines.length < 2) {
+          await popupAlert("File CSV tidak memiliki data.");
+          return;
+        }
+
+        const headers = lines[0]
+          .split(',')
+          .map((header, index) =>
+            (index === 0 ? header.replace(/^\uFEFF/, '') : header)
+              .trim()
+              .toLowerCase()
+          );
+        const kodeGuruIdx = headers.indexOf('kode guru');
+        const namaGuruIdx = headers.indexOf('nama guru');
+        const mataPelajaranIdx = headers.indexOf('mata pelajaran');
+        const roleIdx = headers.indexOf('role');
+        const noTelpIdx = headers.indexOf('no telp');
+        const passwordIdx = headers.indexOf('password');
+        const waliKelasIdx = headers.indexOf('wali kelas dari');
+
+        if (kodeGuruIdx === -1 || namaGuruIdx === -1) {
+          await popupAlert('File CSV harus memiliki kolom "Kode Guru" dan "Nama Guru".');
+          return;
+        }
+
+        const newGuru: Guru[] = [];
+        const lastId = guruList.reduce(
+          (max, guru) => Math.max(max, Number.parseInt(guru.id, 10) || 0),
+          0
+        );
+
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          const kodeGuru = values[kodeGuruIdx];
+          const namaGuru = values[namaGuruIdx];
+
+          if (!kodeGuru || !namaGuru) {
+            await popupAlert(`Baris ${i + 1} harus memiliki "Kode Guru" dan "Nama Guru".`);
+            return;
+          }
+
+          const newRecord: Guru = {
+            id: String(lastId + newGuru.length + 1),
+            kodeGuru,
+            namaGuru,
+            mataPelajaran: mataPelajaranIdx !== -1 ? values[mataPelajaranIdx] : '',
+            role: roleIdx !== -1 ? values[roleIdx] : '',
+            noTelp: noTelpIdx !== -1 ? values[noTelpIdx] : '',
+            password: passwordIdx !== -1 ? values[passwordIdx] : '',
+            waliKelasDari: waliKelasIdx !== -1 ? values[waliKelasIdx] : '',
+          };
+          newGuru.push(newRecord);
+        }
+
+        if (newGuru.length === 0) {
+          await popupAlert("Tidak ada data guru yang valid untuk diimpor.");
+          return;
+        }
+
+        setGuruList([...guruList, ...newGuru]);
+        await popupAlert(`${newGuru.length} data guru berhasil diimpor`);
+      } catch (error) {
+        await popupAlert('Error: Format file CSV tidak sesuai');
+        console.error(error);
+      }
+    };
+
+    reader.readAsText(file);
     e.target.value = '';
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
@@ -422,18 +509,23 @@ export default function GuruAdmin({
       }
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Terjadi kesalahan saat mengekspor PDF. Silakan coba lagi.');
+      await popupAlert('Terjadi kesalahan saat mengekspor PDF. Silakan coba lagi.');
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (filteredData.length === 0) {
+      await popupAlert("Tidak ada data guru untuk diekspor.");
+      return;
+    }
+
     // Prepare CSV header
     const headers = ['Kode Guru', 'Nama Guru', 'Mata Pelajaran', 'Role'];
     const rows = filteredData.map(guru => [
-      guru.kodeGuru,
-      guru.namaGuru,
-      guru.mataPelajaran,
-      guru.role,
+      (guru.kodeGuru || '').replace(/[\r\n]+/g, ' '),
+      (guru.namaGuru || '').replace(/[\r\n]+/g, ' '),
+      (guru.mataPelajaran || '').replace(/[\r\n]+/g, ' '),
+      (guru.role || '').replace(/[\r\n]+/g, ' '),
     ]);
 
     // Create CSV content
@@ -443,13 +535,9 @@ export default function GuruAdmin({
     ].join('\n');
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Data_Guru_${new Date().getTime()}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `Data_Guru_${new Date().getTime()}.csv`);
   };
 
   return (
@@ -782,3 +870,4 @@ export default function GuruAdmin({
     </AdminLayout>
   );
 }
+

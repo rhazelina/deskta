@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import AdminLayout from "../../component/Admin/AdminLayout";
 import { Button } from "../../component/Shared/Button";
 import { Table } from "../../component/Shared/Table";
@@ -6,6 +6,7 @@ import { TambahKelasForm } from "../../component/Shared/Form/KelasForm";
 import AWANKIRI from "../../assets/Icon/AWANKIRI.png";
 import AwanBawahkanan from "../../assets/Icon/AwanBawahkanan.png";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 /* ===================== INTERFACE ===================== */
 interface User {
@@ -77,6 +78,7 @@ export default function KelasAdmin({
   currentPage,
   onMenuClick,
 }: KelasAdminProps) {
+  const { confirm: popupConfirm } = usePopup();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>(dummyData);
   const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
@@ -99,8 +101,8 @@ export default function KelasAdmin({
     return konsentrasiMatch && tingkatMatch;
   });
 
-  const handleDelete = (row: Kelas) => {
-    if (confirm(`Hapus kelas "${row.namaKelas}"?`)) {
+  const handleDelete = async (row: Kelas) => {
+    if (await popupConfirm(`Hapus kelas "${row.namaKelas}"?`)) {
       setKelasList((prev) => prev.filter((k) => k.id !== row.id));
     }
   };
@@ -140,7 +142,7 @@ export default function KelasAdmin({
                 borderRadius: 8,
                 boxShadow: "0 10px 15px rgba(0,0,0,0.1)",
                 minWidth: 180,
-                zIndex: 10,
+                zIndex: 1000, // Ditambah z-index tinggi
                 overflow: "hidden",
                 border: "1px solid #E2E8F0",
               }}
@@ -212,6 +214,8 @@ export default function KelasAdmin({
           display: "flex",
           flexDirection: "column",
           gap: 24,
+          position: "relative", // Tambah ini
+          zIndex: 1, // Tambah ini
         }}
       >
         {/* HEADER 2 DROPDOWN DAN TOMBOL TAMBAH */}
@@ -296,8 +300,6 @@ export default function KelasAdmin({
             height: "48px",
             display: "flex",
             alignItems: "center",
-            position: "relative",
-            right: "-10px" 
           }}>
             <Button 
               label="Tambahkan" 
@@ -326,57 +328,79 @@ export default function KelasAdmin({
         </div>
       </div>
 
-      <TambahKelasForm
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingKelas(null);
-        }}
-        isEdit={!!editingKelas}
-        initialData={
-          editingKelas
-            ? {
-                namaKelas: editingKelas.namaKelas,
-                jurusanId: editingKelas.konsentrasiKeahlian,
-                kelasId: editingKelas.tingkatKelas,
-                waliKelasId: editingKelas.waliKelas,
+      {/* MODAL OVERLAY - Ditambah untuk handle popup */}
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: isModalOpen ? "flex" : "none",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999, // Z-index sangat tinggi
+      }}>
+        <div style={{
+          position: "relative",
+          zIndex: 10000,
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          overflow: "auto",
+        }}>
+          <TambahKelasForm
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setEditingKelas(null);
+            }}
+            isEdit={!!editingKelas}
+            initialData={
+              editingKelas
+                ? {
+                    namaKelas: editingKelas.namaKelas,
+                    jurusanId: editingKelas.konsentrasiKeahlian,
+                    kelasId: editingKelas.tingkatKelas,
+                    waliKelasId: editingKelas.waliKelas,
+                  }
+                : undefined
+            }
+            jurusanList={jurusanList}
+            waliKelasList={waliKelasList}
+            takenWaliKelasIds={kelasList.map(k => k.waliKelas).filter(id => id !== editingKelas?.waliKelas)}
+            onSubmit={(data) => {
+              if (editingKelas) {
+                setKelasList((prev) =>
+                  prev.map((k) =>
+                    k.id === editingKelas.id
+                      ? { 
+                          ...k, 
+                          namaKelas: data.namaKelas,
+                          konsentrasiKeahlian: data.jurusanId,
+                          tingkatKelas: data.kelasId,
+                          waliKelas: data.waliKelasId
+                        }
+                      : k
+                  )
+                );
+              } else {
+                setKelasList((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    namaKelas: data.namaKelas,
+                    konsentrasiKeahlian: data.jurusanId,
+                    tingkatKelas: data.kelasId,
+                    waliKelas: data.waliKelasId,
+                  },
+                ]);
               }
-            : undefined
-        }
-        jurusanList={jurusanList}
-        waliKelasList={waliKelasList}
-        takenWaliKelasIds={kelasList.map(k => k.waliKelas).filter(id => id !== editingKelas?.waliKelas)}
-        onSubmit={(data) => {
-          if (editingKelas) {
-            setKelasList((prev) =>
-              prev.map((k) =>
-                k.id === editingKelas.id
-                  ? { 
-                      ...k, 
-                      namaKelas: data.namaKelas,
-                      konsentrasiKeahlian: data.jurusanId,
-                      tingkatKelas: data.kelasId,
-                      waliKelas: data.waliKelasId
-                    }
-                  : k
-              )
-            );
-          } else {
-            setKelasList((prev) => [
-              ...prev,
-              {
-                id: Date.now().toString(),
-                namaKelas: data.namaKelas,
-                konsentrasiKeahlian: data.jurusanId,
-                tingkatKelas: data.kelasId,
-                waliKelas: data.waliKelasId,
-              },
-            ]);
-          }
-          setIsModalOpen(false);
-          setEditingKelas(null);
-        }}
-      />
+              setIsModalOpen(false);
+              setEditingKelas(null);
+            }}
+          />
+        </div>
+      </div>
     </AdminLayout>
   );
 }
@@ -414,3 +438,4 @@ const bgRight: React.CSSProperties = {
   width: 220,
   zIndex: 0,
 };
+

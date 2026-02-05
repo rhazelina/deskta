@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
 import { SearchBox } from '../../component/Shared/Search';
@@ -6,6 +6,8 @@ import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { SiswaForm } from '../../component/Shared/Form/SiswaForm';
 import { MoreVertical, Edit, Trash2, Eye, Grid, FileDown, Upload, FileText, Download, Search } from 'lucide-react';
+import { saveAs } from "file-saver";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 /* ===================== INTERFACE ===================== */
 interface User {
@@ -117,6 +119,7 @@ export default function SiswaAdmin({
   onMenuClick,
   onNavigateToDetail,
 }: SiswaAdminProps) {
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [searchValue, setSearchValue] = useState('');
   const [selectedJurusan, setSelectedJurusan] = useState('');
   const [selectedKelas, setSelectedKelas] = useState('');
@@ -172,14 +175,36 @@ export default function SiswaAdmin({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const isCsvFile =
+      file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv");
+    if (!isCsvFile) {
+      void popupAlert("Format file harus CSV.");
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = event.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim());
+        const lines = text
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (lines.length < 2) {
+          await popupAlert("File CSV tidak memiliki data.");
+          return;
+        }
 
         // Parse CSV header
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const headers = lines[0]
+          .split(',')
+          .map((header, index) =>
+            (index === 0 ? header.replace(/^\uFEFF/, '') : header)
+              .trim()
+              .toLowerCase()
+          );
         const namaSiswaIdx = headers.indexOf('nama siswa');
         const nisnIdx = headers.indexOf('nisn');
         const jenisKelaminIdx = headers.indexOf('jenis kelamin');
@@ -189,21 +214,32 @@ export default function SiswaAdmin({
         const passwordIdx = headers.indexOf('password');
 
         if (namaSiswaIdx === -1 || nisnIdx === -1) {
-          alert('File CSV harus memiliki kolom "Nama Siswa" dan "NISN"');
+          await popupAlert('File CSV harus memiliki kolom "Nama Siswa" dan "NISN"');
           return;
         }
 
         const newSiswa: Siswa[] = [];
+        const lastId = siswaList.reduce(
+          (max, siswa) => Math.max(max, Number.parseInt(siswa.id, 10) || 0),
+          0
+        );
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
+          const namaSiswa = values[namaSiswaIdx];
+          const nisn = values[nisnIdx];
+
+          if (!namaSiswa || !nisn) {
+            await popupAlert(`Baris ${i + 1} harus memiliki "Nama Siswa" dan "NISN".`);
+            return;
+          }
 
           const jurusanValue = jurusanIdx !== -1 ? values[jurusanIdx] : '';
           const jurusanId = jurusanOptions.find(j => j.label.toLowerCase() === jurusanValue.toLowerCase())?.value || '';
 
           const newRecord: Siswa = {
-            id: String(Math.max(...siswaList.map(s => parseInt(s.id) || 0)) + newSiswa.length + 1),
-            namaSiswa: values[namaSiswaIdx],
-            nisn: values[nisnIdx],
+            id: String(lastId + newSiswa.length + 1),
+            namaSiswa,
+            nisn,
             jenisKelamin: jenisKelaminIdx !== -1 ? values[jenisKelaminIdx] : 'Laki-Laki',
             noTelp: noTelpIdx !== -1 ? values[noTelpIdx] : '',
             jurusan: jurusanValue,
@@ -216,10 +252,15 @@ export default function SiswaAdmin({
           newSiswa.push(newRecord);
         }
 
+        if (newSiswa.length === 0) {
+          await popupAlert("Tidak ada data siswa yang valid untuk diimpor.");
+          return;
+        }
+
         setSiswaList([...siswaList, ...newSiswa]);
-        alert(`${newSiswa.length} data siswa berhasil diimpor`);
+        await popupAlert(`${newSiswa.length} data siswa berhasil diimpor`);
       } catch (error) {
-        alert('Error: Format file CSV tidak sesuai');
+        await popupAlert('Error: Format file CSV tidak sesuai');
         console.error(error);
       }
     };
@@ -289,15 +330,20 @@ export default function SiswaAdmin({
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (filteredData.length === 0) {
+      await popupAlert("Tidak ada data siswa untuk diekspor.");
+      return;
+    }
+
     // Prepare CSV header
     const headers = ['Nama Siswa', 'NISN', 'Jenis Kelamin', 'Jurusan', 'Kelas'];
     const rows = filteredData.map(siswa => [
-      siswa.namaSiswa,
-      siswa.nisn,
-      siswa.jenisKelamin,
-      siswa.jurusan,
-      siswa.kelas,
+      (siswa.namaSiswa || '').replace(/[\r\n]+/g, ' '),
+      (siswa.nisn || '').replace(/[\r\n]+/g, ' '),
+      (siswa.jenisKelamin || '').replace(/[\r\n]+/g, ' '),
+      (siswa.jurusan || '').replace(/[\r\n]+/g, ' '),
+      (siswa.kelas || '').replace(/[\r\n]+/g, ' '),
     ]);
 
     // Create CSV content
@@ -307,13 +353,9 @@ export default function SiswaAdmin({
     ].join('\n');
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Data_Siswa_${new Date().getTime()}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    saveAs(blob, `Data_Siswa_${new Date().getTime()}.csv`);
   };
 
   // Handler edit siswa
@@ -332,7 +374,7 @@ export default function SiswaAdmin({
   };
 
   // Handler submit siswa
-  const handleSubmitSiswa = (data: {
+  const handleSubmitSiswa = async (data: {
     namaSiswa: string;
     nisn: string;
     jurusanId: string;
@@ -355,7 +397,7 @@ export default function SiswaAdmin({
         return siswa;
       });
       setSiswaList(updatedSiswaList);
-      alert(`Data siswa "${data.namaSiswa}" berhasil diperbarui!`);
+      await popupAlert(`Data siswa "${data.namaSiswa}" berhasil diperbarui!`);
     } else {
       // Mode tambah: tambah siswa baru
       const newSiswa: Siswa = {
@@ -372,7 +414,7 @@ export default function SiswaAdmin({
         password: 'password123',
       };
       setSiswaList([...siswaList, newSiswa]);
-      alert(`Siswa "${data.namaSiswa}" berhasil ditambahkan!`);
+      await popupAlert(`Siswa "${data.namaSiswa}" berhasil ditambahkan!`);
     }
     
     setIsModalOpen(false);
@@ -388,10 +430,10 @@ export default function SiswaAdmin({
   };
 
   // Handler delete siswa
-  const handleDeleteSiswa = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
+  const handleDeleteSiswa = async (id: string) => {
+    if (await popupConfirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
       setSiswaList(prevList => prevList.filter(siswa => siswa.id !== id));
-      alert('Data siswa berhasil dihapus!');
+      await popupAlert('Data siswa berhasil dihapus!');
       setOpenActionId(null);
     }
   };
@@ -850,3 +892,4 @@ export default function SiswaAdmin({
     </AdminLayout>
   );
 }
+

@@ -44,17 +44,15 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
     >
       <div
         style={{
-          backgroundColor: "white",
           borderRadius: "16px",
           maxWidth: "500px",
           width: "90%",
           maxHeight: "90vh",
-          overflowY: "auto",
           boxShadow:
             "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-          pointerEvents: "auto",  // Pastikan children bisa diklik
+          pointerEvents: "auto",
         }}
-        onClick={(e) => e.stopPropagation()}  // Mencegah event bubbling ke backdrop
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>

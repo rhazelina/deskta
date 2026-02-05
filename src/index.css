@@ -360,6 +360,17 @@ td {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
+/* Lock scroll saat modal terbuka */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
+#main-content.modal-open {
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
 
 /* ==================== PRINT STYLES ==================== */
 @media print {

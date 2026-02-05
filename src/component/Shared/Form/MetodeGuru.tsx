@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Modal } from '../Modal';
 import QRCodeIcon from '../../../assets/Icon/qr_code.png';
+import { usePopup } from "../../Shared/Popup/PopupProvider";
 
 interface MetodeGuruProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export function MetodeGuru({
   onPilihManual,
   onSubmitDispensasi,
 }: MetodeGuruProps) {
+  const { alert: popupAlert } = usePopup();
   const [showDispensasi, setShowDispensasi] = useState(false);
   const [liveMode, setLiveMode] = useState(true);
 
@@ -41,10 +43,10 @@ export function MetodeGuru({
     if (e.target.files && e.target.files[0]) setDispBukti(e.target.files[0]);
   };
 
-  const handleSubmitDispensasi = () => {
-    if (!dispAlasan) { alert("Isi alasan terlebih dahulu"); return; }
+  const handleSubmitDispensasi = async () => {
+    if (!dispAlasan) { await popupAlert("Isi alasan terlebih dahulu"); return; }
     const payload = { alasan: dispAlasan, tanggal: dispTanggal, jamMulai: dispMulai, jamSelesai: dispSelesai, keterangan: dispKeterangan, bukti: dispBukti || undefined };
-    if (onSubmitDispensasi) onSubmitDispensasi(payload); else alert("Pengajuan dispensasi dikirim ke Waka/Pengurus Kelas untuk validasi.");
+    if (onSubmitDispensasi) onSubmitDispensasi(payload); else await popupAlert("Pengajuan dispensasi dikirim ke Waka/Pengurus Kelas untuk validasi.");
     setDispAlasan(""); setDispTanggal(""); setDispMulai(""); setDispSelesai(""); setDispKeterangan(""); setDispBukti(null);
     closeDispensasi();
   };
@@ -321,3 +323,4 @@ export function MetodeGuru({
     </>
   );
 }
+

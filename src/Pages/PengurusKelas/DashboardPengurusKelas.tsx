@@ -548,7 +548,7 @@ function TimePill({ label }: { label: string }) {
   );
 }
 
-// LINE CHART BARU - SAMA SEPERTI DI DASHBOARD SISWA
+// LINE CHART BARU - DENGAN WARNA REVISI
 function MonthlyLineChart({
   data,
 }: {
@@ -560,12 +560,12 @@ function MonthlyLineChart({
       {
         label: "Hadir",
         data: data.map((d) => d.hadir),
-        borderColor: "#00FF00", // Warna hijau terang untuk Hadir
-        backgroundColor: "rgba(0, 255, 0, 0.1)",
+        borderColor: "#1FA83D", // HIJAU - Hadir
+        backgroundColor: "rgba(31, 168, 61, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#00FF00",
+        pointBackgroundColor: "#1FA83D",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -574,12 +574,12 @@ function MonthlyLineChart({
       {
         label: "Izin",
         data: data.map((d) => d.izin),
-        borderColor: "#FFFF00", // Warna kuning untuk Izin
-        backgroundColor: "rgba(255, 255, 0, 0.1)",
+        borderColor: "#ACA40D", // KUNING - Izin
+        backgroundColor: "rgba(172, 164, 13, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#FFFF00",
+        pointBackgroundColor: "#ACA40D",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -588,12 +588,12 @@ function MonthlyLineChart({
       {
         label: "Sakit",
         data: data.map((d) => d.sakit),
-        borderColor: "#0000FF", // Warna biru untuk Sakit
-        backgroundColor: "rgba(0, 0, 255, 0.1)",
+        borderColor: "#520C8F", // UNGU - Sakit
+        backgroundColor: "rgba(82, 12, 143, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#0000FF",
+        pointBackgroundColor: "#520C8F",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -602,12 +602,12 @@ function MonthlyLineChart({
       {
         label: "Alpha",
         data: data.map((d) => d.alpha),
-        borderColor: "#FF0000", // Warna merah untuk Alpha/Tidak Hadir
-        backgroundColor: "rgba(255, 0, 0, 0.1)",
+        borderColor: "#D90000", // MERAH - Tidak Hadir/Alpha
+        backgroundColor: "rgba(217, 0, 0, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#FF0000",
+        pointBackgroundColor: "#D90000",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -616,12 +616,12 @@ function MonthlyLineChart({
       {
         label: "Dispen",
         data: data.map((d) => d.dispen),
-        borderColor: "#800080", // Warna ungu untuk Dispen/Pulang
-        backgroundColor: "rgba(128, 0, 128, 0.1)",
+        borderColor: "#2F85EB", // BIRU - Pulang/Dispen
+        backgroundColor: "rgba(47, 133, 235, 0.1)",
         borderWidth: 3,
         pointRadius: 5,
         pointHoverRadius: 7,
-        pointBackgroundColor: "#800080",
+        pointBackgroundColor: "#2F85EB",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -707,23 +707,23 @@ function MonthlyLineChart({
   );
 }
 
-// Weekly Donut Chart Component - DIPERBARUI DENGAN WARNA BARU
+// Weekly Donut Chart Component - DENGAN WARNA REVISI
 function WeeklyDonutChart({
   data,
 }: {
   data: { hadir: number; izin: number; sakit: number; alpha: number; dispen: number };
 }) {
   const chartData = {
-    labels: ["Hadir", "Izin", "Sakit", "Alpha", "Dispen"],
+    labels: ["Hadir", "Izin", "Sakit", "Tidak Hadir", "Pulang"],
     datasets: [
       {
         data: [data.hadir, data.izin, data.sakit, data.alpha, data.dispen],
         backgroundColor: [
-          "#00FF00", // Hijau terang untuk Hadir
-          "#FFFF00", // Kuning untuk Izin
-          "#0000FF", // Biru untuk Sakit
-          "#FF0000", // Merah untuk Alpha/Tidak Hadir
-          "#800080"  // Ungu untuk Dispen/Pulang
+          "#1FA83D", // HIJAU - Hadir
+          "#ACA40D", // KUNING - Izin
+          "#520C8F", // UNGU - Sakit
+          "#D90000", // MERAH - Tidak Hadir/Alpha
+          "#2F85EB"  // BIRU - Pulang/Dispen
         ],
         borderColor: "#ffffff",
         borderWidth: 2,
