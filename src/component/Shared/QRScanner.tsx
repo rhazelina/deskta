@@ -9,7 +9,6 @@ interface QRScannerProps {
 
 export default function QRScanner({ onScan, onError, isActive }: QRScannerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [scanner, setScanner] = useState<QrScanner | null>(null);
     const [hasCamera, setHasCamera] = useState(true);
 
     useEffect(() => {
@@ -28,7 +27,6 @@ export default function QRScanner({ onScan, onError, isActive }: QRScannerProps)
             }
         );
 
-        setScanner(qrScanner);
 
         // Start scanning
         qrScanner.start().catch((err) => {

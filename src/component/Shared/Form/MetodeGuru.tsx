@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { Modal } from '../Modal';
-import QRCodeIcon from '../../../assets/Icon/qr_code.png';
 import { usePopup } from "../../Shared/Popup/PopupProvider";
+import QRScanner from "../../Shared/QRScanner";
 
 interface MetodeGuruProps {
   isOpen: boolean;
@@ -10,18 +10,21 @@ interface MetodeGuruProps {
   onPilihManual: () => void;
   onTidakBisaMengajar?: () => void;
   onSubmitDispensasi?: (data: { alasan: string; tanggal?: string; jamMulai?: string; jamSelesai?: string; keterangan?: string; bukti?: File; }) => void;
+  scheduleId?: string;
 }
 
 export function MetodeGuru({
   isOpen,
   onClose,
-  onPilihQR,
   onPilihManual,
   onSubmitDispensasi,
+  scheduleId,
 }: MetodeGuruProps) {
   const { alert: popupAlert } = usePopup();
   const [showDispensasi, setShowDispensasi] = useState(false);
-  const [liveMode, setLiveMode] = useState(true);
+
+  // Camera / Scanner State
+  const [isScannerActive, setIsScannerActive] = useState(true);
 
   // Dispensasi inputs
   const [dispAlasan, setDispAlasan] = useState("");
@@ -31,7 +34,35 @@ export function MetodeGuru({
   const [dispKeterangan, setDispKeterangan] = useState("");
   const [dispBukti, setDispBukti] = useState<File | null>(null);
 
+  // Use QRScanner
+  // const { default: QRScanner } = require("../../Shared/QRScanner");
 
+  const handleScan = async (result: string) => {
+    if (!result) return;
+
+    // Play beep sound if possible? 
+    // console.log("Scanned:", result);
+
+    try {
+      const { dashboardService } = await import('../../../services/dashboard');
+      // Call scan API. 
+      // Assuming /attendance/scan handles Teacher Scanning Student Token
+      const response = await dashboardService.scanAttendance(result);
+
+      // Show success
+      await popupAlert(`✅ Berhasil: ${response.message || 'Presensi tercatat'}`);
+
+      // Optional: Close modal or stay open for next student?
+      // Usually scan multiple students. So stay open.
+    } catch (e: any) {
+      console.error(e);
+      await popupAlert(`❌ Gagal: ${e.response?.data?.message || e.message || 'QR tidak valid'}`);
+    }
+  };
+
+  const handleError = (err: string) => {
+    // console.warn(err);
+  };
 
   const handleClose = () => {
     onClose();
@@ -49,12 +80,6 @@ export function MetodeGuru({
     if (onSubmitDispensasi) onSubmitDispensasi(payload); else await popupAlert("Pengajuan dispensasi dikirim ke Waka/Pengurus Kelas untuk validasi.");
     setDispAlasan(""); setDispTanggal(""); setDispMulai(""); setDispSelesai(""); setDispKeterangan(""); setDispBukti(null);
     closeDispensasi();
-  };
-
-  // const simpleScanMode = true; // Removed as per new structure
-
-  const handleScan = () => {
-    onPilihQR();
   };
 
   const handleManual = () => {
@@ -96,30 +121,32 @@ export function MetodeGuru({
                 textAlign: "center"
               }}
             >
-              PRESENTASI PEMBELAJARAN DIGITAL
+              SCAN PRESENSI SISWA
             </h2>
             <p style={{ fontSize: 14, color: "#6B7280", marginTop: 4, textTransform: 'uppercase', fontWeight: 600 }}>
-              KODE QR UNTUK PRESENSI
+              ARAHKAN KAMERA KE QR SISWA
             </p>
           </div>
 
           <div
             style={{
-              border: "1px dashed #D1D5DB",
-              borderRadius: 24,
-              padding: 24,
               marginBottom: 24,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              minHeight: 248,
+              backgroundColor: '#000', // Camera bg
+              borderRadius: 24,
+              overflow: 'hidden'
             }}
-            onClick={handleScan}
           >
-            <img
-              src={QRCodeIcon}
-              alt="Kode QR"
-              style={{ width: 200, height: 200, objectFit: "contain" }}
-            />
+            {isOpen && (
+              <QRScanner
+                onScan={handleScan}
+                onError={handleError}
+                isActive={isOpen && isScannerActive}
+              />
+            )}
           </div>
 
           <div
@@ -145,28 +172,7 @@ export function MetodeGuru({
                   width: '100%'
                 }}
               >
-                Manual
-              </button>
-              <button
-                type="button"
-                onClick={() => setLiveMode(!liveMode)}
-                style={{
-                  border: "1px solid #D1D5DB",
-                  background: "#FFFFFF",
-                  color: "#1F2937",
-                  padding: "10px 16px",
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8
-                }}
-              >
-                {liveMode ? "Mode: Live" : "Mode: Statics"}
+                Input Manual
               </button>
             </div>
 

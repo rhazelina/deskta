@@ -29,13 +29,7 @@ interface KonsentrasiKeahlianAdminProps {
 }
 
 /* ===================== DUMMY DATA ===================== */
-const dummyData: KonsentrasiKeahlian[] = [
-  { id: "1", kode: "RPL001", nama: "Rekayasa Perangkat Lunak" },
-  { id: "2", kode: "EI002", nama: "Elektronika Industri" },
-  { id: "3", kode: "MKT003", nama: "Mekatronika" },
-  { id: "4", kode: "ANM004", nama: "Animasi" },
-  { id: "5", kode: "DKV005", nama: "Desain Komunikasi Visual" },
-];
+
 
 /* ===================== COMPONENT ===================== */
 export default function KonsentrasiKeahlianAdmin({
@@ -47,11 +41,35 @@ export default function KonsentrasiKeahlianAdmin({
   const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [konsentrasiKeahlianList, setKonsentrasiKeahlianList] = useState<KonsentrasiKeahlian[]>(dummyData);
+  const [konsentrasiKeahlianList, setKonsentrasiKeahlianList] = useState<KonsentrasiKeahlian[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingKonsentrasiKeahlian, setEditingKonsentrasiKeahlian] = useState<KonsentrasiKeahlian | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({ namaJurusan: "", kodeJurusan: "" });
+
+  // Fetch Majors
+  useEffect(() => {
+    const fetchMajors = async () => {
+      try {
+        setIsLoading(true);
+        const { majorService } = await import('../../services/major');
+        const data = await majorService.getMajors();
+        const mappedData: KonsentrasiKeahlian[] = data.map((m: any) => ({
+          id: String(m.id),
+          kode: m.code,
+          nama: m.name
+        }));
+        setKonsentrasiKeahlianList(mappedData);
+      } catch (e) {
+        console.error(e);
+        void popupAlert("Gagal mengambil data jurusan");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMajors();
+  }, [popupAlert]);
 
   /* ===================== FILTER ===================== */
   const filteredData = konsentrasiKeahlianList.filter(
@@ -62,8 +80,15 @@ export default function KonsentrasiKeahlianAdmin({
 
   const handleDelete = async (row: KonsentrasiKeahlian) => {
     if (await popupConfirm(`Hapus "${row.nama}"?`)) {
-      setKonsentrasiKeahlianList((prev) => prev.filter((k) => k.id !== row.id));
-      setOpenActionId(null);
+      try {
+        const { majorService } = await import('../../services/major');
+        await majorService.deleteMajor(row.id);
+        setKonsentrasiKeahlianList((prev) => prev.filter((k) => k.id !== row.id));
+        setOpenActionId(null);
+        void popupAlert("Jurusan berhasil dihapus");
+      } catch (e) {
+        void popupAlert("Gagal menghapus jurusan");
+      }
     }
   };
 
@@ -87,29 +112,35 @@ export default function KonsentrasiKeahlianAdmin({
   };
 
   const handleSubmitKonsentrasi = async (data: { namaJurusan: string; kodeJurusan: string }) => {
-    if (isEditMode && editingKonsentrasiKeahlian) {
-      // Mode ubah: update data konsentrasi keahlian
-      setKonsentrasiKeahlianList((prev) =>
-        prev.map((k) =>
-          k.id === editingKonsentrasiKeahlian.id
-            ? { ...k, nama: data.namaJurusan, kode: data.kodeJurusan }
-            : k
-        )
-      );
-      await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil diperbarui!`);
-    } else {
-      // Mode tambah: tambah konsentrasi keahlian baru
-      setKonsentrasiKeahlianList((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          nama: data.namaJurusan,
-          kode: data.kodeJurusan,
-        },
-      ]);
-      await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil ditambahkan!`);
+    try {
+      const { majorService } = await import('../../services/major');
+      const payload = {
+        name: data.namaJurusan,
+        code: data.kodeJurusan
+      };
+
+      if (isEditMode && editingKonsentrasiKeahlian) {
+        await majorService.updateMajor(editingKonsentrasiKeahlian.id, payload);
+        await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil diperbarui!`);
+      } else {
+        await majorService.createMajor(payload);
+        await popupAlert(`Konsentrasi keahlian "${data.namaJurusan}" berhasil ditambahkan!`);
+      }
+
+      // Refresh
+      const newData = await majorService.getMajors();
+      const mappedData: KonsentrasiKeahlian[] = newData.map((m: any) => ({
+        id: String(m.id),
+        kode: m.code,
+        nama: m.name
+      }));
+      setKonsentrasiKeahlianList(mappedData);
+
+    } catch (e) {
+      console.error(e);
+      void popupAlert("Gagal menyimpan data");
     }
-    
+
     setIsModalOpen(false);
     setEditingKonsentrasiKeahlian(null);
     setIsEditMode(false);
@@ -275,7 +306,13 @@ export default function KonsentrasiKeahlianAdmin({
             boxShadow: "0 0 0 1px #E5E7EB",
           }}
         >
-          <Table columns={columns} data={filteredData} keyField="id" />
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+              Memuat data...
+            </div>
+          ) : (
+            <Table columns={columns} data={filteredData} keyField="id" />
+          )}
         </div>
       </div>
 

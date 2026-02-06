@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
 import { Button } from '../../component/Shared/Button';
 import { Select } from '../../component/Shared/Select';
@@ -34,68 +34,7 @@ interface GuruAdminProps {
   onNavigateToDetail?: (guruId: string) => void;
 }
 
-const dummyData: Guru[] = [
-  {
-    id: '1',
-    kodeGuru: '0918415784',
-    namaGuru: 'Alifah Diantebes Aindra S.pd',
-    mataPelajaran: 'Matematika',
-    role: 'Wali Kelas',
-    password: 'ABC123',
-    noTelp: '08218374859',
-    waliKelasDari: 'XII RPL 2',
-  },
-  {
-    id: '2',
-    kodeGuru: '1348576392',
-    namaGuru: 'Budi Santoso',
-    mataPelajaran: 'Bahasa Inggris',
-    role: 'Staf',
-    password: 'STAF123',
-    noTelp: '08123456789',
-    waliKelasDari: '',
-  },
-  {
-    id: '3',
-    kodeGuru: '0918415785',
-    namaGuru: 'Joko Widodo',
-    mataPelajaran: 'Fisika',
-    role: 'Wali Kelas',
-    password: 'JOKO123',
-    noTelp: '08234567890',
-    waliKelasDari: 'XI TKJ 1',
-  },
-  {
-    id: '4',
-    kodeGuru: '1348576393',
-    namaGuru: 'Siti Nurhaliza',
-    mataPelajaran: 'Kimia',
-    role: 'Staf',
-    password: 'SITI123',
-    noTelp: '08345678901',
-    waliKelasDari: '',
-  },
-  {
-    id: '5',
-    kodeGuru: '0918415786',
-    namaGuru: 'Ahmad Dahlan',
-    mataPelajaran: 'Biologi',
-    role: 'Wali Kelas',
-    password: 'AHMAD123',
-    noTelp: '08456789012',
-    waliKelasDari: 'X RPL 1',
-  },
-  {
-    id: '6',
-    kodeGuru: '1348576394',
-    namaGuru: 'Dewi Lestari',
-    mataPelajaran: 'Sejarah',
-    role: 'Staf',
-    password: 'DEWI123',
-    noTelp: '08567890123',
-    waliKelasDari: '',
-  },
-];
+
 
 export default function GuruAdmin({
   user,
@@ -110,7 +49,41 @@ export default function GuruAdmin({
   const [selectedRole, setSelectedRole] = useState('');
   const [isEksporDropdownOpen, setIsEksporDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [guruList, setGuruList] = useState<Guru[]>(dummyData);
+  const [guruList, setGuruList] = useState<Guru[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { teacherService } = await import('../../services/teacher');
+        const teachers = await teacherService.getTeachers();
+
+        // Map API data to UI format
+        const mappedTeachers: Guru[] = teachers.map((t: any) => ({
+          id: String(t.id),
+          kodeGuru: t.nip || t.code || '-',
+          namaGuru: t.name,
+          mataPelajaran: t.subject || '-',
+          role: t.homeroom_class ? 'Wali Kelas' : 'Guru',
+          password: '', // Password not returned by API for security
+          noTelp: t.phone || '',
+          waliKelasDari: t.homeroom_class ? t.homeroom_class.name : '',
+          originalData: t
+        }));
+
+        setGuruList(mappedTeachers);
+      } catch (error) {
+        console.error("Failed to fetch teachers:", error);
+        void popupAlert("Gagal mengambil data guru dari server.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [popupAlert]);
   const [editingGuru, setEditingGuru] = useState<Guru | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -278,24 +251,45 @@ export default function GuruAdmin({
     namaGuru: string;
     mataPelajaran: string;
     role: string;
-    password: string;
-    noTelp: string;
-    waliKelasDari: string;
   }) => {
-    const newGuru: Guru = {
-      id: String(guruList.length + 1),
-      kodeGuru: data.kodeGuru,
-      namaGuru: data.namaGuru,
-      mataPelajaran: data.mataPelajaran,
-      role: data.role,
-      password: data.password,
-      noTelp: data.noTelp,
-      waliKelasDari: data.waliKelasDari,
-    };
-    setGuruList([...guruList, newGuru]);
-    setIsModalOpen(false);
-    setEditingGuru(null);
-    await popupAlert(`✅ Guru "${data.namaGuru}" berhasil ditambahkan!`);
+    try {
+      const { teacherService } = await import('../../services/teacher');
+
+      const payload = {
+        name: data.namaGuru,
+        nip: data.kodeGuru,
+        username: data.kodeGuru, // Use NIP as username default
+        email: `${data.kodeGuru}@school.id`, // Dummy email if not provided
+        password: 'password123',
+        subject: data.mataPelajaran,
+        // phone: default
+        // homeroom_class_id would need lookup logic
+      };
+
+      await teacherService.createTeacher(payload);
+
+      // Refresh list
+      const teachers = await teacherService.getTeachers();
+      const mappedTeachers: Guru[] = teachers.map((t: any) => ({
+        id: String(t.id),
+        kodeGuru: t.nip || t.code || '-',
+        namaGuru: t.name,
+        mataPelajaran: t.subject || '-',
+        role: t.homeroom_class ? 'Wali Kelas' : 'Guru',
+        password: '',
+        noTelp: t.phone || '',
+        waliKelasDari: t.homeroom_class ? t.homeroom_class.name : '',
+        originalData: t
+      }));
+      setGuruList(mappedTeachers);
+
+      setIsModalOpen(false);
+      setEditingGuru(null);
+      await popupAlert(`✅ Guru "${data.namaGuru}" berhasil ditambahkan!`);
+    } catch (error: any) {
+      console.error(error);
+      await popupAlert(`Gagal menambahkan: ${error.response?.data?.message || 'Error tidak diketahui'}`);
+    }
   };
 
   const handleEditGuru = async (data: {
@@ -303,29 +297,41 @@ export default function GuruAdmin({
     namaGuru: string;
     mataPelajaran: string;
     role: string;
-    password: string;
-    noTelp: string;
-    waliKelasDari: string;
   }) => {
     if (editingGuru) {
-      const updatedList = guruList.map((item) =>
-        item.id === editingGuru.id
-          ? {
-            ...item,
-            kodeGuru: data.kodeGuru,
-            namaGuru: data.namaGuru,
-            mataPelajaran: data.mataPelajaran,
-            role: data.role,
-            password: data.password,
-            noTelp: data.noTelp,
-            waliKelasDari: data.waliKelasDari,
-          }
-          : item
-      );
-      setGuruList(updatedList);
-      setEditingGuru(null);
-      setIsModalOpen(false);
-      await popupAlert(`✅ Data guru "${data.namaGuru}" berhasil diperbarui!`);
+      try {
+        const { teacherService } = await import('../../services/teacher');
+
+        const payload = {
+          name: data.namaGuru,
+          nip: data.kodeGuru,
+          subject: data.mataPelajaran,
+        };
+
+        await teacherService.updateTeacher(editingGuru.id, payload);
+
+        // Refresh list
+        const teachers = await teacherService.getTeachers();
+        const mappedTeachers: Guru[] = teachers.map((t: any) => ({
+          id: String(t.id),
+          kodeGuru: t.nip || t.code || '-',
+          namaGuru: t.name,
+          mataPelajaran: t.subject || '-',
+          role: t.homeroom_class ? 'Wali Kelas' : 'Guru',
+          password: '',
+          noTelp: t.phone || '',
+          waliKelasDari: t.homeroom_class ? t.homeroom_class.name : '',
+          originalData: t
+        }));
+        setGuruList(mappedTeachers);
+
+        setEditingGuru(null);
+        setIsModalOpen(false);
+        await popupAlert(`✅ Data guru "${data.namaGuru}" berhasil diperbarui!`);
+      } catch (error: any) {
+        console.error(error);
+        await popupAlert(`Gagal update: ${error.response?.data?.message || 'Error'}`);
+      }
     }
   };
 
@@ -339,9 +345,17 @@ export default function GuruAdmin({
       `Apakah Anda yakin ingin menghapus guru "${row.namaGuru}"?`
     );
     if (confirmDelete) {
-      const updatedList = guruList.filter((item) => item.id !== row.id);
-      setGuruList(updatedList);
-      await popupAlert(`✅ Guru "${row.namaGuru}" berhasil dihapus!`);
+      try {
+        const { teacherService } = await import('../../services/teacher');
+        await teacherService.deleteTeacher(row.id);
+
+        const updatedList = guruList.filter((item) => item.id !== row.id);
+        setGuruList(updatedList);
+        await popupAlert(`✅ Guru "${row.namaGuru}" berhasil dihapus!`);
+      } catch (error) {
+        console.error(error);
+        await popupAlert("Gagal menghapus data guru.");
+      }
     }
   };
 
@@ -485,21 +499,50 @@ export default function GuruAdmin({
                     <th>Role</th>
                   </tr>
                 </thead>
-                <tbody>
-                  ${filteredData
-            .map(
-              (item, idx) => `
-                    <tr>
-                      <td>${idx + 1}</td>
-                      <td>${item.kodeGuru}</td>
-                      <td>${item.namaGuru}</td>
-                      <td>${item.mataPelajaran}</td>
-                      <td>${item.role}</td>
-                    </tr>
-                  `
-            )
-            .join('')}
-                </tbody>
+        <tbody>
+          {isLoading ? (
+            <tr className="border-b last:border-b-0 border-[#E2E8F0]">
+               <td colSpan={columns.length} style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+                 Memuat data...
+               </td>
+            </tr>
+          ) : filteredData.length > 0 ? (
+            filteredData.map((row, index) => (
+              <tr
+                key={row.id || index}
+                className="border-b last:border-b-0 border-[#E2E8F0] hover:bg-gray-50 transition-colors"
+               >
+                 {columns.map((col) => (
+                   <td
+                     key={col.key}
+                     style={{
+                       padding: '16px 24px',
+                       fontSize: '14px',
+                       color: '#334155',
+                     }}
+                   >
+                     {col.render
+                       ? col.render(row[col.key as keyof Guru], row)
+                       : row[col.key as keyof Guru]}
+                   </td>
+                 ))}
+               </tr>
+             ))
+           ) : (
+             <tr className="border-b last:border-b-0 border-[#E2E8F0]">
+               <td
+                 colSpan={columns.length}
+                 style={{
+                   padding: '24px',
+                   textAlign: 'center',
+                   color: '#64748B',
+                 }}
+               >
+                 Tidak ada data guru yang ditemukan
+               </td>
+             </tr>
+           )}
+        </tbody>
               </table>
             </body>
           </html>
@@ -704,7 +747,7 @@ export default function GuruAdmin({
             }}
           >
             {/* Tombol Tambahkan Guru - BIRU */}
-            <div style={{ 
+            <div style={{
               alignSelf: 'flex-end',
               height: '40px'
             }}>
@@ -714,7 +757,7 @@ export default function GuruAdmin({
                 variant="primary"
               />
             </div>
-            
+
             {/* Tombol Impor - BIRU */}
             <div style={{ alignSelf: 'flex-end' }}>
               <button
@@ -835,16 +878,22 @@ export default function GuruAdmin({
 
         {/* Table */}
         <div style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 0 1px #E5E7EB' }}>
-          <Table columns={columns} data={filteredData} keyField="id" />
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+              Memuat data...
+            </div>
+          ) : (
+            <Table columns={columns} data={filteredData} keyField="id" />
+          )}
         </div>
       </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        onChange={handleFileSelect} 
-        accept=".csv" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+        accept=".csv"
       />
 
       <TambahGuruForm
@@ -859,9 +908,6 @@ export default function GuruAdmin({
               namaGuru: editingGuru.namaGuru,
               mataPelajaran: editingGuru.mataPelajaran,
               role: editingGuru.role,
-              password: editingGuru.password || '',
-              noTelp: editingGuru.noTelp || '',
-              waliKelasDari: editingGuru.waliKelasDari || '',
             }
             : undefined
         }

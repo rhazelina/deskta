@@ -56,60 +56,7 @@ const kelasOptions = [
 ];
 
 /* ===================== DUMMY DATA ===================== */
-const initialSiswaData: Siswa[] = [
-  { 
-    id: '1', 
-    namaSiswa: 'M. Wito Suherman', 
-    nisn: '2347839283', 
-    jenisKelamin: 'Laki-Laki', 
-    noTelp: '08218374859',
-    jurusan: 'Mekatronika', 
-    jurusanId: 'MEK', 
-    tahunAngkatan: '2023 - 2026',
-    kelas: '10', 
-    kelasId: '10-MEK-1',
-    password: 'ABC123'
-  },
-  { 
-    id: '2', 
-    namaSiswa: 'Siti Nurhaliza', 
-    nisn: '2347839284', 
-    jenisKelamin: 'Perempuan', 
-    noTelp: '08123456789',
-    jurusan: 'Rekayasa Perangkat Lunak', 
-    jurusanId: 'RPL', 
-    tahunAngkatan: '2023 - 2026',
-    kelas: '10', 
-    kelasId: '10-RPL-1',
-    password: 'password123'
-  },
-  { 
-    id: '3', 
-    namaSiswa: 'Ahmad Rizki', 
-    nisn: '2347839285', 
-    jenisKelamin: 'Laki-Laki', 
-    noTelp: '08134567890',
-    jurusan: 'Teknik Komputer dan Jaringan', 
-    jurusanId: 'TKJ', 
-    tahunAngkatan: '2023 - 2026',
-    kelas: '11', 
-    kelasId: '11-TKJ-1',
-    password: 'password123'
-  },
-  { 
-    id: '4', 
-    namaSiswa: 'Dewi Lestari', 
-    nisn: '2347839286', 
-    jenisKelamin: 'Perempuan', 
-    noTelp: '08145678901',
-    jurusan: 'Desain Komunikasi Visual', 
-    jurusanId: 'DKV', 
-    tahunAngkatan: '2023 - 2026',
-    kelas: '12', 
-    kelasId: '12-DKV-1',
-    password: 'password123'
-  },
-];
+
 
 /* ===================== COMPONENT ===================== */
 export default function SiswaAdmin({
@@ -125,22 +72,50 @@ export default function SiswaAdmin({
   const [selectedKelas, setSelectedKelas] = useState('');
   const [isEksporDropdownOpen, setIsEksporDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [siswaList, setSiswaList] = useState<Siswa[]>(initialSiswaData);
+  const [siswaList, setSiswaList] = useState<Siswa[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // State untuk edit
   const [editingSiswa, setEditingSiswa] = useState<Siswa | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Fungsi untuk update data siswa (untuk dipanggil dari DetailSiswa)
-  const updateSiswaData = (updatedSiswa: Siswa) => {
-    setSiswaList(prevList => 
-      prevList.map(siswa => 
-        siswa.id === updatedSiswa.id ? updatedSiswa : siswa
-      )
-    );
-  };
+  // Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { studentService } = await import('../../services/student');
+        const students = await studentService.getStudents();
+
+        // Map API data to UI format
+        const mappedStudents: Siswa[] = students.map((s: any) => ({
+          id: String(s.id),
+          namaSiswa: s.user?.name || s.name || '-',
+          nisn: s.nisn,
+          jenisKelamin: s.gender === 'L' ? 'Laki-Laki' : 'Perempuan',
+          noTelp: s.user?.phone || '-',
+          jurusan: s.class_room?.major || '-', // Map major if available
+          jurusanId: s.class_room?.major ? s.class_room.major.substring(0, 3).toUpperCase() : '',
+          tahunAngkatan: '2023 - 2026', // Dummy for now
+          kelas: s.class_room?.name?.split(' ')?.[0] || '10',
+          kelasId: String(s.class_id),
+          password: '',
+          originalData: s
+        }));
+
+        setSiswaList(mappedStudents);
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+        void popupAlert("Gagal mengambil data siswa dari server.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [popupAlert]);
 
   // Handler untuk navigasi ke detail siswa
   const handleNavigateToDetail = (siswaId: string) => {
@@ -380,43 +355,51 @@ export default function SiswaAdmin({
     jurusanId: string;
     kelasId: string;
   }) => {
-    if (isEditMode && editingSiswa) {
-      // Mode edit: update data siswa
-      const updatedSiswaList = siswaList.map(siswa => {
-        if (siswa.id === editingSiswa.id) {
-          return {
-            ...siswa,
-            namaSiswa: data.namaSiswa,
-            nisn: data.nisn,
-            jurusan: jurusanOptions.find(j => j.value === data.jurusanId)?.label || '',
-            jurusanId: data.jurusanId,
-            kelas: data.kelasId.split('-')[0],
-            kelasId: data.kelasId,
-          };
-        }
-        return siswa;
-      });
-      setSiswaList(updatedSiswaList);
-      await popupAlert(`Data siswa "${data.namaSiswa}" berhasil diperbarui!`);
-    } else {
-      // Mode tambah: tambah siswa baru
-      const newSiswa: Siswa = {
-        id: String(Math.max(...siswaList.map(s => parseInt(s.id) || 0)) + 1),
-        namaSiswa: data.namaSiswa,
+    try {
+      const { studentService } = await import('../../services/student');
+
+      const payload = {
+        name: data.namaSiswa,
         nisn: data.nisn,
-        jenisKelamin: 'Laki-Laki',
-        noTelp: '',
-        jurusan: jurusanOptions.find(j => j.value === data.jurusanId)?.label || '',
-        jurusanId: data.jurusanId,
-        tahunAngkatan: '2023 - 2026',
-        kelas: data.kelasId.split('-')[0],
-        kelasId: data.kelasId,
-        password: 'password123',
+        nis: data.nisn,
+        gender: 'L',
+        address: 'Alamat Default',
+        class_id: 1, // HARDCODED for now
+        username: data.nisn,
+        password: 'password123'
       };
-      setSiswaList([...siswaList, newSiswa]);
-      await popupAlert(`Siswa "${data.namaSiswa}" berhasil ditambahkan!`);
+
+      if (isEditMode && editingSiswa) {
+        await studentService.updateStudent(editingSiswa.id, payload);
+        await popupAlert(`Data siswa "${data.namaSiswa}" berhasil diperbarui!`);
+      } else {
+        await studentService.createStudent(payload);
+        await popupAlert(`Siswa "${data.namaSiswa}" berhasil ditambahkan!`);
+      }
+
+      // Refresh
+      const students = await studentService.getStudents();
+      const mappedStudents: Siswa[] = students.map((s: any) => ({
+        id: String(s.id),
+        namaSiswa: s.user?.name || s.name || '-',
+        nisn: s.nisn,
+        jenisKelamin: s.gender === 'L' ? 'Laki-Laki' : 'Perempuan',
+        noTelp: s.user?.phone || '-',
+        jurusan: s.class_room?.major || '-',
+        jurusanId: s.class_room?.major ? s.class_room.major.substring(0, 3).toUpperCase() : '',
+        tahunAngkatan: '2023 - 2026',
+        kelas: s.class_room?.name?.split(' ')?.[0] || '10',
+        kelasId: String(s.class_id),
+        password: '',
+        originalData: s
+      }));
+      setSiswaList(mappedStudents);
+
+    } catch (error: any) {
+      console.error(error);
+      await popupAlert(`Gagal menyimpan: ${error.response?.data?.message || 'Error'}`);
     }
-    
+
     setIsModalOpen(false);
     setEditingSiswa(null);
     setIsEditMode(false);
@@ -460,8 +443,8 @@ export default function SiswaAdmin({
     { key: 'nisn', label: 'NISN' },
     { key: 'jurusan', label: 'Konsentrasi Keahlian' },
     { key: 'kelas', label: 'Tingkatan Kelas' },
-    { 
-      key: 'jenisKelamin', 
+    {
+      key: 'jenisKelamin',
       label: 'Jenis Kelamin',
       render: (value: string) => value === 'Laki-Laki' ? 'L' : 'P'
     },
@@ -729,7 +712,7 @@ export default function SiswaAdmin({
             }}
           >
             {/* Tombol Tambahkan - BIRU */}
-            <div style={{ 
+            <div style={{
               alignSelf: 'flex-end',
               height: '40px'
             }}>
@@ -739,7 +722,7 @@ export default function SiswaAdmin({
                 variant="primary"
               />
             </div>
-            
+
             {/* Tombol Impor - BIRU */}
             <div style={{ alignSelf: 'flex-end' }}>
               <button
@@ -860,16 +843,22 @@ export default function SiswaAdmin({
 
         {/* Table */}
         <div style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 0 1px #E5E7EB' }}>
-          <Table columns={columns} data={filteredData} keyField="id" />
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+              Memuat data...
+            </div>
+          ) : (
+            <Table columns={columns} data={filteredData} keyField="id" />
+          )}
         </div>
       </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        onChange={handleFileSelect} 
-        accept=".csv" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+        accept=".csv"
       />
 
       {/* Modal Form */}
@@ -878,13 +867,13 @@ export default function SiswaAdmin({
         onClose={handleCloseModal}
         onSubmit={handleSubmitSiswa}
         initialData={
-          editingSiswa 
+          editingSiswa
             ? {
-                namaSiswa: editingSiswa.namaSiswa,
-                nisn: editingSiswa.nisn,
-                jurusanId: editingSiswa.jurusanId,
-                kelasId: editingSiswa.kelasId,
-              }
+              namaSiswa: editingSiswa.namaSiswa,
+              nisn: editingSiswa.nisn,
+              jurusanId: editingSiswa.jurusanId,
+              kelasId: editingSiswa.kelasId,
+            }
             : undefined
         }
         isEdit={isEditMode}

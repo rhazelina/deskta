@@ -39,6 +39,7 @@ export interface Student {
   created_at: string;
   updated_at: string;
   class?: Class;
+  user?: User; // Relationship to User model
 }
 
 // Teacher Types
@@ -53,6 +54,7 @@ export interface Teacher {
   created_at: string;
   updated_at: string;
   homeroom_class?: Class;
+  user?: User; // Relationship to User model
 }
 
 // Class Types
@@ -60,6 +62,7 @@ export interface Class {
   id: number;
   name: string;
   grade: number;
+  label?: string;
   major_id: number;
   homeroom_teacher_id?: number;
   schedule_image_url?: string;
@@ -67,6 +70,7 @@ export interface Class {
   updated_at: string;
   major?: Major;
   homeroom_teacher?: Teacher;
+  students?: Student[]; // Relationship to StudentProfile (Student)
 }
 
 // Major Types
@@ -86,13 +90,18 @@ export interface Schedule {
   subject_id: number;
   room_id?: number;
   time_slot_id: number;
-  day_of_week: number;
+  day_of_week?: number;
+  day?: string; // String day: Monday, Tuesday, etc.
+  start_time: string;
+  end_time: string;
+  title?: string;
+  subject_name?: string;
+  room?: string; // Room as string
   created_at: string;
   updated_at: string;
   class?: Class;
   teacher?: Teacher;
   subject?: Subject;
-  room?: Room;
   time_slot?: TimeSlot;
 }
 

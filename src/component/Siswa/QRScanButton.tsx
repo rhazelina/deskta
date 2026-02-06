@@ -22,17 +22,15 @@ export default function QRScanButton({ onSuccess }: QRScanButtonProps) {
                 qr_token: qrData,
             });
 
-            popupAlert({
+            popupAlert(`Status: ${response.data.status || 'Hadir'}`, {
                 title: '✅ Absensi Berhasil!',
-                message: `Status: ${response.data.status || 'Hadir'}`,
             });
 
             setIsModalOpen(false);
             onSuccess?.();
         } catch (error: any) {
-            popupAlert({
+            popupAlert(error.response?.data?.message || 'QR Code tidak valid atau sudah kadaluarsa', {
                 title: '❌ Gagal Absen',
-                message: error.response?.data?.message || 'QR Code tidak valid atau sudah kadaluarsa',
             });
         } finally {
             setIsScanning(false);
@@ -91,9 +89,11 @@ export default function QRScanButton({ onSuccess }: QRScanButtonProps) {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title="📷 Scan QR Code Absensi"
             >
                 <div style={{ padding: '20px' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A", marginBottom: '16px' }}>
+                        📷 Scan QR Code Absensi
+                    </div>
                     {isScanning ? (
                         <div style={{ textAlign: 'center', padding: '40px' }}>
                             <div style={{
@@ -111,9 +111,8 @@ export default function QRScanButton({ onSuccess }: QRScanButtonProps) {
                             <QRScanner
                                 onScan={handleScan}
                                 onError={(error) => {
-                                    popupAlert({
+                                    popupAlert(error, {
                                         title: '⚠️ Peringatan',
-                                        message: error,
                                     });
                                 }}
                                 isActive={isModalOpen}

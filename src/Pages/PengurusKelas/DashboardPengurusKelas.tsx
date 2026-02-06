@@ -58,23 +58,7 @@ interface DashboardPengurusKelasProps {
   onLogout: () => void;
 }
 
-// Dummy data untuk statistik - DIPERBARUI DENGAN DATA YANG SAMA SEPERTI DI SISWA
-const monthlyTrendData = [
-  { month: "Jan", hadir: 20, izin: 5, sakit: 3, alpha: 2, dispen: 1 },
-  { month: "Feb", hadir: 42, izin: 8, sakit: 2, alpha: 3, dispen: 2 },
-  { month: "Mar", hadir: 48, izin: 4, sakit: 1, alpha: 2, dispen: 1 },
-  { month: "Apr", hadir: 46, izin: 6, sakit: 2, alpha: 1, dispen: 2 },
-  { month: "Mei", hadir: 50, izin: 3, sakit: 1, alpha: 1, dispen: 1 },
-  { month: "Jun", hadir: 47, izin: 5, sakit: 2, alpha: 1, dispen: 2 },
-];
-
-const weeklyStats = {
-  hadir: 80,
-  izin: 25,
-  sakit: 20,
-  alpha: 40,
-  dispen: 15,
-};
+// Chart data will be populated from API
 
 export default function DashboardPengurusKelas({
   user,
@@ -90,6 +74,16 @@ export default function DashboardPengurusKelas({
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
   const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Chart data states - populated from API
+  const [monthlyTrendData, setMonthlyTrendData] = useState<any[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState<any>({
+    hadir: 0,
+    izin: 0,
+    sakit: 0,
+    alpha: 0,
+    dispen: 0,
+  });
 
   // Fetch API data on mount
   useEffect(() => {
@@ -110,6 +104,48 @@ export default function DashboardPengurusKelas({
         setTodaySchedules(todaySchedule);
 
         setAttendanceSummary(summaryData);
+
+        // Transform API data for charts
+        if (summaryData?.status_summary) {
+          // Transform status summary to weekly stats
+          const stats = summaryData.status_summary.reduce((acc: any, item: any) => {
+            const status = item.status.toLowerCase();
+            if (status === 'present') acc.hadir = item.total;
+            else if (status === 'excused' || status === 'izin') acc.izin = item.total;
+            else if (status === 'sick' || status === 'sakit') acc.sakit = item.total;
+            else if (status === 'absent' || status === 'alpha') acc.alpha = item.total;
+            else if (status === 'dinas' || status === 'dispen') acc.dispen = item.total;
+            return acc;
+          }, { hadir: 0, izin: 0, sakit: 0, alpha: 0, dispen: 0 });
+
+          setWeeklyStats(stats);
+        }
+
+        // Transform daily summary to monthly trend (last 6 months)
+        if (summaryData?.daily_summary) {
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          const monthlyData: any = {};
+
+          summaryData.daily_summary.forEach((item: any) => {
+            const date = new Date(item.day);
+            const monthKey = monthNames[date.getMonth()];
+
+            if (!monthlyData[monthKey]) {
+              monthlyData[monthKey] = { month: monthKey, hadir: 0, izin: 0, sakit: 0, alpha: 0, dispen: 0 };
+            }
+
+            const status = item.status.toLowerCase();
+            if (status === 'present') monthlyData[monthKey].hadir += item.total;
+            else if (status === 'excused' || status === 'izin') monthlyData[monthKey].izin += item.total;
+            else if (status === 'sick' || status === 'sakit') monthlyData[monthKey].sakit += item.total;
+            else if (status === 'absent' || status === 'alpha') monthlyData[monthKey].alpha += item.total;
+            else if (status === 'dinas' || status === 'dispen') monthlyData[monthKey].dispen += item.total;
+          });
+
+          // Convert to array and take last 6 months
+          const monthlyArray = Object.values(monthlyData);
+          setMonthlyTrendData(monthlyArray.slice(-6));
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {

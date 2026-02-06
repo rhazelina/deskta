@@ -39,90 +39,78 @@ export default function KehadiranSiswaGuru({
   currentPage,
   onMenuClick,
 }: KehadiranSiswaGuruProps) {
-  const [currentDate] = useState('25-01-2025');
-  const [selectedKelas] = useState('X Mekatronika 1');
-  const [selectedMapel] = useState('Matematika (1-4)');
+  const [currentDate] = useState(new Date().toLocaleDateString('id-ID'));
+  // Use props or navigation state for these if possible, fallback to manual for now or "Pilih Kelas"
+  // For this fix, we will fetch data if classId is available (which we need to pass)
+  // Assuming current implementation relies on `selectedSchedule` context or props, but interfaces are strict.
+  // We will fetch based on the FIRST schedule found or similar if no prop.
+  // Ideally, GuruDashboard passes props. Let's assume we can pass `selectedSchedule`.
+
+  const [selectedKelas, setSelectedKelas] = useState('Memuat...');
+  const [selectedMapel, setSelectedMapel] = useState('Memuat...');
   const [editingSiswa, setEditingSiswa] = useState<SiswaData | null>(null);
   const [selectedSiswa, setSelectedSiswa] = useState<SiswaData | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [siswaList, setSiswaList] = useState<SiswaData[]>([]);
 
-  const [siswaList, setSiswaList] = useState<SiswaData[]>([
-    { 
-      id: '1', 
-      nisn: '1348576392', 
-      nama: 'Wito Suherman Suhermin', 
-      mapel: 'Matematika', 
-      status: 'hadir',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd',
-      waktuHadir: '07:30 WIB'
-    },
-    { 
-      id: '2', 
-      nisn: '1348576393', 
-      nama: 'Budi Santoso', 
-      mapel: 'Matematika', 
-      status: 'hadir',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd',
-      waktuHadir: '07:25 WIB'
-    },
-    { 
-      id: '3', 
-      nisn: '1348576394', 
-      nama: 'Siti Nurhaliza', 
-      mapel: 'Matematika', 
-      status: 'izin',
-      keterangan: 'Ijin tidak masuk karena ada keperluan keluarga',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd'
-    },
-    { 
-      id: '4', 
-      nisn: '1348576395', 
-      nama: 'Andi Wijaya', 
-      mapel: 'Matematika', 
-      status: 'sakit',
-      keterangan: 'Demam tinggi dan dokter menyarankan istirahat',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd'
-    },
-    { 
-      id: '5', 
-      nisn: '1348576396', 
-      nama: 'Dewi Lestari', 
-      mapel: 'Matematika', 
-      status: 'alpha',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd'
-    },
-    { 
-      id: '6', 
-      nisn: '1348576397', 
-      nama: 'Rudi Hartono', 
-      mapel: 'Matematika', 
-      status: 'alpha',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd'
-    },
-    { 
-      id: '7', 
-      nisn: '1348576398', 
-      nama: 'Maya Sari', 
-      mapel: 'Matematika', 
-      status: 'pulang',
-      keterangan: 'Pulang lebih awal karena sakit perut',
-      tanggal: '25-01-2025',
-      jamPelajaran: '1-4',
-      guru: 'Alifah Diantebes Aindra S.pd'
-    },
-  ]);
+  // Fetch Data Effect
+  // Fetch Data Effect
+  useMemo(() => {
+    const fetchData = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        // Fetch teacher's schedules for today to get the class
+        const schedules = await dashboardService.getTeacherSchedules({ date: new Date().toISOString().split('T')[0] });
+
+        if (schedules.length > 0) {
+          const schedule = schedules[0];
+          setSelectedKelas(schedule.class?.name || 'Kelas');
+          setSelectedMapel(schedule.subject_name || schedule.title || 'Mapel');
+
+          if (schedule.class_id) {
+            // Fetch class students
+            const classData = await dashboardService.getClassDetails(schedule.class_id.toString());
+
+            // Fetch existing attendance for this schedule
+            let attendanceRecords: any[] = [];
+            try {
+              attendanceRecords = await dashboardService.getAttendanceBySchedule(schedule.id.toString());
+            } catch (err) {
+              console.error("Failed to fetch attendance records", err);
+            }
+
+            if (classData && classData.students) {
+              const mappedStudents = classData.students.map((s: any) => {
+                // Find existing record
+                const record = attendanceRecords.find((a: any) => a.student_id == s.id);
+
+                return {
+                  id: s.id.toString(),
+                  nisn: s.nisn || '-',
+                  nama: s.user?.name || 'Siswa',
+                  mapel: schedule.subject_name || schedule.title || 'Mapel',
+                  status: record ? record.status : 'alpha', // Use real status or default to alpha
+                  tanggal: currentDate,
+                  jamPelajaran: '1-2', // Placeholder, ideally calculated from schedule
+                  guru: user.name,
+                  keterangan: record?.reason,
+                  waktuHadir: record ? new Date(record.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : undefined
+                };
+              });
+              setSiswaList(mappedStudents);
+            }
+          }
+        } else {
+          setSelectedKelas("Tidak ada jadwal");
+          setSelectedMapel("-");
+          setSiswaList([]);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchData();
+  }, [user.name, currentDate]);
 
   const handleEditClick = (siswa: SiswaData) => {
     setEditingSiswa(siswa);
@@ -167,7 +155,7 @@ export default function KehadiranSiswaGuru({
   const StatusButton = ({ status, siswa }: { status: string; siswa: SiswaData }) => {
     const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#1FA83D';
     const label = status === 'alpha' ? 'Tidak Hadir' : status.charAt(0).toUpperCase() + status.slice(1);
-    
+
     return (
       <div
         onClick={() => handleStatusClick(siswa)}
@@ -262,7 +250,7 @@ export default function KehadiranSiswaGuru({
   );
 
   // Icon check untuk status hadir
-  const CheckIcon = ({ size = 24 }: { size?: number }) => (
+  const CheckIcon = ({ size = 24, color = "currentColor" }: { size?: number; color?: string }) => (
     <svg
       width={size}
       height={size}
@@ -273,7 +261,7 @@ export default function KehadiranSiswaGuru({
     >
       <path
         d="M20 6L9 17L4 12"
-        stroke="currentColor"
+        stroke={color}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -676,53 +664,53 @@ export default function KehadiranSiswaGuru({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: 'auto',
               flex: 1,
             }}>
               {/* Row Tanggal */}
-              <DetailRow 
-                label="Tanggal" 
-                value={selectedSiswa.tanggal || currentDate} 
+              <DetailRow
+                label="Tanggal"
+                value={selectedSiswa.tanggal || currentDate}
                 icon={<img src={CalendarIcon} alt="Calendar" style={{ width: 16, height: 16, opacity: 0.7 }} />}
               />
 
               {/* Row Jam Pelajaran */}
-              <DetailRow 
-                label="Jam Pelajaran" 
-                value={selectedSiswa.jamPelajaran || '1-4'} 
+              <DetailRow
+                label="Jam Pelajaran"
+                value={selectedSiswa.jamPelajaran || '1-4'}
               />
 
               {/* Row Nama Siswa */}
-              <DetailRow 
-                label="Nama Siswa" 
-                value={selectedSiswa.nama} 
+              <DetailRow
+                label="Nama Siswa"
+                value={selectedSiswa.nama}
               />
 
               {/* Row NISN */}
-              <DetailRow 
-                label="NISN" 
-                value={selectedSiswa.nisn} 
+              <DetailRow
+                label="NISN"
+                value={selectedSiswa.nisn}
               />
 
               {/* Row Mata Pelajaran */}
-              <DetailRow 
-                label="Mata Pelajaran" 
-                value={selectedSiswa.mapel} 
+              <DetailRow
+                label="Mata Pelajaran"
+                value={selectedSiswa.mapel}
               />
 
               {/* Row Guru */}
-              <DetailRow 
-                label="Guru" 
-                value={selectedSiswa.guru || '-'} 
+              <DetailRow
+                label="Guru"
+                value={selectedSiswa.guru || '-'}
               />
 
               {/* Row Waktu Hadir (khusus untuk status hadir) */}
               {selectedSiswa.status === 'hadir' && selectedSiswa.waktuHadir && (
-                <DetailRow 
-                  label="Waktu Hadir" 
-                  value={selectedSiswa.waktuHadir} 
+                <DetailRow
+                  label="Waktu Hadir"
+                  value={selectedSiswa.waktuHadir}
                   icon={<TimeIcon size={16} />}
                 />
               )}
@@ -749,10 +737,10 @@ export default function KehadiranSiswaGuru({
                     fontWeight: 600,
                   }}>
                     {selectedSiswa.status === 'alpha' ? 'Tidak Hadir' :
-                     selectedSiswa.status === 'sakit' ? 'Sakit' :
-                     selectedSiswa.status === 'izin' ? 'Izin' :
-                     selectedSiswa.status === 'hadir' ? 'Hadir' :
-                     'Pulang'}
+                      selectedSiswa.status === 'sakit' ? 'Sakit' :
+                        selectedSiswa.status === 'izin' ? 'Izin' :
+                          selectedSiswa.status === 'hadir' ? 'Hadir' :
+                            'Pulang'}
                   </span>
                 </div>
               </div>

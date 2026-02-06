@@ -17,7 +17,7 @@ Role: Admin
 
 ---
 
-### 🎓 Waka (Wakil Kepala Sekolah)
+### 🎓 Waka (Wakil Kepala Sekolah)  
 ```
 Username: waka1
 Email: waka@example.com

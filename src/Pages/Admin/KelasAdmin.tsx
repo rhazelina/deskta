@@ -30,15 +30,7 @@ interface KelasAdminProps {
 }
 
 /* ===================== DUMMY DATA ===================== */
-const dummyData: Kelas[] = [
-  { id: "1", konsentrasiKeahlian: "Rekayasa Perangkat Lunak", tingkatKelas: "10", namaKelas: "RPL 1", waliKelas: "Alifah Diantebes Aindra S.pd" },
-  { id: "2", konsentrasiKeahlian: "Rekayasa Perangkat Lunak", tingkatKelas: "10", namaKelas: "RPL 2", waliKelas: "Siti Nurhaliza" },
-  { id: "3", konsentrasiKeahlian: "Mekatronika", tingkatKelas: "11", namaKelas: "Meka 1", waliKelas: "Alifah Diantebes Aindra S.pd" },
-  { id: "4", konsentrasiKeahlian: "Mekatronika", tingkatKelas: "11", namaKelas: "Meka 2", waliKelas: "Siti Nurhaliza" },
-  { id: "5", konsentrasiKeahlian: "Animasi", tingkatKelas: "12", namaKelas: "Anim 1", waliKelas: "Alifah Diantebes Aindra S.pd" },
-  { id: "6", konsentrasiKeahlian: "Desain Komunikasi Visual", tingkatKelas: "10", namaKelas: "DKV 1", waliKelas: "Siti Nurhaliza" },
-  { id: "7", konsentrasiKeahlian: "Elektronika Industri", tingkatKelas: "11", namaKelas: "EI 1", waliKelas: "Alifah Diantebes Aindra S.pd" },
-];
+
 
 // Data dummy untuk dropdown filter
 const konsentrasiKeahlianOptions = [
@@ -57,14 +49,7 @@ const tingkatKelasOptions = [
   "12"
 ];
 
-// Data dummy untuk dropdown form
-const jurusanList = [
-  { id: "1", nama: "Rekayasa Perangkat Lunak" },
-  { id: "2", nama: "Mekatronika" },
-  { id: "3", nama: "Animasi" },
-  { id: "4", nama: "Desain Komunikasi Visual" },
-  { id: "5", nama: "Elektronika Industri" },
-];
+
 
 const waliKelasList = [
   { id: "Alifah Diantebes Aindra S.pd", nama: "Alifah Diantebes Aindra S.pd" },
@@ -78,32 +63,79 @@ export default function KelasAdmin({
   currentPage,
   onMenuClick,
 }: KelasAdminProps) {
-  const { confirm: popupConfirm } = usePopup();
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [kelasList, setKelasList] = useState<Kelas[]>(dummyData);
+  const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [jurusanList, setJurusanList] = useState<{ id: string, nama: string }[]>([]); // Dynamic majors
   const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [selectedKonsentrasi, setSelectedKonsentrasi] = useState("Semua Konsentrasi Keahlian");
   const [selectedTingkat, setSelectedTingkat] = useState("Semua Tingkat");
 
+  // Fetch Classes and Majors
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { classService } = await import('../../services/class');
+        const { majorService } = await import('../../services/major');
+
+        const [classesData, majorsData] = await Promise.all([
+          classService.getClasses(),
+          majorService.getMajors()
+        ]);
+
+        const mappedClasses: Kelas[] = classesData.map((c: any) => ({
+          id: String(c.id),
+          konsentrasiKeahlian: c.major ? c.major.name : '-',
+          tingkatKelas: c.grade,
+          namaKelas: c.name || `${c.grade} ${c.label}`,
+          waliKelas: c.homeroom_teacher?.user?.name || '-'
+        }));
+        setKelasList(mappedClasses);
+
+        const mappedMajors = majorsData.map((m: any) => ({
+          id: String(m.id),
+          nama: m.name
+        }));
+        setJurusanList(mappedMajors);
+
+      } catch (e) {
+        console.error(e);
+        void popupAlert("Gagal mengambil data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [popupAlert]);
+
   /* ===================== FILTER ===================== */
   const filteredData = kelasList.filter((k) => {
     // Filter berdasarkan konsentrasi keahlian
-    const konsentrasiMatch = 
-      selectedKonsentrasi === "Semua Konsentrasi Keahlian" || 
+    const konsentrasiMatch =
+      selectedKonsentrasi === "Semua Konsentrasi Keahlian" ||
       k.konsentrasiKeahlian === selectedKonsentrasi;
-    
+
     // Filter berdasarkan tingkat kelas
-    const tingkatMatch = 
-      selectedTingkat === "Semua Tingkat" || 
+    const tingkatMatch =
+      selectedTingkat === "Semua Tingkat" ||
       k.tingkatKelas === selectedTingkat;
-    
+
     return konsentrasiMatch && tingkatMatch;
   });
 
   const handleDelete = async (row: Kelas) => {
     if (await popupConfirm(`Hapus kelas "${row.namaKelas}"?`)) {
-      setKelasList((prev) => prev.filter((k) => k.id !== row.id));
+      try {
+        const { classService } = await import('../../services/class');
+        await classService.deleteClass(row.id);
+        setKelasList((prev) => prev.filter((k) => k.id !== row.id));
+        void popupAlert("Kelas berhasil dihapus");
+      } catch (e) {
+        void popupAlert("Gagal menghapus kelas");
+      }
     }
   };
 
@@ -228,14 +260,14 @@ export default function KelasAdmin({
           }}
         >
           {/* KIRI: 2 DROPDOWN */}
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
+          <div style={{
+            display: "flex",
+            alignItems: "center",
             gap: 16,
             flex: 1,
           }}>
             {/* DROPDOWN KONSENTRASI KEAHLIAN */}
-            <div style={{ 
+            <div style={{
               minWidth: "200px",
               maxWidth: "250px"
             }}>
@@ -263,9 +295,9 @@ export default function KelasAdmin({
                 ))}
               </select>
             </div>
-            
+
             {/* DROPDOWN TINGKAT KELAS */}
-            <div style={{ 
+            <div style={{
               minWidth: "120px",
               maxWidth: "150px"
             }}>
@@ -296,15 +328,15 @@ export default function KelasAdmin({
           </div>
 
           {/* KANAN: TOMBOL TAMBAH - DIPOSISIKAN LEBIH KE KANAN */}
-          <div style={{ 
+          <div style={{
             height: "48px",
             display: "flex",
             alignItems: "center",
           }}>
-            <Button 
-              label="Tambahkan" 
+            <Button
+              label="Tambahkan"
               onClick={() => setIsModalOpen(true)}
-              style={{ 
+              style={{
                 height: "100%",
                 padding: "0 24px",
                 borderRadius: 8,
@@ -358,42 +390,57 @@ export default function KelasAdmin({
             initialData={
               editingKelas
                 ? {
-                    namaKelas: editingKelas.namaKelas,
-                    jurusanId: editingKelas.konsentrasiKeahlian,
-                    kelasId: editingKelas.tingkatKelas,
-                    waliKelasId: editingKelas.waliKelas,
-                  }
+                  namaKelas: editingKelas.namaKelas.split(' ').slice(1).join(' '), // Try to extract label
+                  jurusanId: editingKelas.konsentrasiKeahlian,
+                  kelasId: editingKelas.tingkatKelas,
+                  waliKelasId: editingKelas.waliKelas,
+                }
                 : undefined
             }
             jurusanList={jurusanList}
             waliKelasList={waliKelasList}
             takenWaliKelasIds={kelasList.map(k => k.waliKelas).filter(id => id !== editingKelas?.waliKelas)}
-            onSubmit={(data) => {
-              if (editingKelas) {
-                setKelasList((prev) =>
-                  prev.map((k) =>
-                    k.id === editingKelas.id
-                      ? { 
-                          ...k, 
-                          namaKelas: data.namaKelas,
-                          konsentrasiKeahlian: data.jurusanId,
-                          tingkatKelas: data.kelasId,
-                          waliKelas: data.waliKelasId
-                        }
-                      : k
-                  )
-                );
-              } else {
-                setKelasList((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString(),
-                    namaKelas: data.namaKelas,
-                    konsentrasiKeahlian: data.jurusanId,
-                    tingkatKelas: data.kelasId,
-                    waliKelas: data.waliKelasId,
-                  },
-                ]);
+            onSubmit={async (data) => {
+              try {
+                const { classService } = await import('../../services/class');
+
+                // Find major ID based on selected name/ID (form returns ID if passed as ID)
+                // In TambahKelasForm, options value={jurusan.nama}, so we get name?
+                // Actually, let's look at `DataKelas.jsx`'s input.
+                // Assuming data.jurusanId matches `jurusanList` entry.
+                // We'll try to find by Name OR ID.
+
+                const selectedMajor = jurusanList.find(j => j.nama === data.jurusanId || j.id === data.jurusanId);
+                const majorId = selectedMajor ? parseInt(selectedMajor.id) : 1;
+
+                const payload = {
+                  grade: data.kelasId,
+                  label: data.namaKelas,
+                  major_id: majorId,
+                };
+
+                if (editingKelas) {
+                  await classService.updateClass(editingKelas.id, payload);
+                  void popupAlert("Kelas berhasil diupdate");
+                } else {
+                  await classService.createClass(payload);
+                  void popupAlert("Kelas berhasil dibuat");
+                }
+
+                // Refresh
+                const newData = await classService.getClasses();
+                const mappedData: Kelas[] = newData.map((c: any) => ({
+                  id: String(c.id),
+                  konsentrasiKeahlian: c.major ? c.major.name : '-',
+                  tingkatKelas: c.grade,
+                  namaKelas: c.name || `${c.grade} ${c.label}`,
+                  waliKelas: c.homeroom_teacher?.user?.name || '-'
+                }));
+                setKelasList(mappedData);
+
+              } catch (e) {
+                console.error(e);
+                void popupAlert("Gagal menyimpan data kelas");
               }
               setIsModalOpen(false);
               setEditingKelas(null);

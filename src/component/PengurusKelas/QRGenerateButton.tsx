@@ -20,16 +20,16 @@ export default function QRGenerateButton({ schedules }: QRGenerateButtonProps) {
             setIsGenerating(true);
             const result = await dashboardService.generateQRCode({
                 schedule_id: scheduleId,
-                duration: 30, // 30 minutes validity
+                type: 'student',
+                expires_in_minutes: 30, // 30 minutes validity
             });
 
             setQrData(result);
             setIsSelectModalOpen(false);
             setIsModalOpen(true);
         } catch (error: any) {
-            popupAlert({
+            popupAlert(error.response?.data?.message || 'Terjadi kesalahan saat membuat QR code', {
                 title: '❌ Gagal Generate QR',
-                message: error.response?.data?.message || 'Terjadi kesalahan saat membuat QR code',
             });
         } finally {
             setIsGenerating(false);
@@ -100,9 +100,11 @@ export default function QRGenerateButton({ schedules }: QRGenerateButtonProps) {
             <Modal
                 isOpen={isSelectModalOpen}
                 onClose={() => setIsSelectModalOpen(false)}
-                title="📋 Pilih Jadwal untuk Generate QR"
             >
                 <div style={{ padding: '20px' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A", marginBottom: '16px' }}>
+                        📋 Pilih Jadwal untuk Generate QR
+                    </div>
                     {todaySchedules.length === 0 ? (
                         <div style={{
                             textAlign: 'center',
@@ -167,9 +169,11 @@ export default function QRGenerateButton({ schedules }: QRGenerateButtonProps) {
                     setIsModalOpen(false);
                     setQrData(null);
                 }}
-                title="✅ QR Code Berhasil Dibuat"
             >
                 <div style={{ padding: '20px' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A", marginBottom: '16px' }}>
+                        ✅ QR Code Berhasil Dibuat
+                    </div>
                     {qrData && (
                         <QRCodeDisplay
                             value={qrData.token}

@@ -393,7 +393,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        {isLoadingData ? '...' : adminSummary.total_students.toLocaleString('id-ID')}
+                        {isLoadingData ? '...' : (adminSummary.total_students || 0).toLocaleString('id-ID')}
                       </div>
                       <div
                         style={{
@@ -479,7 +479,7 @@ export default function AdminDashboard({
                           textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
                         }}
                       >
-                        {isLoadingData ? '...' : adminSummary.total_teachers.toLocaleString('id-ID')}
+                        {isLoadingData ? '...' : (adminSummary.total_teachers || 0).toLocaleString('id-ID')}
                       </div>
                       <div
                         style={{

@@ -11,6 +11,7 @@ import { JadwalModal } from "../../component/Shared/Form/Jadwal";
 import { MetodeGuru } from "../../component/Shared/Form/MetodeGuru";
 import { TidakBisaMengajar } from "../../component/Shared/Form/TidakBisaMengajar";
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+import QRScanner from "../../component/Shared/QRScanner";
 
 
 // Icon Components
@@ -95,19 +96,20 @@ const BREAKPOINTS = {
   desktop: 1400,
 };
 
-// Helper function to format schedule data from API
 const formatScheduleFromAPI = (schedule: any): ScheduleItem => {
-  const timeSlot = schedule.time_slot;
-  const startTime = timeSlot?.start_time || '00:00';
-  const endTime = timeSlot?.end_time || '00:00';
-  const slotNumber = timeSlot?.slot_number || 0;
+  // Fix: API returns start_time/end_time directly, not in time_slot
+  const startTime = schedule.start_time?.substring(0, 5) || '00:00';
+  const endTime = schedule.end_time?.substring(0, 5) || '00:00';
+
+  // Create a slot label based on time or fallback
+  const jamLabel = `${startTime} - ${endTime}`;
 
   return {
     id: schedule.id.toString(),
-    subject: schedule.subject?.name || 'Mata Pelajaran',
+    subject: schedule.subject_name || schedule.title || 'Mata Pelajaran',
     className: schedule.class?.name || 'Kelas',
-    jurusan: schedule.class?.name || '',
-    jam: `${slotNumber} (${startTime}-${endTime})`,
+    jurusan: schedule.class?.major?.name || schedule.class?.name || '',
+    jam: jamLabel,
   };
 };
 
@@ -310,6 +312,8 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   // API Data State
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
+  const [scanResult, setScanResult] = useState<string | null>(null);
+
 
   // ========== EFFECTS ==========
   useEffect(() => {
@@ -346,7 +350,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
       try {
         const { dashboardService } = await import('../../services/dashboard');
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-        const data = await dashboardService.getMySchedules({ date: today });
+        const data = await dashboardService.getTeacherSchedules({ date: today });
         const formattedSchedules = data.map(formatScheduleFromAPI);
         setSchedules(formattedSchedules);
       } catch (error) {
@@ -404,8 +408,6 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
     setActiveModal("metode");
   };
 
-  // Removed handleMulaiScan
-
   const handlePilihQR = () => {
     setActiveModal("schedule");
   };
@@ -413,6 +415,26 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
   const handlePilihManual = () => {
     setActiveModal(null);
     setCurrentPage("input-manual");
+  };
+
+  // ========== SCAN LOGIC ==========
+  const handleScanResult = async (result: string) => {
+    console.log("Scanned:", result);
+    // Call API to record attendance
+    try {
+      const { dashboardService } = await import('../../services/dashboard');
+      // result is the token
+      const response = await dashboardService.scanAttendance(result);
+
+      setScanResult(`Berhasil: ${response.student?.user?.name || 'Siswa'} - ${response.status}`);
+      await popupAlert(`✅ Absensi Berhasil!\nSiswa: ${response.student?.user?.name}\nStatus: ${response.status}`);
+
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.message || "Gagal memproses QR Code";
+      setScanResult(`Gagal: ${msg}`);
+      await popupAlert(`❌ Gagal: ${msg}`);
+    }
   };
 
   const handleSubmitTidakBisaMengajar = async (data: {
@@ -443,7 +465,6 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
           />
         );
       case "presensi":
-        // Fitur dinonaktifkan
         return (
           <GuruLayout
             pageTitle="Scan QR"
@@ -452,7 +473,60 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
             user={user}
             onLogout={handleLogoutClick}
           >
-            <div style={styles.comingSoon}>Fitur Scan QR dinonaktifkan</div>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '24px',
+              borderRadius: '16px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1F2937' }}>
+                  Scan QR Code Siswa
+                </h2>
+                <p style={{ color: '#6B7280', marginTop: '8px' }}>
+                  Arahkan kamera ke QR Code kartu pelajar siswa untuk mencatat kehadiran
+                </p>
+              </div>
+
+              <QRScanner
+                isActive={currentPage === 'presensi'}
+                onScan={handleScanResult}
+                onError={(err) => console.error(err)}
+              />
+
+              {scanResult && (
+                <div style={{
+                  marginTop: '24px',
+                  padding: '16px',
+                  backgroundColor: '#ECFDF5',
+                  border: '1px solid #10B981',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ color: '#065F46', fontWeight: 'bold' }}>
+                    Scan Berhasil!
+                  </p>
+                  <p style={{ color: '#047857', marginTop: '4px' }}>
+                    {scanResult}
+                  </p>
+                  <button
+                    onClick={() => setScanResult(null)}
+                    style={{
+                      marginTop: '12px',
+                      padding: '8px 16px',
+                      backgroundColor: '#10B981',
+                      color: 'white',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 500
+                    }}
+                  >
+                    Scan Lagi
+                  </button>
+                </div>
+              )}
+            </div>
           </GuruLayout>
         );
       case "input-manual":
@@ -856,6 +930,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               onPilihQR={handlePilihQR}
               onPilihManual={handlePilihManual}
               onTidakBisaMengajar={handleTidakBisaMengajar}
+              scheduleId={selectedSchedule?.id}
             />
 
             <TidakBisaMengajar

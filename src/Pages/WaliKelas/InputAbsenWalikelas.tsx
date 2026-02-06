@@ -1,6 +1,5 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import WalikelasLayout from '../../component/Walikelas/layoutwakel';
-import { StatusBadge } from '../../component/Shared/StatusBadge';
 import CalendarIcon from '../../assets/Icon/calender.png';
 import { Modal } from '../../component/Shared/Modal';
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
@@ -85,21 +84,98 @@ export function InputAbsenWalikelas({
   onMenuClick,
 }: InputAbsenWalikelasProps) {
   const { alert: popupAlert } = usePopup();
-  const [selectedKelas] = useState('X Mekatronika 1');
-  const [selectedMapel] = useState('Matematika (1-4)');
+  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedMapel] = useState('Wali Kelas');
   const [currentDate, setCurrentDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
 
-  const [siswaList, setSiswaList] = useState<Siswa[]>([
-    { id: '1', nisn: '1348576392', nama: 'Wito Suherman Suhermin', status: null },
-    { id: '2', nisn: '1348576393', nama: 'Ahmad Fauzi', status: null },
-    { id: '3', nisn: '1348576394', nama: 'Siti Nurhaliza', status: null },
-    { id: '4', nisn: '1348576395', nama: 'Budi Santoso', status: null },
-    { id: '5', nisn: '1348576396', nama: 'Dewi Sartika', status: null },
-    { id: '6', nisn: '1348576397', nama: 'Rizki Ramadhan', status: null },
-  ]);
+  const [siswaList, setSiswaList] = useState<Siswa[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [classId, setClassId] = useState<number | null>(null);
+  const [scheduleId, setScheduleId] = useState<number | null>(null);
+
+  // Initial Fetch: Homeroom Info
+  useEffect(() => {
+    const fetchHomeroom = async () => {
+      try {
+        const { dashboardService } = await import('../../services/dashboard');
+        const myClass = await dashboardService.getMyHomeroom();
+        if (myClass) {
+          setSelectedKelas(myClass.name || 'Kelas Saya');
+          setClassId(myClass.id);
+        }
+      } catch (e) {
+        console.error("Failed to fetch homeroom", e);
+      }
+    };
+    fetchHomeroom();
+  }, [popupAlert]);
+
+  // Fetch Students & Attendance logic
+  useEffect(() => {
+    if (!classId) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { attendanceService } = await import('../../services/attendance');
+        const { dashboardService } = await import('../../services/dashboard');
+
+        // 1. Get Schedules for today
+        const schedules = await dashboardService.getMyHomeroomSchedules();
+        if (schedules && schedules.length > 0) {
+          setScheduleId(schedules[0].id);
+        }
+
+        // 2. Get Students Summary (includes generic student info)
+        const studentSummaryRes = await attendanceService.getClassStudentsSummary(classId);
+        const rawStudents = studentSummaryRes.data.data || studentSummaryRes.data;
+
+        // 3. Get existing attendance for this date
+        const attResponse = await attendanceService.getClassAttendanceByDate(classId, currentDate);
+        const attendanceRecords = attResponse.data.data || attResponse.data || [];
+
+        const mapped: Siswa[] = rawStudents.map((s: any) => {
+          const record = attendanceRecords.find((r: any) => r.student_id === s.id);
+
+          // Map backend status to frontend
+          let status: Siswa['status'] = null;
+          if (record) {
+            switch (record.status) {
+              case 'present': status = 'hadir'; break;
+              case 'sick': status = 'sakit'; break;
+              case 'permission':
+              case 'izin': status = 'izin'; break;
+              case 'absent': status = 'alpha'; break;
+              case 'late': status = 'hadir'; break;
+              case 'return':
+              case 'pulang': status = 'pulang'; break;
+              default: status = 'hadir';
+            }
+          }
+
+          return {
+            id: String(s.id),
+            nisn: s.nisn,
+            nama: s.user?.name || s.name || '-',
+            status: status,
+            keterangan: record?.reason || ''
+          };
+        });
+
+        setSiswaList(mapped);
+
+      } catch (e) {
+        console.error(e);
+        void popupAlert("Gagal memuat data siswa");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [classId, currentDate, popupAlert]);
 
   const [selectedSiswa, setSelectedSiswa] = useState<Siswa | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,7 +189,7 @@ export function InputAbsenWalikelas({
   const handleStatusClick = (siswa: Siswa, e: React.MouseEvent) => {
     e.stopPropagation();
     if (siswa.status === null) return;
-    
+
     setSelectedSiswa(siswa);
     setEditStatus(siswa.status);
     setEditKeterangan(siswa.keterangan || '');
@@ -123,13 +199,13 @@ export function InputAbsenWalikelas({
   const handleSaveEdit = () => {
     if (!selectedSiswa || !editStatus) return;
 
-    setSiswaList(siswaList.map(s => 
-      s.id === selectedSiswa.id 
-        ? { 
-            ...s, 
-            status: editStatus, 
-            keterangan: editKeterangan 
-          } 
+    setSiswaList(siswaList.map(s =>
+      s.id === selectedSiswa.id
+        ? {
+          ...s,
+          status: editStatus,
+          keterangan: editKeterangan
+        }
         : s
     ));
 
@@ -144,8 +220,44 @@ export function InputAbsenWalikelas({
       await popupAlert("Pilih status untuk minimal satu siswa!");
       return;
     }
-    await popupAlert(`Data kehadiran berhasil disimpan untuk ${siswaWithStatus.length} siswa!`);
-    onMenuClick('Beranda');
+
+    // Usually we try to use the derived scheduleId, or fallback
+    const finalScheduleId = scheduleId || 1;
+
+    try {
+      const { attendanceService } = await import('../../services/attendance');
+      const { STATUS_FRONTEND_TO_BACKEND } = await import('../../utils/statusMapping');
+
+      // Loop through and save each
+      const promises = siswaWithStatus.map(s => {
+        let backendStatus = STATUS_FRONTEND_TO_BACKEND[s.status!] || 'present';
+
+        let reason = s.keterangan;
+        // Basic mapping for returning home/pulang
+        if (s.status === 'pulang') {
+          // Check if 'pulang' is valid backend status, else map to 'izin' or similar
+          // Assuming for now it maps to 'return' or handled by backend logic
+          if (!reason) reason = 'Pulang';
+        }
+
+        return attendanceService.createManualAttendance({
+          attendee_type: 'student',
+          student_id: parseInt(s.id),
+          schedule_id: finalScheduleId,
+          status: backendStatus,
+          date: currentDate,
+          reason: reason
+        });
+      });
+
+      await Promise.all(promises);
+      await popupAlert(`Data kehadiran berhasil disimpan untuk ${siswaWithStatus.length} siswa!`);
+      // onMenuClick('Beranda'); 
+
+    } catch (e: any) {
+      console.error(e);
+      await popupAlert(`Gagal menyimpan: ${e.response?.data?.message || e.message}`);
+    }
   };
 
   // Warna sesuai permintaan
@@ -372,97 +484,97 @@ export function InputAbsenWalikelas({
                       <td style={{ padding: '16px', fontSize: '14px', color: '#111827', fontWeight: '500' }}>{idx + 1}</td>
                       <td style={{ padding: '16px', fontSize: '14px', color: '#374151', fontWeight: '400' }}>{siswa.nisn}</td>
                       <td style={{ padding: '16px', fontSize: '14px', color: '#111827', fontWeight: '500' }}>{siswa.nama}</td>
-                      
+
                       {/* Radio Button Hadir */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input 
-                          type="radio" 
-                          name={`status-${siswa.id}`} 
-                          checked={siswa.status === 'hadir'} 
-                          onChange={() => handleStatusChange(siswa.id, 'hadir')} 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px', 
-                            cursor: 'pointer', 
+                        <input
+                          type="radio"
+                          name={`status-${siswa.id}`}
+                          checked={siswa.status === 'hadir'}
+                          onChange={() => handleStatusChange(siswa.id, 'hadir')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
                             accentColor: statusColors.hadir,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
-                          }} 
+                          }}
                         />
                       </td>
-                      
+
                       {/* Radio Button Sakit */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input 
-                          type="radio" 
-                          name={`status-${siswa.id}`} 
-                          checked={siswa.status === 'sakit'} 
-                          onChange={() => handleStatusChange(siswa.id, 'sakit')} 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px', 
-                            cursor: 'pointer', 
+                        <input
+                          type="radio"
+                          name={`status-${siswa.id}`}
+                          checked={siswa.status === 'sakit'}
+                          onChange={() => handleStatusChange(siswa.id, 'sakit')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
                             accentColor: statusColors.sakit,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
-                          }} 
+                          }}
                         />
                       </td>
-                      
+
                       {/* Radio Button Izin */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input 
-                          type="radio" 
-                          name={`status-${siswa.id}`} 
-                          checked={siswa.status === 'izin'} 
-                          onChange={() => handleStatusChange(siswa.id, 'izin')} 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px', 
-                            cursor: 'pointer', 
+                        <input
+                          type="radio"
+                          name={`status-${siswa.id}`}
+                          checked={siswa.status === 'izin'}
+                          onChange={() => handleStatusChange(siswa.id, 'izin')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
                             accentColor: statusColors.izin,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
-                          }} 
+                          }}
                         />
                       </td>
-                      
+
                       {/* Radio Button Tidak Hadir (Alpha) */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input 
-                          type="radio" 
-                          name={`status-${siswa.id}`} 
-                          checked={siswa.status === 'alpha'} 
-                          onChange={() => handleStatusChange(siswa.id, 'alpha')} 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px', 
-                            cursor: 'pointer', 
+                        <input
+                          type="radio"
+                          name={`status-${siswa.id}`}
+                          checked={siswa.status === 'alpha'}
+                          onChange={() => handleStatusChange(siswa.id, 'alpha')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
                             accentColor: statusColors.alpha,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
-                          }} 
+                          }}
                         />
                       </td>
-                      
+
                       {/* Radio Button Pulang */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <input 
-                          type="radio" 
-                          name={`status-${siswa.id}`} 
-                          checked={siswa.status === 'pulang'} 
-                          onChange={() => handleStatusChange(siswa.id, 'pulang')} 
-                          style={{ 
-                            width: '18px', 
-                            height: '18px', 
-                            cursor: 'pointer', 
+                        <input
+                          type="radio"
+                          name={`status-${siswa.id}`}
+                          checked={siswa.status === 'pulang'}
+                          onChange={() => handleStatusChange(siswa.id, 'pulang')}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            cursor: 'pointer',
                             accentColor: statusColors.pulang,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
-                          }} 
+                          }}
                         />
                       </td>
-                      
+
                       {/* Kolom Status */}
                       <td style={{ padding: '16px', textAlign: 'center' }}>
                         <StatusButton siswa={siswa} />
@@ -527,14 +639,14 @@ export function InputAbsenWalikelas({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: "auto",
               flex: 1,
             }}>
               {/* Row Nama Siswa */}
               <DetailRow label="Nama Siswa" value={selectedSiswa.nama} />
-              
+
               {/* Row NISN */}
               <DetailRow label="NISN" value={selectedSiswa.nisn} />
 
@@ -556,9 +668,9 @@ export function InputAbsenWalikelas({
                     fontSize: 13,
                     fontWeight: 600,
                   }}>
-                    {editStatus === 'alpha' ? 'Tidak Hadir' : 
-                     editStatus === 'pulang' ? 'Pulang' : 
-                     editStatus.charAt(0).toUpperCase() + editStatus.slice(1)}
+                    {editStatus === 'alpha' ? 'Tidak Hadir' :
+                      editStatus === 'pulang' ? 'Pulang' :
+                        editStatus.charAt(0).toUpperCase() + editStatus.slice(1)}
                   </span>
                 </div>
               </div>
@@ -596,10 +708,10 @@ export function InputAbsenWalikelas({
                   onChange={(e) => setEditKeterangan(e.target.value)}
                   placeholder={
                     editStatus === 'hadir' ? "Contoh: Hadir tepat waktu, aktif dalam pembelajaran..." :
-                    editStatus === 'izin' ? "Contoh: Menghadiri acara keluarga, izin dokter..." :
-                    editStatus === 'sakit' ? "Contoh: Demam tinggi, flu berat..." :
-                    editStatus === 'pulang' ? "Contoh: Sakit perut, ada keperluan mendadak..." :
-                    "Alasan tidak hadir..."
+                      editStatus === 'izin' ? "Contoh: Menghadiri acara keluarga, izin dokter..." :
+                        editStatus === 'sakit' ? "Contoh: Demam tinggi, flu berat..." :
+                          editStatus === 'pulang' ? "Contoh: Sakit perut, ada keperluan mendadak..." :
+                            "Alasan tidak hadir..."
                   }
                   style={{
                     width: "100%",
@@ -632,10 +744,10 @@ export function InputAbsenWalikelas({
                   paddingBottom: 12,
                   borderBottom: "1px solid #E5E7EB",
                 }}>
-                  <div style={{ 
-                    fontWeight: 600, 
+                  <div style={{
+                    fontWeight: 600,
                     color: "#374151",
-                    marginBottom: 12 
+                    marginBottom: 12
                   }}>
                     Ubah Status :
                   </div>
@@ -670,9 +782,9 @@ export function InputAbsenWalikelas({
                           backgroundColor: editStatus === status ? statusColors[status] : '#D1D5DB',
                           marginRight: "8px",
                         }} />
-                        {status === 'alpha' ? 'Tidak Hadir' : 
-                         status === 'pulang' ? 'Pulang' : 
-                         status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status === 'alpha' ? 'Tidak Hadir' :
+                          status === 'pulang' ? 'Pulang' :
+                            status.charAt(0).toUpperCase() + status.slice(1)}
                       </button>
                     ))}
                   </div>

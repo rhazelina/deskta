@@ -43,6 +43,20 @@ export const dashboardService = {
     },
 
     /**
+     * Get teacher schedules (for teachers)
+     */
+    async getTeacherSchedules(params?: ScheduleQueryParams): Promise<any> {
+        // Teacher uses the index endpoint which filters by authenticated teacher
+        const response = await apiClient.get<any>(
+            API_ENDPOINTS.SCHEDULES,
+            { params }
+        );
+        // The index endpoint returns a paginated response, so we need to return .data or .data.data
+        // Based on ScheduleController::index, it returns paginate()
+        return response.data.data ? response.data.data : response.data;
+    },
+
+    /**
      * Get my attendance summary (for students)
      */
     async getMyAttendanceSummary(params?: AttendanceQueryParams): Promise<AttendanceSummary> {
@@ -163,9 +177,13 @@ export const dashboardService = {
     },
 
     /**
-     * Generate QR code (for pengurus kelas)
+     * Generate QR code
      */
-    async generateQRCode(data: { schedule_id: number; duration?: number }): Promise<any> {
+    async generateQRCode(data: {
+        schedule_id: number;
+        type: 'student' | 'teacher';
+        expires_in_minutes?: number
+    }): Promise<any> {
         const response = await apiClient.post<any>(API_ENDPOINTS.QR_GENERATE, data);
         return response.data;
     },
@@ -183,6 +201,43 @@ export const dashboardService = {
      */
     async revokeQRCode(token: string): Promise<void> {
         await apiClient.post(`/qrcodes/${token}/revoke`);
+    },
+
+    /**
+     * Manual Attendance Input (for Teacher/Waka)
+     */
+    async submitManualAttendance(data: {
+        attendee_type: 'student' | 'teacher';
+        student_id?: string;
+        teacher_id?: string;
+        schedule_id: string;
+        status: 'present' | 'late' | 'excused' | 'sick' | 'absent' | 'dinas' | 'izin' | 'pulang';
+        date: string;
+        reason?: string;
+    }): Promise<any> {
+        return (await apiClient.post('/attendance/manual', data)).data;
+    },
+
+    /**
+     * Scan Attendance
+     */
+    async scanAttendance(token: string, device_id?: number): Promise<any> {
+        return (await apiClient.post('/attendance/scan', { token, device_id })).data;
+    },
+
+    /**
+     * Get Class Details (Students)
+     */
+    async getClassDetails(classId: string): Promise<Class> {
+        return (await apiClient.get<Class>(`/classes/${classId}`)).data;
+    },
+
+    /**
+     * Get Attendance by Schedule ID
+     */
+    async getAttendanceBySchedule(scheduleId: string): Promise<any[]> {
+        const response = await apiClient.get<any>(API_ENDPOINTS.ATTENDANCE_BY_SCHEDULE(Number(scheduleId)));
+        return response.data.data ? response.data.data : response.data;
     },
 };
 
