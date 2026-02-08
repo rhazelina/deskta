@@ -15,7 +15,7 @@ interface KehadiranSiswaProps {
   onLogout: () => void;
   currentPage: string;
   onMenuClick: (page: string) => void;
-  onNavigateToDetail?: (kelasId: string) => void;
+  onNavigateToDetail?: (kelasId: string, kelasInfo: { namaKelas: string; waliKelas: string }) => void;
 }
 
 const JURUSAN_LIST = [
@@ -90,7 +90,7 @@ export default function KehadiranSiswa({
 
   const handleViewDetail = (row: KelasRow) => {
     if (onNavigateToDetail) {
-      onNavigateToDetail(row.id);
+      onNavigateToDetail(row.id, { namaKelas: row.namaKelas, waliKelas: row.waliKelas });
     }
   };
 

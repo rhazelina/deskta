@@ -11,9 +11,12 @@ interface FormModalProps {
   titleStyle?: React.CSSProperties;
   showSubmitButton?: boolean;
   style?: React.CSSProperties;
+  contentStyle?: React.CSSProperties;
   maxHeight?: string;
   topOffset?: string;
   bottomMargin?: string; // ⬅️ TAMBAH PROP BARU untuk margin bawah
+  onReset?: () => void;
+  resetLabel?: string;
 }
 
 export function FormModal({
@@ -27,12 +30,16 @@ export function FormModal({
   titleStyle = {},
   showSubmitButton = true,
   style,
+  contentStyle,
   // ⬇️ JARAK ATAS: TETAP atau SEDIKIT DITAMBAH
   topOffset = "14vh",
   // ⬇️ TINGGI MODAL: DITAMBAH BANYAK untuk lebih panjang ke bawah
   maxHeight = "83vh", // ⬅️ DARI 55vh KE 85vh (30% lebih tinggi!)
   // ⬇️ MARGIN BAWAH: TAMBAH untuk ruang di bawah modal
+  // ⬇️ MARGIN BAWAH: TAMBAH untuk ruang di bawah modal
   bottomMargin = "20px",
+  onReset,
+  resetLabel = "Reset",
 }: FormModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,11 +140,12 @@ export function FormModal({
           }}
         >
           <form onSubmit={handleSubmit}>
-            <div style={{ 
-              padding: "24px", 
+            <div style={{
+              padding: "24px",
               backgroundColor: "white",
               // ⬇️ MINIMAL HEIGHT: TAMBAH agar konten cukup panjang
               minHeight: "350px",
+              ...contentStyle,
             }}>
               {children}
             </div>
@@ -175,6 +183,27 @@ export function FormModal({
           >
             Batal
           </button>
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              disabled={isSubmitting}
+              style={{
+                padding: "10px 24px",
+                borderRadius: "8px",
+                border: "2px solid #ea580c", // Orange for reset
+                backgroundColor: "white",
+                color: "#ea580c",
+                fontWeight: "600",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                minWidth: "100px",
+                opacity: isSubmitting ? 0.5 : 1,
+              }}
+            >
+              {resetLabel}
+            </button>
+          )}
           {showSubmitButton && (
             <button
               type="submit"

@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+﻿// KelasAdmin.tsx - Halaman admin untuk mengelola data kelas
+import React, { useState, useEffect, useMemo } from "react";
 import AdminLayout from "../../component/Admin/AdminLayout";
 import { Button } from "../../component/Shared/Button";
 import { Table } from "../../component/Shared/Table";
@@ -29,17 +30,16 @@ interface KelasAdminProps {
   onMenuClick: (page: string) => void;
 }
 
-/* ===================== DUMMY DATA ===================== */
-
-
-// Data dummy untuk dropdown filter
 const konsentrasiKeahlianOptions = [
   "Semua Konsentrasi Keahlian",
   "Rekayasa Perangkat Lunak",
-  "Mekatronika",
-  "Animasi",
+  "Teknik Komputer dan Jaringan",
+  "Multimedia",
   "Desain Komunikasi Visual",
-  "Elektronika Industri"
+  "Teknik Kendaraan Ringan",
+  "Elektronika Industri",
+  "Mekatronika",
+  "Animasi"
 ];
 
 const tingkatKelasOptions = [
@@ -47,13 +47,6 @@ const tingkatKelasOptions = [
   "10",
   "11",
   "12"
-];
-
-
-
-const waliKelasList = [
-  { id: "Alifah Diantebes Aindra S.pd", nama: "Alifah Diantebes Aindra S.pd" },
-  { id: "Siti Nurhaliza", nama: "Siti Nurhaliza" },
 ];
 
 /* ===================== COMPONENT ===================== */
@@ -66,27 +59,38 @@ export default function KelasAdmin({
   const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [jurusanList, setJurusanList] = useState<{ id: string, nama: string }[]>([]); // Dynamic majors
   const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [selectedKonsentrasi, setSelectedKonsentrasi] = useState("Semua Konsentrasi Keahlian");
   const [selectedTingkat, setSelectedTingkat] = useState("Semua Tingkat");
+  const [validationError, setValidationError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch Classes and Majors
-  React.useEffect(() => {
+  // Data for Form
+  const [jurusanList, setJurusanList] = useState<{ id: string, nama: string }[]>([]);
+  const [semuaGuru, setSemuaGuru] = useState<{ id: string, nama: string }[]>([]);
+
+  // Fetch Data
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const { classService } = await import('../../services/class');
         const { majorService } = await import('../../services/major');
+        // We also need teacher list for Wali Kelas. 
+        // Assuming teacherService exists or we use 'users' endpoint?
+        // Let's use teacherService if available.
+        const { teacherService } = await import('../../services/teacher');
 
-        const [classesData, majorsData] = await Promise.all([
+        const [classesData, majorsData, teachersData] = await Promise.all([
           classService.getClasses(),
-          majorService.getMajors()
+          majorService.getMajors(),
+          teacherService.getTeachers()
         ]);
 
-        const mappedClasses: Kelas[] = classesData.map((c: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mappedClasses: Kelas[] = classesData.map((c: Record<string, any>) => ({
           id: String(c.id),
           konsentrasiKeahlian: c.major ? c.major.name : '-',
           tingkatKelas: c.grade,
@@ -95,11 +99,19 @@ export default function KelasAdmin({
         }));
         setKelasList(mappedClasses);
 
-        const mappedMajors = majorsData.map((m: any) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mappedMajors = majorsData.map((m: Record<string, any>) => ({
           id: String(m.id),
           nama: m.name
         }));
         setJurusanList(mappedMajors);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mappedTeachers = teachersData.map((t: Record<string, any>) => ({
+          id: String(t.id),
+          nama: t.user?.name || t.nip || 'Guru'
+        }));
+        setSemuaGuru(mappedTeachers);
 
       } catch (e) {
         console.error(e);
@@ -111,14 +123,70 @@ export default function KelasAdmin({
     fetchData();
   }, [popupAlert]);
 
+  /* ===================== GET UNIQUE DATA ===================== */
+  // Daftar wali kelas yang sudah digunakan
+  const usedWaliKelas = useMemo(() => {
+    const waliKelasSet = new Set<string>();
+    kelasList.forEach(kelas => {
+      if (kelas.waliKelas && kelas.waliKelas !== '-') {
+        waliKelasSet.add(kelas.waliKelas);
+      }
+    });
+    return Array.from(waliKelasSet);
+  }, [kelasList]);
+
+
+
+  // Daftar guru yang belum menjadi wali kelas (tersedia)
+  const availableWaliKelas = useMemo(() => {
+    // IMPORTANT: In real backend waliKelas is Name string in Table, but ID in update?
+    // deskta version uses ID in update/create payload (data.waliKelasId).
+    // The select options in form (KelasForm) expect ID for value and NAME for display.
+    // In our `semauGuru` fetched from teacherService, `nama` is the name.
+    // `usedWaliKelas` set contains NAMES because that's what we mapped in `kelasList`.
+    // Wait, backend response for class puts name in `waliKelas` field.
+    // So we need to match by ID if possible, or name.
+    // Ideally we should store ID in `kelasList` too?
+    // Let's assume we filter by NAME for simplicity as per existing logic, OR fix logic to use IDs.
+    // In `fetchData`: waliKelas: c.homeroom_teacher?.user?.name
+    // We should probably rely on the form passing the ID.
+    // For `availableWaliKelas` calculation: filter out teachers whose name is in `usedWaliKelas`?
+    // Or fetch who is homeroom teacher from backend?
+    // Let's filter by name.
+
+    return semuaGuru.filter(guru => !usedWaliKelas.includes(guru.nama));
+  }, [semuaGuru, usedWaliKelas]);
+
+  // Daftar wali kelas yang tersedia untuk modal edit (termasuk yang sedang diedit)
+  const availableWaliKelasForEdit = useMemo(() => {
+    if (!editingKelas) return availableWaliKelas;
+
+    // Saat edit, tambahkan wali kelas yang sedang diedit ke daftar tersedia
+    const currentWaliKelas = semuaGuru.find(guru => guru.nama === editingKelas.waliKelas);
+    if (currentWaliKelas) {
+      // Need to avoid duplicates if somehow it is in available list
+      if (!availableWaliKelas.find(g => g.id === currentWaliKelas.id)) {
+        return [...availableWaliKelas, currentWaliKelas];
+      }
+    }
+    return availableWaliKelas;
+  }, [availableWaliKelas, editingKelas, semuaGuru]);
+
+  // Statistik untuk ditampilkan
+  const stats = useMemo(() => ({
+    totalKelas: kelasList.length,
+    waliKelasTersedia: availableWaliKelas.length,
+    waliKelasDigunakan: usedWaliKelas.length,
+  }), [kelasList.length, availableWaliKelas.length, usedWaliKelas.length]);
+
+
+
   /* ===================== FILTER ===================== */
   const filteredData = kelasList.filter((k) => {
-    // Filter berdasarkan konsentrasi keahlian
     const konsentrasiMatch =
       selectedKonsentrasi === "Semua Konsentrasi Keahlian" ||
       k.konsentrasiKeahlian === selectedKonsentrasi;
 
-    // Filter berdasarkan tingkat kelas
     const tingkatMatch =
       selectedTingkat === "Semua Tingkat" ||
       k.tingkatKelas === selectedTingkat;
@@ -126,17 +194,109 @@ export default function KelasAdmin({
     return konsentrasiMatch && tingkatMatch;
   });
 
+  /* ===================== HANDLE DELETE ===================== */
   const handleDelete = async (row: Kelas) => {
-    if (await popupConfirm(`Hapus kelas "${row.namaKelas}"?`)) {
+    if (await popupConfirm(`Hapus kelas "${row.namaKelas}"? Wali kelas "${row.waliKelas}" akan tersedia kembali.`)) {
       try {
         const { classService } = await import('../../services/class');
         await classService.deleteClass(row.id);
+
+        // Refresh local list
         setKelasList((prev) => prev.filter((k) => k.id !== row.id));
+        setOpenActionId(null);
         void popupAlert("Kelas berhasil dihapus");
       } catch (e) {
+        console.error(e);
         void popupAlert("Gagal menghapus kelas");
       }
     }
+  };
+
+  /* ===================== HANDLE SUBMIT ===================== */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSubmit = async (data: Record<string, any>) => {
+    if (isSubmitting) return;
+
+    // Check duplicate logic locally for UPSERT proposal
+    // We construct the key and check if it exists
+    const combinationKey = `${data.jurusanId}|${data.kelasId}|${data.namaKelas.toLowerCase().trim()}`;
+
+    // Find if any class matches this key (excluding current edit id)
+    const duplicateClass = kelasList.find((k) => {
+      // If editing, skip self
+      if (editingKelas && k.id === editingKelas.id) return false;
+      const existingKey = `${k.konsentrasiKeahlian}|${k.tingkatKelas}|${k.namaKelas.toLowerCase()}`;
+      return existingKey === combinationKey;
+    });
+
+    let targetId = editingKelas?.id;
+
+    if (duplicateClass) {
+      // Prompt for Upsert
+      const confirmUpdate = await popupConfirm(
+        `Kelas "${data.namaKelas}" (Jurusan: ${data.jurusanId}, Tingkat: ${data.kelasId}) sudah ada. Update data kelas tersebut?`
+      );
+      if (!confirmUpdate) return;
+      targetId = duplicateClass.id;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { classService } = await import('../../services/class');
+
+      // Find major ID based on selected name/ID
+      // In Form, jurusanId is the NAME because options use name.
+      const selectedMajor = jurusanList.find(j => j.nama === data.jurusanId || j.id === data.jurusanId);
+      const majorId = selectedMajor ? parseInt(selectedMajor.id) : null;
+
+      if (!majorId) throw new Error("Jurusan tidak valid");
+
+      const payload = {
+        grade: data.kelasId,
+        label: data.namaKelas,
+        major_id: majorId,
+        homeroom_teacher_id: data.waliKelasId
+      };
+
+      if (targetId) {
+        await classService.updateClass(targetId, payload);
+        void popupAlert("Kelas berhasil diupdate");
+      } else {
+        await classService.createClass(payload);
+        void popupAlert("Kelas berhasil dibuat");
+      }
+
+      // Refresh Data
+      const newData = await classService.getClasses();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedData: Kelas[] = newData.map((c: Record<string, any>) => ({
+        id: String(c.id),
+        konsentrasiKeahlian: c.major ? c.major.name : '-',
+        tingkatKelas: c.grade,
+        namaKelas: c.name || `${c.grade} ${c.label}`,
+        waliKelas: c.homeroom_teacher?.user?.name || '-'
+      }));
+      setKelasList(mappedData);
+
+      // Reset
+      setIsModalOpen(false);
+      setEditingKelas(null);
+      setValidationError("");
+
+    } catch (e) {
+      console.error(e);
+      const errorMsg = (e as any)?.response?.data?.message || "Gagal menyimpan data kelas";
+      void popupAlert(errorMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ===================== HANDLE OPEN MODAL ===================== */
+  const handleOpenModal = () => {
+    setValidationError("");
+    setIsModalOpen(true);
   };
 
   /* ===================== TABLE ===================== */
@@ -148,7 +308,7 @@ export default function KelasAdmin({
     {
       key: "aksi",
       label: "Aksi",
-      render: (_: any, row: Kelas) => (
+      render: (_: unknown, row: Kelas) => (
         <div style={{ position: "relative" }}>
           <button
             onClick={() =>
@@ -158,32 +318,19 @@ export default function KelasAdmin({
               border: "none",
               background: "transparent",
               cursor: "pointer",
+              color: "#666",
             }}
           >
             <MoreVertical size={22} strokeWidth={1.5} />
           </button>
 
           {openActionId === row.id && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                marginTop: 6,
-                background: "#FFFFFF",
-                borderRadius: 8,
-                boxShadow: "0 10px 15px rgba(0,0,0,0.1)",
-                minWidth: 180,
-                zIndex: 1000, // Ditambah z-index tinggi
-                overflow: "hidden",
-                border: "1px solid #E2E8F0",
-              }}
-            >
-              {/* EDIT */}
+            <div style={dropdownMenuStyle}>
               <button
                 onClick={() => {
                   setOpenActionId(null);
                   setEditingKelas(row);
+                  setValidationError("");
                   setIsModalOpen(true);
                 }}
                 style={actionItemStyle}
@@ -200,7 +347,6 @@ export default function KelasAdmin({
                 Ubah
               </button>
 
-              {/* HAPUS */}
               <button
                 onClick={() => handleDelete(row)}
                 style={{ ...actionItemStyle, borderBottom: "none" }}
@@ -232,61 +378,61 @@ export default function KelasAdmin({
       onLogout={onLogout}
       hideBackground
     >
-      <img src={AWANKIRI} style={bgLeft} />
-      <img src={AwanBawahkanan} style={bgRight} />
+      <img src={AWANKIRI} style={bgLeft} alt="Background awan kiri" />
+      <img src={AwanBawahkanan} style={bgRight} alt="Background awan kanan bawah" />
 
-      <div
-        style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(6px)",
-          borderRadius: 16,
-          padding: 24,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(255,255,255,0.6)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-          position: "relative", // Tambah ini
-          zIndex: 1, // Tambah ini
-        }}
-      >
-        {/* HEADER 2 DROPDOWN DAN TOMBOL TAMBAH */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
-          {/* KIRI: 2 DROPDOWN */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            flex: 1,
-          }}>
-            {/* DROPDOWN KONSENTRASI KEAHLIAN */}
-            <div style={{
-              minWidth: "200px",
-              maxWidth: "250px"
-            }}>
+      <div style={containerStyle}>
+        {/* STATISTICS CARDS - WARNA NAVY DENGAN TULISAN PUTIH */}
+        <div style={statsContainerStyle}>
+          <div style={statCardStyle}>
+            {/* Icon dengan background circular */}
+            <div style={statIconContainerStyle}>
+              <div style={iconCircleStyle}>
+                <span style={iconTextStyle}>🏫</span>
+              </div>
+            </div>
+
+            <div style={statContentStyle}>
+              <div style={statNumberStyle}>{stats.totalKelas}</div>
+              <div style={statLabelStyle}>Total Kelas</div>
+            </div>
+          </div>
+
+          <div style={statCardStyle}>
+            <div style={statIconContainerStyle}>
+              <div style={iconCircleStyle}>
+                <span style={iconTextStyle}>👨‍🏫</span>
+              </div>
+            </div>
+
+            <div style={statContentStyle}>
+              <div style={statNumberStyle}>{stats.waliKelasTersedia}</div>
+              <div style={statLabelStyle}>Wali Kelas Tersedia</div>
+            </div>
+          </div>
+
+          <div style={statCardStyle}>
+            <div style={statIconContainerStyle}>
+              <div style={iconCircleStyle}>
+                <span style={iconTextStyle}>📚</span>
+              </div>
+            </div>
+
+            <div style={statContentStyle}>
+              <div style={statNumberStyle}>{stats.waliKelasDigunakan}</div>
+              <div style={statLabelStyle}>Wali Kelas Digunakan</div>
+            </div>
+          </div>
+        </div>
+
+        {/* HEADER DENGAN FILTER DAN TOMBOL */}
+        <div style={headerStyle}>
+          <div style={filterContainerStyle}>
+            <div style={{ minWidth: "200px", maxWidth: "250px" }}>
               <select
                 value={selectedKonsentrasi}
                 onChange={(e) => setSelectedKonsentrasi(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  borderRadius: 8,
-                  border: "1px solid #D1D5DB",
-                  fontSize: 14,
-                  backgroundColor: "#FFFFFF",
-                  color: "#1F2937",
-                  outline: "none",
-                  cursor: "pointer",
-                  height: "48px",
-                  boxSizing: "border-box",
-                }}
+                style={dropdownStyle}
               >
                 {konsentrasiKeahlianOptions.map((option) => (
                   <option key={option} value={option}>
@@ -296,27 +442,11 @@ export default function KelasAdmin({
               </select>
             </div>
 
-            {/* DROPDOWN TINGKAT KELAS */}
-            <div style={{
-              minWidth: "120px",
-              maxWidth: "150px"
-            }}>
+            <div style={{ minWidth: "120px", maxWidth: "150px" }}>
               <select
                 value={selectedTingkat}
                 onChange={(e) => setSelectedTingkat(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  borderRadius: 8,
-                  border: "1px solid #D1D5DB",
-                  fontSize: 14,
-                  backgroundColor: "#FFFFFF",
-                  color: "#1F2937",
-                  outline: "none",
-                  cursor: "pointer",
-                  height: "48px",
-                  boxSizing: "border-box",
-                }}
+                style={dropdownStyle}
               >
                 {tingkatKelasOptions.map((option) => (
                   <option key={option} value={option}>
@@ -327,124 +457,69 @@ export default function KelasAdmin({
             </div>
           </div>
 
-          {/* KANAN: TOMBOL TAMBAH - DIPOSISIKAN LEBIH KE KANAN */}
-          <div style={{
-            height: "48px",
-            display: "flex",
-            alignItems: "center",
-          }}>
+          <div style={buttonContainerStyle}>
             <Button
               label="Tambahkan"
-              onClick={() => setIsModalOpen(true)}
-              style={{
-                height: "100%",
-                padding: "0 24px",
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
+              onClick={handleOpenModal}
+              style={buttonStyle}
             />
           </div>
         </div>
 
-        {/* TABLE WRAPPER */}
-        <div
-          style={{
-            borderRadius: 12,
-            overflow: "hidden",
-            boxShadow: "0 0 0 1px #E5E7EB",
-          }}
-        >
-          <Table columns={columns} data={filteredData} keyField="id" />
+        {validationError && (
+          <div style={errorBannerStyle}>
+            ⚠️ {validationError}
+          </div>
+        )}
+
+        <div style={tableWrapperStyle}>
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+              Memuat data...
+            </div>
+          ) : (
+            <Table columns={columns} data={filteredData} keyField="id" />
+          )}
         </div>
       </div>
 
-      {/* MODAL OVERLAY - Ditambah untuk handle popup */}
+      {/* MODAL OVERLAY */}
       <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        ...modalOverlayStyle,
         display: isModalOpen ? "flex" : "none",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999, // Z-index sangat tinggi
       }}>
-        <div style={{
-          position: "relative",
-          zIndex: 10000,
-          maxWidth: "90vw",
-          maxHeight: "90vh",
-          overflow: "auto",
-        }}>
+        <div style={modalContentStyle}>
           <TambahKelasForm
             isOpen={isModalOpen}
             onClose={() => {
               setIsModalOpen(false);
               setEditingKelas(null);
+              setValidationError("");
+              setIsSubmitting(false);
             }}
             isEdit={!!editingKelas}
+            isLoading={isSubmitting} // Pass isLoading here
             initialData={
               editingKelas
                 ? {
-                  namaKelas: editingKelas.namaKelas.split(' ').slice(1).join(' '), // Try to extract label
+                  // Try to guess valid data from editingKelas
+                  // Nama Kelas is Name
+                  namaKelas: editingKelas.namaKelas,
+                  // Jurusan is Name in existing data? Yes
                   jurusanId: editingKelas.konsentrasiKeahlian,
+                  // Kelas ID is grade
                   kelasId: editingKelas.tingkatKelas,
-                  waliKelasId: editingKelas.waliKelas,
+                  // Wali Kelas ID ?? editingKelas.waliKelas is NAME. 
+                  // We need ID of user/teacher. 
+                  // We have `semuaGuru`. using name match to find ID.
+                  waliKelasId: semuaGuru.find(g => g.nama === editingKelas.waliKelas)?.id || ''
                 }
                 : undefined
             }
             jurusanList={jurusanList}
-            waliKelasList={waliKelasList}
-            takenWaliKelasIds={kelasList.map(k => k.waliKelas).filter(id => id !== editingKelas?.waliKelas)}
-            onSubmit={async (data) => {
-              try {
-                const { classService } = await import('../../services/class');
-
-                // Find major ID based on selected name/ID (form returns ID if passed as ID)
-                // In TambahKelasForm, options value={jurusan.nama}, so we get name?
-                // Actually, let's look at `DataKelas.jsx`'s input.
-                // Assuming data.jurusanId matches `jurusanList` entry.
-                // We'll try to find by Name OR ID.
-
-                const selectedMajor = jurusanList.find(j => j.nama === data.jurusanId || j.id === data.jurusanId);
-                const majorId = selectedMajor ? parseInt(selectedMajor.id) : 1;
-
-                const payload = {
-                  grade: data.kelasId,
-                  label: data.namaKelas,
-                  major_id: majorId,
-                };
-
-                if (editingKelas) {
-                  await classService.updateClass(editingKelas.id, payload);
-                  void popupAlert("Kelas berhasil diupdate");
-                } else {
-                  await classService.createClass(payload);
-                  void popupAlert("Kelas berhasil dibuat");
-                }
-
-                // Refresh
-                const newData = await classService.getClasses();
-                const mappedData: Kelas[] = newData.map((c: any) => ({
-                  id: String(c.id),
-                  konsentrasiKeahlian: c.major ? c.major.name : '-',
-                  tingkatKelas: c.grade,
-                  namaKelas: c.name || `${c.grade} ${c.label}`,
-                  waliKelas: c.homeroom_teacher?.user?.name || '-'
-                }));
-                setKelasList(mappedData);
-
-              } catch (e) {
-                console.error(e);
-                void popupAlert("Gagal menyimpan data kelas");
-              }
-              setIsModalOpen(false);
-              setEditingKelas(null);
-            }}
+            waliKelasList={availableWaliKelasForEdit}
+            takenWaliKelasIds={editingKelas ? usedWaliKelas.filter(id => id !== editingKelas.waliKelas) : usedWaliKelas}
+            onSubmit={handleSubmit}
           />
         </div>
       </div>
@@ -452,30 +527,246 @@ export default function KelasAdmin({
   );
 }
 
-/* ===================== STYLE ===================== */
+/* ===================== STYLES ===================== */
+const containerStyle: React.CSSProperties = {
+  background: "#FFFFFF",
+  borderRadius: 12,
+  padding: 20,
+  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  display: "flex",
+  flexDirection: "column",
+  gap: 24,
+  position: "relative",
+  zIndex: 1,
+  minHeight: "calc(100vh - 180px)",
+};
+
+/* ========== STATISTICS CARDS STYLES - WARNA NAVY ========== */
+const statsContainerStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 20,
+  justifyContent: "space-between",
+  marginBottom: 8,
+};
+
+const statCardStyle: React.CSSProperties = {
+  flex: 1,
+  backgroundColor: "#1e3a8a", // Navy blue
+  borderRadius: 16,
+  padding: "24px",
+  display: "flex",
+  alignItems: "center",
+  gap: 16,
+  boxShadow: "0 4px 12px rgba(30, 58, 138, 0.3)",
+  border: "1px solid #1e40af",
+  minHeight: "120px",
+  transition: "all 0.2s ease",
+  cursor: "pointer",
+};
+
+const statIconContainerStyle: React.CSSProperties = {
+  flexShrink: 0,
+};
+
+const iconCircleStyle: React.CSSProperties = {
+  width: "64px",
+  height: "64px",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(255, 255, 255, 0.15)",
+  border: "2px solid rgba(255, 255, 255, 0.3)",
+};
+
+const iconTextStyle: React.CSSProperties = {
+  fontSize: "28px",
+  lineHeight: 1,
+  color: "#FFFFFF",
+};
+
+const statContentStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  flex: 1,
+  minWidth: 0,
+};
+
+const statNumberStyle: React.CSSProperties = {
+  color: "#FFFFFF",
+  fontSize: "36px",
+  fontWeight: 800,
+  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  lineHeight: 1.2,
+  marginBottom: "6px",
+  textShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
+};
+
+const statLabelStyle: React.CSSProperties = {
+  color: "#dbeafe", // Light blue
+  fontSize: "15px",
+  fontWeight: 500,
+  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  letterSpacing: "0.3px",
+};
+
+// Hover effects (Inserted via JS in component or styles here? Inline styles don't support pseudo :hover well without CSS-in-JS or external sheet. 
+// I'll skip complex hover logic for consistency with previous merge or use style tag trick if strictly needed.
+// previous merge used:
+// const styleSheet = document.createElement("style"); ...
+// I can keep that pattern or omit. I'll omit to mitigate risk of hydration mismatch if SSR used (though this is SPA),
+// but for standard React, it's fine. I will omit for simplicity unless requested.
+// The code I wrote has:
+/*
+const hoverStyles = `...`;
+const styleSheet ...
+*/
+// I will include it to match Merge version fidelity.
+// But placing `document.head.appendChild` at top level module scope is bad practice.
+// I'll put it in useEffect if needed, or simply not do it.
+// I will skip it to be safe.
+
+/* ========== HEADER STYLES ========== */
+const headerStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 20,
+  marginTop: 8,
+  paddingBottom: 16,
+  borderBottom: "1px solid #F3F4F6",
+};
+
+const filterContainerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  flex: 1,
+};
+
+const buttonContainerStyle: React.CSSProperties = {
+  height: "40px",
+  display: "flex",
+  alignItems: "center",
+};
+
+const buttonStyle: React.CSSProperties = {
+  height: "100%",
+  padding: "0 20px",
+  borderRadius: 8,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "#1e3a8a",
+  color: "#FFFFFF",
+  fontWeight: 600,
+  fontSize: "14px",
+  border: "none",
+  cursor: "pointer",
+  transition: "background-color 0.2s ease",
+};
+
+/* ========== TABLE STYLES ========== */
+const tableWrapperStyle: React.CSSProperties = {
+  borderRadius: 8,
+  overflow: "hidden",
+  border: "1px solid #E5E7EB",
+  backgroundColor: "#FFFFFF",
+  marginTop: 8,
+};
+
+/* ========== MODAL STYLES ========== */
+const modalOverlayStyle: React.CSSProperties = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999,
+  backdropFilter: "blur(2px)",
+};
+
+const modalContentStyle: React.CSSProperties = {
+  position: "relative",
+  zIndex: 10000,
+  maxWidth: "90vw",
+  maxHeight: "90vh",
+  overflow: "auto",
+};
+
+/* ========== DROPDOWN STYLES ========== */
+const dropdownStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: 6,
+  border: "1px solid #D1D5DB",
+  fontSize: 14,
+  backgroundColor: "#FFFFFF",
+  color: "#374151",
+  outline: "none",
+  cursor: "pointer",
+  height: "40px",
+  boxSizing: "border-box",
+  transition: "all 0.2s ease",
+};
+
+const dropdownMenuStyle: React.CSSProperties = {
+  position: "absolute",
+  top: "100%",
+  right: 0,
+  marginTop: 4,
+  background: "#FFFFFF",
+  borderRadius: 6,
+  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+  minWidth: 140,
+  zIndex: 1000,
+  overflow: "hidden",
+  border: "1px solid #E5E7EB",
+};
+
 const actionItemStyle: React.CSSProperties = {
   width: "100%",
-  padding: "12px 16px",
+  padding: "8px 12px",
   border: "none",
   background: "none",
   textAlign: "left",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: 10,
-  color: "#0F172A",
+  gap: 8,
+  color: "#374151",
   fontSize: 14,
-  fontWeight: 500,
+  fontWeight: 400,
   transition: "all 0.2s ease",
-  borderBottom: "1px solid #F1F5F9",
+  borderBottom: "1px solid #F3F4F6",
 };
 
+/* ========== ERROR BANNER STYLES ========== */
+const errorBannerStyle: React.CSSProperties = {
+  backgroundColor: "#FEF2F2",
+  border: "1px solid #FECACA",
+  color: "#DC2626",
+  padding: "12px 16px",
+  borderRadius: "6px",
+  fontSize: "14px",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  fontWeight: 500,
+  margin: "8px 0",
+};
+
+/* ========== BACKGROUND IMAGE STYLES ========== */
 const bgLeft: React.CSSProperties = {
   position: "fixed",
   top: 0,
   left: 0,
-  width: 220,
+  width: 200,
   zIndex: 0,
+  opacity: 0.9,
 };
 
 const bgRight: React.CSSProperties = {
@@ -484,5 +775,5 @@ const bgRight: React.CSSProperties = {
   right: 0,
   width: 220,
   zIndex: 0,
+  opacity: 0.9,
 };
-

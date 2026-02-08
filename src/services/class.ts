@@ -1,9 +1,6 @@
 import apiClient from './api';
 
-//  
-import { API_ENDPOINTS } from '../utils/constants';
-import { API_BASE_URL } from '../utils/constants';
-//
+
 
 
 export interface ClassRoom {

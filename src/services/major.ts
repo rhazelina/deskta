@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { API_ENDPOINTS } from '../utils/constants';
+
 
 export interface Major {
     id: number;

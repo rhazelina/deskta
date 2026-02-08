@@ -1,11 +1,27 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import WalikelasLayout from "../../component/Walikelas/layoutwakel";
 import { User, ArrowLeft, Eye } from "lucide-react";
 import { Modal } from "../../component/Shared/Modal";
+import { attendanceService } from "../../services/attendance";
+import { dashboardService } from "../../services/dashboard";
 
-type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa";
+type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa" | "Terlambat" | "Pulang";
 
-type RowKehadiran = {
+// Mapping backend status to frontend status
+const MAP_STATUS: Record<string, StatusKehadiran> = {
+  'present': 'Hadir',
+  'late': 'Terlambat',
+  'excused': 'Izin',
+  'sick': 'Sakit',
+  'absent': 'Alfa',
+  'alpha': 'Alfa',
+  'dinas': 'Izin', // Or separate if needed
+  'izin': 'Izin',
+  'pulang': 'Pulang'
+};
+
+interface RowKehadiran {
+  id: number;
   no: number;
   tanggal: string;
   jam: string;
@@ -14,7 +30,7 @@ type RowKehadiran = {
   status: StatusKehadiran;
   keterangan?: string;
   bukti?: string;
-};
+}
 
 interface DaftarKetidakhadiranWaliKelasProps {
   user?: { name: string; role: string };
@@ -23,84 +39,69 @@ interface DaftarKetidakhadiranWaliKelasProps {
   onLogout?: () => void;
   siswaName?: string;
   siswaIdentitas?: string;
+  studentId?: string; // Added studentId
 }
 
 export default function DaftarKetidakhadiranWaliKelas({
   user = { name: "Wali Kelas", role: "walikelas" },
   currentPage = "daftar-ketidakhadiran-walikelas",
-  onMenuClick = () => {},
-  onLogout = () => {},
-  siswaName = "Muhammad Wito S.",
-  siswaIdentitas = "0918415784",
+  onMenuClick = () => { },
+  onLogout = () => { },
+  siswaName = "Siswa",
+  siswaIdentitas = "-",
+  studentId,
 }: DaftarKetidakhadiranWaliKelasProps) {
-  // Data dummy dengan keterangan dan bukti
-  const [rows] = useState<RowKehadiran[]>([
-    {
-      no: 1,
-      tanggal: "20-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Hadir",
-    },
-    {
-      no: 2,
-      tanggal: "20-05-2025",
-      jam: "3-4",
-      mapel: "Bahasa Indonesia",
-      guru: "Siti Nurhaliza S.pd",
-      status: "Hadir",
-    },
-    {
-      no: 3,
-      tanggal: "21-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Hadir",
-    },
-    {
-      no: 4,
-      tanggal: "21-05-2025",
-      jam: "5-6",
-      mapel: "Fisika",
-      guru: "Budi Santoso S.pd",
-      status: "Izin",
-      keterangan: "Ijin tidak masuk karena ada keperluan keluarga",
-      bukti: "surat_izin.jpg",
-    },
-    {
-      no: 5,
-      tanggal: "22-05-2025",
-      jam: "3-4",
-      mapel: "Kimia",
-      guru: "Dewi Lestari S.pd",
-      status: "Sakit",
-      keterangan: "Demam tinggi dan dokter menyarankan istirahat",
-      bukti: "surat_dokter.jpg",
-    },
-    {
-      no: 6,
-      tanggal: "23-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Alfa",
-    },
-    {
-      no: 7,
-      tanggal: "23-05-2025",
-      jam: "7-8",
-      mapel: "Bahasa Inggris",
-      guru: "Ahmad Fauzi S.pd",
-      status: "Alfa",
-    },
-  ]);
 
+  const [rows, setRows] = useState<RowKehadiran[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<RowKehadiran | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Hitung statistik menggunakan useMemo untuk optimasi
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!studentId) return;
+      setIsLoading(true);
+      try {
+        // 1. Get Class Info (to ensure we have access/id)
+        const classData = await dashboardService.getMyHomeroom();
+
+        if (classData.id) {
+          // 2. Fetch Absences
+          // We use getClassStudentsAbsences. We might need to filter by studentId if the API returns all.
+          // Assuming params can take student_id or we filter client side.
+          const response = await attendanceService.getClassStudentsAbsences(classData.id, {});
+          const allAbsences = (response.data as any).data || response.data;
+
+          if (Array.isArray(allAbsences)) {
+            // Filter by studentId
+            const studentAbsences = allAbsences.filter((item: any) => item.student_id.toString() === studentId.toString());
+
+            const mappedRows: RowKehadiran[] = studentAbsences.map((item: any, index: number) => ({
+              id: item.id,
+              no: index + 1,
+              tanggal: item.date,
+              jam: item.schedule?.start_time ? `${item.schedule.start_time.slice(0, 5)} - ${item.schedule.end_time.slice(0, 5)}` : '-',
+              mapel: item.schedule?.subject_name || '-',
+              guru: item.schedule?.teacher?.user?.name || '-',
+              status: MAP_STATUS[item.status] || 'Alfa',
+              keterangan: item.reason || (item.status === 'alpha' ? 'Tanpa Keterangan' : '-'),
+              bukti: item.attachment || null // Assuming attachment field exists
+            }));
+            setRows(mappedRows);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching absence details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [studentId]);
+
+
+  // Hitung statistik
   const stats = useMemo(() => ({
     hadir: rows.filter((r) => r.status === "Hadir").length,
     izin: rows.filter((r) => r.status === "Izin").length,
@@ -112,15 +113,15 @@ export default function DaftarKetidakhadiranWaliKelas({
     onMenuClick("rekap-kehadiran-siswa");
   };
 
-  // Warna sesuai revisi dari AbsensiSiswa.tsx
   const COLORS = {
-    HADIR: "#1FA83D",    // REVISI: Hadir > #1FA83D
-    IZIN: "#ACA40D",     // REVISI: Izin > #ACA40D
-    SAKIT: "#520C8F",    // REVISI: Sakit > #520C8F
-    ALFA: "#D90000"      // REVISI: Alfa/Tidak Hadir > #D90000
+    HADIR: "#1FA83D",
+    IZIN: "#ACA40D",
+    SAKIT: "#520C8F",
+    ALFA: "#D90000",
+    TERLAMBAT: "#F59E0B",
+    PULANG: "#2F85EB"
   };
 
-  // Fungsi untuk membuka modal detail
   const handleStatusClick = (record: RowKehadiran, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -128,21 +129,18 @@ export default function DaftarKetidakhadiranWaliKelas({
     setIsModalOpen(true);
   };
 
-  // Komponen Status Button yang bisa diklik
   const StatusButton = ({ status, row }: { status: StatusKehadiran; row: RowKehadiran }) => {
     let bgColor = COLORS.ALFA;
-    let label = "Alfa";
-    let textColor = "#FFFFFF";
+    let label = status;
+    const textColor = "#FFFFFF";
 
-    if (status === "Hadir") {
-      bgColor = COLORS.HADIR;
-      label = "Hadir";
-    } else if (status === "Izin") {
-      bgColor = COLORS.IZIN;
-      label = "Izin";
-    } else if (status === "Sakit") {
-      bgColor = COLORS.SAKIT;
-      label = "Sakit";
+    switch (status) {
+      case "Hadir": bgColor = COLORS.HADIR; break;
+      case "Izin": bgColor = COLORS.IZIN; break;
+      case "Sakit": bgColor = COLORS.SAKIT; break;
+      case "Terlambat": bgColor = COLORS.TERLAMBAT; break;
+      case "Pulang": bgColor = COLORS.PULANG; break;
+      default: bgColor = COLORS.ALFA; break;
     }
 
     return (
@@ -157,7 +155,7 @@ export default function DaftarKetidakhadiranWaliKelas({
           padding: "8px 14px",
           borderRadius: "20px",
           fontSize: "12px",
-          fontWeight: 800, // Diperkuat
+          fontWeight: 800,
           color: textColor,
           backgroundColor: bgColor,
           cursor: "pointer",
@@ -178,34 +176,31 @@ export default function DaftarKetidakhadiranWaliKelas({
         }}
       >
         <Eye size={14} />
-        <span style={{ fontWeight: 700 }}>{label}</span> {/* Diperkuat */}
+        <span style={{ fontWeight: 700 }}>{label}</span>
       </div>
     );
   };
 
-  // Fungsi untuk mendapatkan teks status
   const getStatusText = (status: StatusKehadiran) => {
     switch (status) {
-      case "Hadir":
-        return "Siswa hadir tepat waktu";
-      case "Izin":
-        return "Siswa izin dengan keterangan";
-      case "Sakit":
-        return "Siswa sakit dengan surat dokter";
-      case "Alfa":
-        return "Siswa tidak hadir tanpa keterangan";
-      default:
-        return status;
+      case "Hadir": return "Siswa hadir tepat waktu";
+      case "Izin": return "Siswa izin dengan keterangan";
+      case "Sakit": return "Siswa sakit dengan surat dokter";
+      case "Alfa": return "Siswa tidak hadir tanpa keterangan";
+      case "Terlambat": return "Siswa terlambat hadir";
+      case "Pulang": return "Siswa pulang lebih awal";
+      default: return status;
     }
   };
 
-  // Fungsi untuk mendapatkan warna status
   const getStatusColor = (status: StatusKehadiran) => {
     switch (status) {
       case "Hadir": return COLORS.HADIR;
       case "Izin": return COLORS.IZIN;
       case "Sakit": return COLORS.SAKIT;
       case "Alfa": return COLORS.ALFA;
+      case "Terlambat": return COLORS.TERLAMBAT;
+      case "Pulang": return COLORS.PULANG;
       default: return "#6B7280";
     }
   };
@@ -246,12 +241,13 @@ export default function DaftarKetidakhadiranWaliKelas({
             <User size={30} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 20, fontWeight: 900 }}>{siswaName}</div> {/* Diperkuat */}
-            <div style={{ fontSize: 15, opacity: 0.9, fontWeight: 600 }}>NISN: {siswaIdentitas}</div> {/* Diperkuat */}
+            <div style={{ fontSize: 20, fontWeight: 900 }}>{siswaName}</div>
+            <div style={{ fontSize: 15, opacity: 0.9, fontWeight: 600 }}>NISN: {siswaIdentitas}</div>
           </div>
         </div>
 
-        {/* STATISTIK KEHADIRAN */}
+        {/* STATISTIK KEHADIRAN (Hanya Absensi karena endpoint absensi) */}
+        {/* Jika endpoint hanya return absen, statistik Hadir akan 0, which is fine for "Daftar Ketidakhadiran" */}
         <div
           style={{
             display: "flex",
@@ -260,31 +256,8 @@ export default function DaftarKetidakhadiranWaliKelas({
             flexWrap: "wrap",
           }}
         >
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              border: `2px solid ${COLORS.HADIR}`,
-              borderRadius: 10,
-              padding: "12px 24px",
-              textAlign: "center",
-              minWidth: 100,
-              flex: 1,
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}> {/* Diperkuat */}
-              Hadir
-            </div>
-            <div
-              style={{
-                fontSize: 32, // Diperbesar
-                fontWeight: 900, // Diperkuat
-                color: COLORS.HADIR,
-                marginTop: 4,
-              }}
-            >
-              {stats.hadir}
-            </div>
-          </div>
+          {/* Removed Hadir stats card if we strictly show absences, but keeping logical consistency with 'stats' object */}
+          {/* If we want to show all stats, we'd need a summary endpoint for this student. For now, rely on what we have. */}
 
           <div
             style={{
@@ -297,13 +270,13 @@ export default function DaftarKetidakhadiranWaliKelas({
               flex: 1,
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}> {/* Diperkuat */}
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}>
               Izin
             </div>
             <div
               style={{
-                fontSize: 32, // Diperbesar
-                fontWeight: 900, // Diperkuat
+                fontSize: 32,
+                fontWeight: 900,
                 color: COLORS.IZIN,
                 marginTop: 4,
               }}
@@ -323,13 +296,13 @@ export default function DaftarKetidakhadiranWaliKelas({
               flex: 1,
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}> {/* Diperkuat */}
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}>
               Sakit
             </div>
             <div
               style={{
-                fontSize: 32, // Diperbesar
-                fontWeight: 900, // Diperkuat
+                fontSize: 32,
+                fontWeight: 900,
                 color: COLORS.SAKIT,
                 marginTop: 4,
               }}
@@ -349,13 +322,13 @@ export default function DaftarKetidakhadiranWaliKelas({
               flex: 1,
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}> {/* Diperkuat */}
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#6B7280" }}>
               Alfa
             </div>
             <div
               style={{
-                fontSize: 32, // Diperbesar
-                fontWeight: 900, // Diperkuat
+                fontSize: 32,
+                fontWeight: 900,
                 color: COLORS.ALFA,
                 marginTop: 4,
               }}
@@ -370,7 +343,7 @@ export default function DaftarKetidakhadiranWaliKelas({
           style={{
             display: "flex",
             justifyContent: "flex-end",
-            marginBottom: 16, // Ditambah
+            marginBottom: 16,
           }}
         >
           <button
@@ -386,7 +359,7 @@ export default function DaftarKetidakhadiranWaliKelas({
               border: "none",
               cursor: "pointer",
               fontSize: 14,
-              fontWeight: 700, // Diperkuat
+              fontWeight: 700,
               transition: "all 0.2s",
               boxShadow: "0 2px 4px rgba(6, 42, 74, 0.2)",
             }}
@@ -423,47 +396,53 @@ export default function DaftarKetidakhadiranWaliKelas({
               gridTemplateColumns: "70px 140px 140px 1fr 1fr 150px",
               backgroundColor: "#F3F4F6",
               padding: "16px 20px",
-              fontWeight: 800, // Diperkuat
+              fontWeight: 800,
               fontSize: 14,
               color: "#374151",
               borderBottom: "2px solid #E5E7EB",
             }}
           >
-            <div style={{ textAlign: "center", fontWeight: 900 }}>No</div> {/* Diperkuat */}
-            <div style={{ textAlign: "center", fontWeight: 900 }}>Tanggal</div> {/* Diperkuat */}
-            <div style={{ textAlign: "center", fontWeight: 900 }}>Jam Pelajaran</div> {/* Diperkuat */}
-            <div style={{ fontWeight: 900 }}>Mata Pelajaran</div> {/* Diperkuat */}
-            <div style={{ fontWeight: 900 }}>Guru</div> {/* Diperkuat */}
-            <div style={{ textAlign: "center", fontWeight: 900 }}>Status</div> {/* Diperkuat */}
+            <div style={{ textAlign: "center", fontWeight: 900 }}>No</div>
+            <div style={{ textAlign: "center", fontWeight: 900 }}>Tanggal</div>
+            <div style={{ textAlign: "center", fontWeight: 900 }}>Jam Pelajaran</div>
+            <div style={{ fontWeight: 900 }}>Mata Pelajaran</div>
+            <div style={{ fontWeight: 900 }}>Guru</div>
+            <div style={{ textAlign: "center", fontWeight: 900 }}>Status</div>
           </div>
 
           {/* ROWS */}
-          {rows.map((r, idx) => (
-            <div
-              key={r.no}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "70px 140px 140px 1fr 1fr 150px",
-                padding: "16px 20px",
-                fontSize: 14,
-                alignItems: "center",
-                borderBottom: idx < rows.length - 1 ? "1px solid #F3F4F6" : "none",
-                backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#FAFBFC",
-                transition: "background-color 0.2s",
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F3F4F6"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#FFFFFF" : "#FAFBFC"}
-            >
-              <div style={{ textAlign: "center", color: "#6B7280", fontWeight: "700" }}>{r.no}</div> {/* Diperkuat */}
-              <div style={{ textAlign: "center", color: "#374151", fontWeight: "700" }}>{r.tanggal}</div> {/* Diperkuat */}
-              <div style={{ textAlign: "center", color: "#374151", fontWeight: "700" }}>{r.jam}</div> {/* Diperkuat */}
-              <div style={{ color: "#111827", fontWeight: "800" }}>{r.mapel}</div> {/* Diperkuat */}
-              <div style={{ color: "#374151", fontWeight: "600" }}>{r.guru}</div> {/* Diperkuat */}
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <StatusButton status={r.status} row={r} />
+          {isLoading ? (
+            <div style={{ padding: "20px", textAlign: "center", color: "#6B7280" }}>Memuat riwayat...</div>
+          ) : rows.length === 0 ? (
+            <div style={{ padding: "40px", textAlign: "center", color: "#9CA3AF" }}>Tidak ada data ketidakhadiran.</div>
+          ) : (
+            rows.map((r, idx) => (
+              <div
+                key={r.no}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "70px 140px 140px 1fr 1fr 150px",
+                  padding: "16px 20px",
+                  fontSize: 14,
+                  alignItems: "center",
+                  borderBottom: idx < rows.length - 1 ? "1px solid #F3F4F6" : "none",
+                  backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#FAFBFC",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#F3F4F6"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#FFFFFF" : "#FAFBFC"}
+              >
+                <div style={{ textAlign: "center", color: "#6B7280", fontWeight: "700" }}>{r.no}</div>
+                <div style={{ textAlign: "center", color: "#374151", fontWeight: "700" }}>{r.tanggal}</div>
+                <div style={{ textAlign: "center", color: "#374151", fontWeight: "700" }}>{r.jam}</div>
+                <div style={{ color: "#111827", fontWeight: "800" }}>{r.mapel}</div>
+                <div style={{ color: "#374151", fontWeight: "600" }}>{r.guru}</div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <StatusButton status={r.status} row={r} />
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* SUMMARY FOOTER */}
@@ -480,15 +459,15 @@ export default function DaftarKetidakhadiranWaliKelas({
         >
           <div style={{
             fontSize: "16px",
-            fontWeight: 900, // Diperkuat
+            fontWeight: 900,
             color: "#6B7280",
             marginBottom: "8px",
           }}>
-            Total Data Kehadiran
+            Total Data Ketidakhadiran
           </div>
           <div style={{
-            fontSize: "36px", // Diperbesar
-            fontWeight: 900, // Diperkuat
+            fontSize: "36px",
+            fontWeight: 900,
             color: "#062A4A",
           }}>
             {rows.length}
@@ -526,7 +505,7 @@ export default function DaftarKetidakhadiranWaliKelas({
                   fontSize: "20px",
                   fontWeight: 900,
                 }}>
-                  Detail Kehadiran
+                  Detail Ketidakhadiran
                 </h3>
               </div>
               <button
@@ -547,24 +526,16 @@ export default function DaftarKetidakhadiranWaliKelas({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: "auto",
               flex: 1,
             }}>
-              {/* Row Tanggal */}
               <DetailRow label="Tanggal" value={selectedRecord.tanggal} />
-
-              {/* Row Jam Pelajaran */}
               <DetailRow label="Jam Pelajaran" value={selectedRecord.jam} />
-
-              {/* Row Mata Pelajaran */}
               <DetailRow label="Mata pelajaran" value={selectedRecord.mapel} />
-
-              {/* Row Nama Guru */}
               <DetailRow label="Nama guru" value={selectedRecord.guru} />
 
-              {/* Row Status */}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -587,14 +558,13 @@ export default function DaftarKetidakhadiranWaliKelas({
                 </div>
               </div>
 
-              {/* Info Box */}
               <div style={{
                 backgroundColor: "#EFF6FF",
                 border: "2px solid #BFDBFE",
                 borderRadius: 8,
                 padding: 16,
                 textAlign: "center",
-                marginBottom: (selectedRecord.status === "Izin" || selectedRecord.status === "Sakit") && selectedRecord.keterangan ? 24 : 0,
+                marginBottom: (selectedRecord.status !== "Hadir") && selectedRecord.keterangan ? 24 : 0,
               }}>
                 <div style={{
                   fontSize: 14,
@@ -605,8 +575,7 @@ export default function DaftarKetidakhadiranWaliKelas({
                 </div>
               </div>
 
-              {/* Keterangan untuk izin dan sakit */}
-              {(selectedRecord.status === "Izin" || selectedRecord.status === "Sakit") && selectedRecord.keterangan && (
+              {((selectedRecord.status !== "Hadir")) && selectedRecord.keterangan && (
                 <div>
                   <div style={{
                     fontSize: 14,
@@ -621,6 +590,7 @@ export default function DaftarKetidakhadiranWaliKelas({
                     backgroundColor: "#F9FAFB",
                     borderRadius: 8,
                     border: "2px solid #E5E7EB",
+                    marginBottom: 24
                   }}>
                     <p style={{
                       margin: 0,
@@ -635,9 +605,9 @@ export default function DaftarKetidakhadiranWaliKelas({
                 </div>
               )}
 
-              {/* Area Bukti Foto untuk izin dan sakit */}
-              {(selectedRecord.status === "Izin" || selectedRecord.status === "Sakit") && (
-                <div style={{ marginTop: selectedRecord.keterangan ? 24 : 0 }}>
+              {/* Area Bukti Foto */}
+              {selectedRecord.bukti && (
+                <div style={{ marginTop: 0 }}>
                   <div style={{
                     fontSize: 14,
                     fontWeight: 800,
@@ -647,7 +617,7 @@ export default function DaftarKetidakhadiranWaliKelas({
                     Bukti Foto :
                   </div>
                   <div style={{
-                    padding: "40px 16px",
+                    padding: "16px",
                     backgroundColor: "#F9FAFB",
                     borderRadius: 8,
                     border: "2px solid #E5E7EB",
@@ -656,60 +626,12 @@ export default function DaftarKetidakhadiranWaliKelas({
                     alignItems: "center",
                     justifyContent: "center",
                   }}>
-                    <p style={{
-                      margin: 0,
-                      fontSize: 14,
-                      color: "#9CA3AF",
-                      textAlign: "center",
-                      fontWeight: 600,
-                    }}>
-                      {selectedRecord.bukti || "[Area untuk menampilkan bukti foto]"}
-                    </p>
+                    {/* Placeholder for image */}
+                    <div style={{ textAlign: 'center' }}>
+                      {/* In real app, render <img src={selectedRecord.bukti} /> */}
+                      <p style={{ color: '#9CA3AF' }}>📷 {selectedRecord.bukti}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Catatan untuk status Hadir */}
-              {selectedRecord.status === "Hadir" && (
-                <div style={{ 
-                  marginTop: 24,
-                  padding: "14px 18px",
-                  backgroundColor: "#F0FDF4",
-                  borderRadius: 8,
-                  border: "2px solid #BBF7D0",
-                }}>
-                  <p style={{
-                    margin: 0,
-                    fontSize: 14,
-                    color: "#166534",
-                    lineHeight: 1.5,
-                    textAlign: "center",
-                    fontWeight: 700,
-                  }}>
-                    ✓ Siswa hadir tepat waktu sesuai jadwal pelajaran
-                  </p>
-                </div>
-              )}
-
-              {/* Catatan untuk status Alfa */}
-              {selectedRecord.status === "Alfa" && (
-                <div style={{ 
-                  marginTop: 24,
-                  padding: "14px 18px",
-                  backgroundColor: "#FEF2F2",
-                  borderRadius: 8,
-                  border: "2px solid #FECACA",
-                }}>
-                  <p style={{
-                    margin: 0,
-                    fontSize: 14,
-                    color: "#991B1B",
-                    lineHeight: 1.5,
-                    textAlign: "center",
-                    fontWeight: 700,
-                  }}>
-                    ⚠ Siswa tidak hadir tanpa keterangan
-                  </p>
                 </div>
               )}
             </div>
@@ -720,7 +642,6 @@ export default function DaftarKetidakhadiranWaliKelas({
   );
 }
 
-// Komponen DetailRow
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{

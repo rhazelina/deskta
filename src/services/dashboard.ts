@@ -136,6 +136,16 @@ export const dashboardService = {
     },
 
     /**
+     * Get waka dashboard summary (stats & trend)
+     */
+    async getWakaDashboardSummary(): Promise<any> {
+        const response = await apiClient.get<any>(
+            '/waka/dashboard/summary'
+        );
+        return response.data;
+    },
+
+    /**
      * Get teachers daily attendance (for waka)
      */
     async getTeachersDailyAttendance(params?: { date?: string }): Promise<Teacher[]> {

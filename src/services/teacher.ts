@@ -60,5 +60,19 @@ export const teacherService = {
      */
     async deleteTeacher(id: string | number): Promise<void> {
         await apiClient.delete(`${API_ENDPOINTS.TEACHERS}/${id}`);
+    },
+
+    /**
+     * Upload schedule image
+     */
+    async uploadScheduleImage(id: string | number, file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post(`${API_ENDPOINTS.TEACHERS}/${id}/schedule-image`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
     }
 };

@@ -47,6 +47,17 @@ export default function KonsentrasiKeahlianAdmin({
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({ namaJurusan: "", kodeJurusan: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Function to check for duplicates
+  const checkDuplicate = (kode: string, nama: string, excludeId?: string) => {
+    return konsentrasiKeahlianList.some(
+      (k) =>
+        (k.kode.toLowerCase() === kode.toLowerCase() ||
+          k.nama.toLowerCase() === nama.toLowerCase()) &&
+        k.id !== excludeId
+    );
+  };
 
   // Fetch Majors
   useEffect(() => {
@@ -112,6 +123,19 @@ export default function KonsentrasiKeahlianAdmin({
   };
 
   const handleSubmitKonsentrasi = async (data: { namaJurusan: string; kodeJurusan: string }) => {
+    // Validasi duplikasi di frontend
+    const isDuplicate = checkDuplicate(
+      data.kodeJurusan,
+      data.namaJurusan,
+      isEditMode && editingKonsentrasiKeahlian ? editingKonsentrasiKeahlian.id : undefined
+    );
+
+    if (isDuplicate) {
+      await popupAlert("Kode atau nama konsentrasi keahlian sudah ada. Harap gunakan yang berbeda.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const { majorService } = await import('../../services/major');
       const payload = {
@@ -136,15 +160,17 @@ export default function KonsentrasiKeahlianAdmin({
       }));
       setKonsentrasiKeahlianList(mappedData);
 
-    } catch (e) {
-      console.error(e);
-      void popupAlert("Gagal menyimpan data");
-    }
+      handleCloseModal();
 
-    setIsModalOpen(false);
-    setEditingKonsentrasiKeahlian(null);
-    setIsEditMode(false);
-    setFormData({ namaJurusan: "", kodeJurusan: "" });
+    } catch (e: any) {
+      console.error(e);
+      // Handle logic for backend duplication error (409) if needed
+      // Assuming generic error for now, as frontend check covers most cases
+      const errorMessage = e?.response?.data?.message || "Gagal menyimpan data";
+      await popupAlert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -323,6 +349,7 @@ export default function KonsentrasiKeahlianAdmin({
         onSubmit={handleSubmitKonsentrasi}
         initialData={formData}
         isEdit={isEditMode}
+        isLoading={isSubmitting}
       />
     </AdminLayout>
   );

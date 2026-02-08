@@ -1,9 +1,11 @@
 // src/Pages/WakaStaff/JadwalKelasStaff.tsx
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StaffLayout from '../../component/WakaStaff/StaffLayout';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { Eye, Upload } from "lucide-react";
+import { classService, ClassRoom } from '../../services/class';
+import { usePopup } from '../../contexts/PopupContext';
 
 interface JadwalKelasStaffProps {
   user: {
@@ -16,45 +18,6 @@ interface JadwalKelasStaffProps {
   onselectKelas?: (namaKelas: string) => void;
 }
 
-interface KelasItem {
-  id: string;
-  namaKelas: string;
-  tingkat: string;
-  jurusan: string;
-  waliKelas: string;
-}
-
-const dummyKelas: KelasItem[] = [
-  {
-    id: '1',
-    namaKelas: 'XII Mekatronika 1',
-    tingkat: 'XII',
-    jurusan: 'Mekatronika',
-    waliKelas: 'Ewit Ernlyah',
-  },
-  {
-    id: '2',
-    namaKelas: 'XII Mekatronika 2',
-    tingkat: 'XII',
-    jurusan: 'Mekatronika',
-    waliKelas: 'Ewit Ernlyah',
-  },
-  {
-    id: '3',
-    namaKelas: 'XI RPL 1',
-    tingkat: 'XI',
-    jurusan: 'Rekayasa Perangkat Lunak',
-    waliKelas: 'Budi Santoso',
-  },
-  {
-    id: '4',
-    namaKelas: 'X TKJ 1',
-    tingkat: 'X',
-    jurusan: 'Teknik Komputer Jaringan',
-    waliKelas: 'Siti Nurhaliza',
-  },
-];
-
 export default function JadwalKelasStaff({
   user,
   onLogout,
@@ -64,15 +27,35 @@ export default function JadwalKelasStaff({
 }: JadwalKelasStaffProps) {
   const [selectedJurusan, setSelectedJurusan] = useState('');
   const [selectedTingkat, setSelectedTingkat] = useState('');
-  const [jadwalImages, setJadwalImages] = useState<Record<string, string>>({});
+  const [classes, setClasses] = useState<ClassRoom[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { popupAlert, popupConfirm } = usePopup();
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    setLoading(true);
+    try {
+      const data = await classService.getClasses();
+      setClasses(data);
+    } catch (error) {
+      console.error("Failed to fetch classes", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const jurusanOptions = useMemo(
-    () =>
-      [...new Set(dummyKelas.map((item) => item.jurusan))].map((jrs) => ({
+    () => {
+      const majors = Array.from(new Set(classes.map(c => c.major?.name || 'Unknown')));
+      return majors.map((jrs) => ({
         label: jrs,
         value: jrs,
-      })),
-    []
+      }));
+    },
+    [classes]
   );
 
   const tingkatOptions = [
@@ -81,51 +64,77 @@ export default function JadwalKelasStaff({
     { label: 'Kelas XII', value: 'XII' },
   ];
 
-  const filteredData = dummyKelas.filter((item) => {
-    const matchJurusan = selectedJurusan ? item.jurusan === selectedJurusan : true;
-    const matchTingkat = selectedTingkat ? item.tingkat === selectedTingkat : true;
+  const filteredData = classes.filter((item) => {
+    const itemMajor = item.major?.name || "";
+    const matchJurusan = selectedJurusan ? itemMajor === selectedJurusan : true;
+    const matchTingkat = selectedTingkat ? item.grade === selectedTingkat : true;
     return matchJurusan && matchTingkat;
   });
 
-  const handleUpload = (row: KelasItem) => {
+  const handleUpload = (row: ClassRoom) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/png, image/jpeg, image/jpg";
 
-    input.onchange = (e: any) => {
+    input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
-        const imageUrl = URL.createObjectURL(file);
-        setJadwalImages((prev) => ({
-          ...prev,
-          [row.id]: imageUrl,
-        }));
+        if (file.size > 2 * 1024 * 1024) {
+          void popupAlert("Ukuran file maksimal 2MB");
+          return;
+        }
+
+        const confirm = await popupConfirm(`Upload jadwal untuk ${row.grade} ${row.label}?`);
+        if (!confirm) return;
+
+        try {
+          await classService.uploadSchedule(row.id, file);
+          void popupAlert("Jadwal kelas berhasil diupload");
+          fetchClasses(); // Refresh
+        } catch (error) {
+          console.error("Upload failed", error);
+          void popupAlert("Gagal mengupload jadwal. Silakan coba lagi.");
+        }
       }
     };
 
     input.click();
   };
 
-  const handleViewDetail = (row: KelasItem) => {
+  const handleViewDetail = (row: ClassRoom) => {
+    const name = row.name || `${row.grade} ${row.label}`;
     if (onselectKelas) {
-      onselectKelas(row.namaKelas);
+      onselectKelas(name);
     }
 
     onMenuClick('lihat-kelas', {
-      kelas: row.namaKelas,
-      jadwalImage: jadwalImages[row.id],
+      kelas: name,
+      classId: row.id,
+      jadwalImage: row.schedule_image_path,
     });
   };
 
   const columns = [
-    { key: 'namaKelas', label: 'Nama Kelas' },
-    { key: 'jurusan', label: 'Nama Konsentrasi Keahlian' },
-    { key: 'waliKelas', label: 'Wali Kelas' },
+    {
+      key: 'displayName',
+      label: 'Nama Kelas',
+      render: (_: any, row: ClassRoom) => row.name || `${row.grade} ${row.label}`
+    },
+    {
+      key: 'jurusan',
+      label: 'Nama Konsentrasi Keahlian',
+      render: (_: any, row: ClassRoom) => row.major?.name || "-"
+    },
+    {
+      key: 'waliKelas',
+      label: 'Wali Kelas',
+      render: (_: any, row: ClassRoom) => row.homeroom_teacher?.user?.name || "-"
+    },
     {
       key: 'aksi',
       label: 'Aksi',
-      align: 'center', // 🔥 INI KUNCI UTAMANYA
-      render: (_: any, row: KelasItem) => (
+      align: 'center',
+      render: (_: any, row: ClassRoom) => (
         <div
           style={{
             display: 'inline-flex',
@@ -142,6 +151,7 @@ export default function JadwalKelasStaff({
               display: 'flex',
               alignItems: 'center',
             }}
+            title="Lihat Detail"
           >
             <Eye size={18} />
           </button>
@@ -154,7 +164,9 @@ export default function JadwalKelasStaff({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              color: row.schedule_image_path ? '#3B82F6' : 'inherit'
             }}
+            title={row.schedule_image_path ? "Ganti Jadwal" : "Upload Jadwal"}
           >
             <Upload size={18} />
           </button>
@@ -208,7 +220,7 @@ export default function JadwalKelasStaff({
           columns={columns}
           data={filteredData}
           keyField="id"
-          emptyMessage="Belum ada data jadwal kelas."
+          emptyMessage={loading ? "Memuat data..." : "Belum ada data jadwal kelas."}
         />
       </div>
     </StaffLayout>

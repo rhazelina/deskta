@@ -1,10 +1,8 @@
 ﻿// src/Pages/WakaStaff/DetailSiswaStaff.tsx
 import { useEffect, useMemo, useState, useRef } from "react";
-import { FileText, FileSpreadsheet, GraduationCap, Calendar, ChevronDown } from "lucide-react";
+import { FileText, FileSpreadsheet, GraduationCap, Calendar } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { Button } from "../../component/Shared/Button";
-import { FormModal } from "../../component/Shared/FormModal";
-import { Select } from "../../component/Shared/Select";
 import { Table } from "../../component/Shared/Table";
 import { Modal } from "../../component/Shared/Modal";
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
@@ -131,7 +129,7 @@ export default function DetailSiswaStaff({
 }: DetailSiswaStaffProps) {
   const { alert: popupAlert } = usePopup();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+
   // Tanggal otomatis update setiap hari
   const [selectedTanggal, setSelectedTanggal] = useState(
     new Date().toLocaleDateString("id-ID", {
@@ -144,7 +142,7 @@ export default function DetailSiswaStaff({
   const [selectedMapel, setSelectedMapel] = useState("");
   const [selectedGuru, setSelectedGuru] = useState("");
   const [jsPDFLoaded, setJsPDFLoaded] = useState(false);
-  
+
   // State untuk dropdown ekspor
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
@@ -155,158 +153,158 @@ export default function DetailSiswaStaff({
   };
 
   // ✅ PERBAIKAN: Dummy data kehadiran siswa DENGAN NAMA GURU LENGKAP dan detail
-  const [rows, setRows] = useState<KehadiranRow[]>([
-    { 
-      id: "1", 
-      nisn: "1348576392", 
-      namaSiswa: "Wito Suherman Suhermin", 
-      mataPelajaran: "Matematika", 
-      namaGuru: "Pak Budi", 
-      status: "hadir", 
-      waktuMasuk: "07:30 WIB", 
-      waktuKeluar: "12:00 WIB", 
+  const [rows] = useState<KehadiranRow[]>([
+    {
+      id: "1",
+      nisn: "1348576392",
+      namaSiswa: "Wito Suherman Suhermin",
+      mataPelajaran: "Matematika",
+      namaGuru: "Pak Budi",
+      status: "hadir",
+      waktuMasuk: "07:30 WIB",
+      waktuKeluar: "12:00 WIB",
       lokasi: "Sekolah - Gerbang Utama",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "2", 
-      nisn: "1348576393", 
-      namaSiswa: "Ahmad Fauzi", 
-      mataPelajaran: "Matematika", 
-      namaGuru: "Pak Budi", 
-      status: "hadir", 
-      waktuMasuk: "07:25 WIB", 
-      waktuKeluar: "12:05 WIB", 
+    {
+      id: "2",
+      nisn: "1348576393",
+      namaSiswa: "Ahmad Fauzi",
+      mataPelajaran: "Matematika",
+      namaGuru: "Pak Budi",
+      status: "hadir",
+      waktuMasuk: "07:25 WIB",
+      waktuKeluar: "12:05 WIB",
       lokasi: "Sekolah - Gerbang Utama",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "3", 
-      nisn: "1348576394", 
-      namaSiswa: "Siti Nurhaliza", 
-      mataPelajaran: "Bahasa Indonesia", 
-      namaGuru: "Bu Sari", 
-      status: "izin", 
+    {
+      id: "3",
+      nisn: "1348576394",
+      namaSiswa: "Siti Nurhaliza",
+      mataPelajaran: "Bahasa Indonesia",
+      namaGuru: "Bu Sari",
+      status: "izin",
       keterangan: "Ijin tidak masuk karena ada keperluan keluarga",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "4", 
-      nisn: "1348576395", 
-      namaSiswa: "Budi Santoso", 
-      mataPelajaran: "Bahasa Inggris", 
-      namaGuru: "Bu Linda", 
-      status: "sakit", 
+    {
+      id: "4",
+      nisn: "1348576395",
+      namaSiswa: "Budi Santoso",
+      mataPelajaran: "Bahasa Inggris",
+      namaGuru: "Bu Linda",
+      status: "sakit",
       keterangan: "Demam tinggi dan dokter menyarankan istirahat",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "5", 
-      nisn: "1348576396", 
-      namaSiswa: "Dewi Sartika", 
-      mataPelajaran: "Matematika", 
-      namaGuru: "Bu Ani", 
+    {
+      id: "5",
+      nisn: "1348576396",
+      namaSiswa: "Dewi Sartika",
+      mataPelajaran: "Matematika",
+      namaGuru: "Bu Ani",
       status: "tidak-hadir",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "6", 
-      nisn: "1348576397", 
-      namaSiswa: "Rizki Ramadhan", 
-      mataPelajaran: "Fisika", 
-      namaGuru: "Pak Ahmad", 
+    {
+      id: "6",
+      nisn: "1348576397",
+      namaSiswa: "Rizki Ramadhan",
+      mataPelajaran: "Fisika",
+      namaGuru: "Pak Ahmad",
       status: "tidak-hadir",
       jamPelajaran: "5-8",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "7", 
-      nisn: "1348576398", 
-      namaSiswa: "Andi Wijaya", 
-      mataPelajaran: "Matematika", 
-      namaGuru: "Pak Hendra", 
-      status: "hadir", 
-      waktuMasuk: "07:45 WIB", 
-      waktuKeluar: "11:50 WIB", 
+    {
+      id: "7",
+      nisn: "1348576398",
+      namaSiswa: "Andi Wijaya",
+      mataPelajaran: "Matematika",
+      namaGuru: "Pak Hendra",
+      status: "hadir",
+      waktuMasuk: "07:45 WIB",
+      waktuKeluar: "11:50 WIB",
       lokasi: "Sekolah - Gerbang Timur",
       jamPelajaran: "1-4",
       tanggal: "25-01-2025"
     },
-    { 
-      id: "8", 
-      nisn: "1348576399", 
-      namaSiswa: "Zizee Miari", 
-      mataPelajaran: "MPKK", 
-      namaGuru: "Bu Rere", 
-      status: "hadir", 
-      waktuMasuk: "07:20 WIB", 
-      waktuKeluar: "12:10 WIB", 
+    {
+      id: "8",
+      nisn: "1348576399",
+      namaSiswa: "Zizee Miari",
+      mataPelajaran: "MPKK",
+      namaGuru: "Bu Rere",
+      status: "hadir",
+      waktuMasuk: "07:20 WIB",
+      waktuKeluar: "12:10 WIB",
       lokasi: "Sekolah - Gerbang Utama",
       jamPelajaran: "5-8",
       tanggal: "26-01-2025"
     },
-    { 
-      id: "9", 
-      nisn: "1348576400", 
-      namaSiswa: "Fafa Amata", 
-      mataPelajaran: "MPKK", 
-      namaGuru: "Bu Dian", 
-      status: "hadir", 
-      waktuMasuk: "07:35 WIB", 
-      waktuKeluar: "12:00 WIB", 
+    {
+      id: "9",
+      nisn: "1348576400",
+      namaSiswa: "Fafa Amata",
+      mataPelajaran: "MPKK",
+      namaGuru: "Bu Dian",
+      status: "hadir",
+      waktuMasuk: "07:35 WIB",
+      waktuKeluar: "12:00 WIB",
       lokasi: "Sekolah - Gerbang Utama",
       jamPelajaran: "5-8",
       tanggal: "26-01-2025"
     },
-    { 
-      id: "10", 
-      nisn: "1348576401", 
-      namaSiswa: "Rina Lestari", 
-      mataPelajaran: "Kimia", 
-      namaGuru: "Bu Dewi", 
-      status: "hadir", 
-      waktuMasuk: "07:40 WIB", 
-      waktuKeluar: "12:15 WIB", 
+    {
+      id: "10",
+      nisn: "1348576401",
+      namaSiswa: "Rina Lestari",
+      mataPelajaran: "Kimia",
+      namaGuru: "Bu Dewi",
+      status: "hadir",
+      waktuMasuk: "07:40 WIB",
+      waktuKeluar: "12:15 WIB",
       lokasi: "Sekolah - Gerbang Utama",
       jamPelajaran: "1-4",
       tanggal: "26-01-2025"
     },
-    { 
-      id: "11", 
-      nisn: "1348576402", 
-      namaSiswa: "Joko Susanto", 
-      mataPelajaran: "Fisika", 
-      namaGuru: "Bu Rina", 
-      status: "sakit", 
+    {
+      id: "11",
+      nisn: "1348576402",
+      namaSiswa: "Joko Susanto",
+      mataPelajaran: "Fisika",
+      namaGuru: "Bu Rina",
+      status: "sakit",
       keterangan: "Flu berat dan batuk",
       jamPelajaran: "1-4",
       tanggal: "26-01-2025"
     },
-    { 
-      id: "12", 
-      nisn: "1348576403", 
-      namaSiswa: "Maya Putri", 
-      mataPelajaran: "Bahasa Inggris", 
-      namaGuru: "Pak John", 
-      status: "izin", 
+    {
+      id: "12",
+      nisn: "1348576403",
+      namaSiswa: "Maya Putri",
+      mataPelajaran: "Bahasa Inggris",
+      namaGuru: "Pak John",
+      status: "izin",
       keterangan: "Menghadiri acara keluarga",
       jamPelajaran: "5-8",
       tanggal: "26-01-2025"
     },
-    { 
-      id: "13", 
-      nisn: "1348576404", 
-      namaSiswa: "Ahmad Yani", 
-      mataPelajaran: "Matematika", 
-      namaGuru: "Pak Budi", 
-      status: "pulang", 
-      keterangan: "Pulang lebih awal karena sakit perut", 
-      waktuMasuk: "07:30 WIB", 
+    {
+      id: "13",
+      nisn: "1348576404",
+      namaSiswa: "Ahmad Yani",
+      mataPelajaran: "Matematika",
+      namaGuru: "Pak Budi",
+      status: "pulang",
+      keterangan: "Pulang lebih awal karena sakit perut",
+      waktuMasuk: "07:30 WIB",
       waktuKeluar: "10:15 WIB",
       jamPelajaran: "1-4",
       tanggal: "26-01-2025"
@@ -404,7 +402,7 @@ export default function DetailSiswaStaff({
       });
       return Array.from(guruSet).sort();
     }
-    
+
     // Jika ada mapel dipilih, ambil dari mapping
     return MATA_PELAJARAN_GURU[selectedMapel] || [];
   }, [selectedMapel, rows]);
@@ -495,7 +493,7 @@ export default function DetailSiswaStaff({
       case "sakit":
         return "Siswa sakit dengan surat dokter";
       case "hadir":
-        return waktuMasuk 
+        return waktuMasuk
           ? `Siswa hadir tepat waktu pada ${waktuMasuk}`
           : "Siswa hadir tepat waktu";
       case "pulang":
@@ -557,8 +555,8 @@ export default function DetailSiswaStaff({
     { key: "nisn", label: "NISN" },
     { key: "namaSiswa", label: "Nama Siswa" },
     { key: "mataPelajaran", label: "Mata Pelajaran" },
-    { 
-      key: "namaGuru", 
+    {
+      key: "namaGuru",
       label: "Nama Guru",
       render: (value: string) => (
         <div style={{ fontWeight: 500 }}>{value || "-"}</div>
@@ -579,40 +577,7 @@ export default function DetailSiswaStaff({
     },
   ], []);
 
-  // Modal edit
-  const [editingRow, setEditingRow] = useState<KehadiranRow | null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editStatus, setEditStatus] = useState<DetailStatusType>("hadir");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const statusOptions = [
-    { label: 'Hadir', value: 'hadir' as DetailStatusType },
-    { label: 'Sakit', value: 'sakit' as DetailStatusType },
-    { label: 'Izin', value: 'izin' as DetailStatusType },
-    { label: 'Tidak Hadir', value: 'tidak-hadir' as DetailStatusType },
-    { label: 'Pulang', value: 'pulang' as DetailStatusType },
-  ];
-
-  const handleOpenEdit = (row: KehadiranRow) => {
-    setEditingRow(row);
-    setEditStatus(row.status);
-    setIsEditOpen(true);
-  };
-
-  const handleCloseEdit = () => {
-    setIsEditOpen(false);
-    setEditingRow(null);
-  };
-
-  const handleSubmitEdit = () => {
-    if (!editingRow) return;
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setRows(prev => prev.map(r => r.id === editingRow.id ? { ...r, status: editStatus } : r));
-      setIsSubmitting(false);
-      handleCloseEdit();
-    }, 300);
-  };
 
   const handleExportPDF = async () => {
     if (!jsPDFLoaded || !window.jspdf) {
@@ -634,9 +599,9 @@ export default function DetailSiswaStaff({
       doc.setFont(undefined, 'normal');
       doc.text(`Kelas: ${kelasInfo.namaKelas}`, 14, 25);
       doc.text(`Tanggal: ${selectedTanggal}`, 14, 32);
-      
+
       if (selectedMapel) {
-        const mapelText = selectedGuru 
+        const mapelText = selectedGuru
           ? `Mata Pelajaran: ${selectedMapel} (${selectedGuru})`
           : `Mata Pelajaran: ${selectedMapel}`;
         doc.text(mapelText, 14, 39);
@@ -685,7 +650,7 @@ export default function DetailSiswaStaff({
       // Save PDF
       const filename = `Rekap_Kehadiran_${kelasInfo.namaKelas}_${selectedTanggal.replace(/\//g, '-')}.pdf`;
       doc.save(filename);
-      
+
       await popupAlert("PDF berhasil diunduh!");
       setShowExportDropdown(false);
     } catch (error) {
@@ -699,14 +664,14 @@ export default function DetailSiswaStaff({
     csvContent += "REKAP KEHADIRAN SISWA\n";
     csvContent += `Kelas: ${kelasInfo.namaKelas}\n`;
     csvContent += `Tanggal: ${selectedTanggal}\n`;
-    
+
     if (selectedMapel) {
-      const mapelText = selectedGuru 
+      const mapelText = selectedGuru
         ? `Mata Pelajaran: ${selectedMapel} (${selectedGuru})`
         : `Mata Pelajaran: ${selectedMapel}`;
       csvContent += `${mapelText}\n`;
     }
-    
+
     csvContent += "\nRINGKASAN,\n";
     csvContent += `Hadir,${totalHadir}\n`;
     csvContent += `Sakit,${totalSakit}\n`;
@@ -760,7 +725,7 @@ export default function DetailSiswaStaff({
         {/* Bar atas: tanggal + card kelas + tombol */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-            
+
             {/* BUTTON TANGGAL BARU - DENGAN BACKGROUND BIRU */}
             <div
               style={{
@@ -779,7 +744,7 @@ export default function DetailSiswaStaff({
               <Calendar size={18} strokeWidth={2.5} />
               <span>{selectedTanggal}</span>
             </div>
-            
+
             {/* CARD KELAS */}
             <div
               style={{
@@ -841,8 +806,8 @@ export default function DetailSiswaStaff({
                 label="Ekspor"
                 icon={<FileText size={16} />}
                 onClick={toggleExportDropdown}
-                style={{ 
-                  backgroundColor: "#3B82F6", 
+                style={{
+                  backgroundColor: "#3B82F6",
                   borderColor: "#3B82F6",
                   display: "flex",
                   alignItems: "center",
@@ -915,9 +880,9 @@ export default function DetailSiswaStaff({
               label="Lihat Rekap"
               icon={<FileText size={16} />}
               onClick={() => onMenuClick("rekap-kehadiran-siswa")}
-              style={{ 
-                backgroundColor: "#3B82F6", 
-                borderColor: "#3B82F6" 
+              style={{
+                backgroundColor: "#3B82F6",
+                borderColor: "#3B82F6"
               }}
             />
 
@@ -934,14 +899,14 @@ export default function DetailSiswaStaff({
               <label style={{ display: "block", fontWeight: 500, marginBottom: 6, fontSize: 13, color: "#6B7280" }}>
                 Mata Pelajaran
               </label>
-              <select 
-                value={selectedMapel} 
-                onChange={e => setSelectedMapel(e.target.value)} 
-                style={{ 
+              <select
+                value={selectedMapel}
+                onChange={e => setSelectedMapel(e.target.value)}
+                style={{
                   width: "100%",
-                  padding: "10px 12px", 
-                  borderRadius: 8, 
-                  border: "1px solid #D1D5DB", 
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #D1D5DB",
                   fontSize: 14,
                   backgroundColor: "#FFFFFF",
                   cursor: "pointer",
@@ -961,14 +926,14 @@ export default function DetailSiswaStaff({
               <label style={{ display: "block", fontWeight: 500, marginBottom: 6, fontSize: 13, color: "#6B7280" }}>
                 Nama Guru
               </label>
-              <select 
-                value={selectedGuru} 
-                onChange={e => setSelectedGuru(e.target.value)} 
-                style={{ 
+              <select
+                value={selectedGuru}
+                onChange={e => setSelectedGuru(e.target.value)}
+                style={{
                   width: "100%",
-                  padding: "10px 12px", 
-                  borderRadius: 8, 
-                  border: "1px solid #D1D5DB", 
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #D1D5DB",
                   fontSize: 14,
                   backgroundColor: availableGurus.length === 0 ? "#F3F4F6" : "#FFFFFF",
                   cursor: availableGurus.length === 0 ? "not-allowed" : "pointer",
@@ -1006,24 +971,10 @@ export default function DetailSiswaStaff({
         <Table
           columns={columns}
           data={filteredRows}
-          onEdit={handleOpenEdit}
           keyField="id"
           emptyMessage="Belum ada data kehadiran siswa."
         />
       </div>
-
-      {/* Modal Edit */}
-      <FormModal isOpen={isEditOpen} onClose={handleCloseEdit} title="Ubah Kehadiran" onSubmit={handleSubmitEdit} submitLabel="Simpan" isSubmitting={isSubmitting}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <p style={{ margin: 0, marginBottom: 8, fontSize: 14, fontWeight: 600 }}>Pilih Kehadiran</p>
-          <Select
-            value={editStatus}
-            onChange={(val) => setEditStatus(val as DetailStatusType)}
-            options={statusOptions}
-            placeholder="Pilih status kehadiran"
-          />
-        </div>
-      </FormModal>
 
       {/* Modal Detail Kehadiran */}
       <Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)}>
@@ -1075,7 +1026,7 @@ export default function DetailSiswaStaff({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: "auto",
               flex: 1,
@@ -1239,26 +1190,26 @@ export default function DetailSiswaStaff({
 /** Kartu ringkasan dengan warna BOLD */
 function SummaryCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ 
+    <div style={{
       backgroundColor: color, // BACKGROUND BOLD COLOR
-      borderRadius: 12, 
-      padding: 16, 
-      boxShadow: "0 4px 8px rgba(0,0,0,0.15)" 
+      borderRadius: 12,
+      padding: 16,
+      boxShadow: "0 4px 8px rgba(0,0,0,0.15)"
     }}>
-      <div style={{ 
-        fontSize: 13, 
+      <div style={{
+        fontSize: 13,
         color: "#FFFFFF", // TEXT PUTIH
-        marginBottom: 6, 
+        marginBottom: 6,
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.5px',
-        opacity: 0.9 
+        opacity: 0.9
       }}>
         {label}
       </div>
-      <div style={{ 
-        fontSize: 28, 
-        fontWeight: 800, 
+      <div style={{
+        fontSize: 28,
+        fontWeight: 800,
         color: "#FFFFFF", // TEXT PUTIH
         textShadow: "0 2px 4px rgba(0,0,0,0.2)"
       }}>

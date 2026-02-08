@@ -1,9 +1,11 @@
 // src/Pages/WakaStaff/JadwalGuruStaff.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { SearchBox } from "../../component/Shared/Search";
 import { Table } from "../../component/Shared/Table";
 import { Eye, Upload } from "lucide-react";
+import { teacherService, Teacher } from "../../services/teacher";
+import { usePopup } from "../../contexts/PopupContext";
 
 interface JadwalGuruStaffProps {
   user: {
@@ -16,45 +18,6 @@ interface JadwalGuruStaffProps {
   onselectGuru?: (namaGuru: string) => void;
 }
 
-interface GuruJadwal {
-  id: string;
-  kodeGuru: string;
-  namaGuru: string;
-  mataPelajaran: string;
-  role: string;
-}
-
-const dummyGuruJadwal: GuruJadwal[] = [
-  {
-    id: "1",
-    kodeGuru: "0918415784",
-    namaGuru: "Alifah Diantobes Aindra S.Pd",
-    mataPelajaran: "Matematika",
-    role: "Wali Kelas",
-  },
-  {
-    id: "2",
-    kodeGuru: "1348576392",
-    namaGuru: "Budi Santoso",
-    mataPelajaran: "Bahasa Inggris",
-    role: "Staf",
-  },
-  {
-    id: "3",
-    kodeGuru: "0918415785",
-    namaGuru: "Joko Widodo",
-    mataPelajaran: "Fisika",
-    role: "Wali Kelas",
-  },
-  {
-    id: "4",
-    kodeGuru: "1348576393",
-    namaGuru: "Siti Nurhaliza",
-    mataPelajaran: "Kimia",
-    role: "Staf",
-  },
-];
-
 export default function JadwalGuruStaff({
   user,
   onLogout,
@@ -63,57 +26,92 @@ export default function JadwalGuruStaff({
   onselectGuru,
 }: JadwalGuruStaffProps) {
   const [searchValue, setSearchValue] = useState("");
-  const [jadwalImages, setJadwalImages] = useState<Record<string, string>>({});
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { popupAlert, popupConfirm } = usePopup();
 
-  const filteredData = dummyGuruJadwal.filter(
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  const fetchTeachers = async () => {
+    setLoading(true);
+    try {
+      const data = await teacherService.getTeachers();
+      setTeachers(data);
+    } catch (error) {
+      console.error("Failed to fetch teachers", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = teachers.filter(
     (item) =>
-      item.kodeGuru.toLowerCase().includes(searchValue.toLowerCase()) ||
-      item.namaGuru.toLowerCase().includes(searchValue.toLowerCase()) ||
-      item.mataPelajaran.toLowerCase().includes(searchValue.toLowerCase()) ||
-      item.role.toLowerCase().includes(searchValue.toLowerCase())
+      item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      item.nip.toLowerCase().includes(searchValue.toLowerCase()) ||
+      item.subject.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  const handleUpload = (row: GuruJadwal) => {
+  const handleUpload = (row: Teacher) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/png, image/jpeg, image/jpg";
 
-    input.onchange = (e: any) => {
+    input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
-        const imageUrl = URL.createObjectURL(file);
-        setJadwalImages((prev) => ({
-          ...prev,
-          [row.id]: imageUrl,
-        }));
+        if (file.size > 2 * 1024 * 1024) {
+          void popupAlert("Ukuran file maksimal 2MB");
+          return;
+        }
+
+        const confirm = await popupConfirm(`Upload jadwal untuk ${row.name}?`);
+        if (!confirm) return;
+
+        try {
+          await teacherService.uploadScheduleImage(row.id, file);
+          void popupAlert("Jadwal berhasil diupload");
+          fetchTeachers(); // Refresh to get new image path if needed (though usually we assume it worked)
+        } catch (error) {
+          console.error("Upload failed", error);
+          void popupAlert("Gagal mengupload jadwal. Silakan coba lagi.");
+        }
       }
     };
 
     input.click();
   };
 
-  const handleViewDetail = (row: GuruJadwal) => {
+  const handleViewDetail = (row: Teacher) => {
     if (onselectGuru) {
-      onselectGuru(row.namaGuru);
+      onselectGuru(row.name);
     }
 
+    // Determine the image URL. Backend returns path, we need full URL or logic to prepend storage generic URL
+    // Assuming backend returns relative path 'schedules/teachers/...' and we have a way to view it.
+    // Ideally use `getScheduleImage` endpoint returning the file or redirect. 
+    // Here we pass the ID so the detail page can fetch the image if needed, or if path is public.
+    // For now passing row to detail.
+
     onMenuClick("lihat-guru", {
-      namaGuru: row.namaGuru,
-      noIdentitas: row.kodeGuru,
-      jadwalImage: jadwalImages[row.id],
+      namaGuru: row.name,
+      noIdentitas: row.code || row.nip,
+      teacherId: row.id, // Pass ID for detail page to fetch specific data
+      jadwalImage: row.schedule_image_path, // Pass path if available
     });
   };
 
   const columns = [
-    { key: "kodeGuru", label: "Kode Guru" },
-    { key: "namaGuru", label: "Nama Guru" },
-    { key: "mataPelajaran", label: "Mata Pelajaran" },
-    { key: "role", label: "Role" },
+    { key: "code", label: "Kode Guru" },
+    { key: "name", label: "Nama Guru" },
+    { key: "subject", label: "Mata Pelajaran" },
+    // { key: "role", label: "Role" }, // Role is less relevant here as all are teachers/staff
     {
       key: "aksi",
       label: "Aksi",
       align: "center",
-      render: (_: any, row: GuruJadwal) => (
+      render: (_: any, row: Teacher) => (
         <div
           style={{
             display: "inline-flex",
@@ -130,6 +128,7 @@ export default function JadwalGuruStaff({
               display: "flex",
               alignItems: "center",
             }}
+            title="Lihat Detail"
           >
             <Eye size={18} />
           </button>
@@ -142,7 +141,9 @@ export default function JadwalGuruStaff({
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
+              color: row.schedule_image_path ? '#3B82F6' : 'inherit'
             }}
+            title={row.schedule_image_path ? "Ganti Jadwal" : "Upload Jadwal"}
           >
             <Upload size={18} />
           </button>
@@ -180,7 +181,7 @@ export default function JadwalGuruStaff({
           columns={columns}
           data={filteredData}
           keyField="id"
-          emptyMessage="Belum ada data jadwal guru."
+          emptyMessage={loading ? "Memuat data..." : "Belum ada data jadwal guru."}
         />
       </div>
     </StaffLayout>

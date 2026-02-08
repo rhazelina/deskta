@@ -7,7 +7,7 @@ interface MetodeGuruProps {
   isOpen: boolean;
   onClose: () => void;
   onPilihQR: () => void;
-  onPilihManual: () => void;
+  // onPilihManual: () => void; // Removed
   onTidakBisaMengajar?: () => void;
   onSubmitDispensasi?: (data: { alasan: string; tanggal?: string; jamMulai?: string; jamSelesai?: string; keterangan?: string; bukti?: File; }) => void;
   scheduleId?: string;
@@ -16,16 +16,14 @@ interface MetodeGuruProps {
 export function MetodeGuru({
   isOpen,
   onClose,
-  onPilihManual,
+  // onPilihManual,
   onSubmitDispensasi,
-  scheduleId,
+  // scheduleId,
 }: MetodeGuruProps) {
   const { alert: popupAlert } = usePopup();
   const [showDispensasi, setShowDispensasi] = useState(false);
 
   // Camera / Scanner State
-  const [isScannerActive, setIsScannerActive] = useState(true);
-
   // Dispensasi inputs
   const [dispAlasan, setDispAlasan] = useState("");
   const [dispTanggal, setDispTanggal] = useState<string>("");
@@ -33,9 +31,9 @@ export function MetodeGuru({
   const [dispSelesai, setDispSelesai] = useState<string>("");
   const [dispKeterangan, setDispKeterangan] = useState("");
   const [dispBukti, setDispBukti] = useState<File | null>(null);
+  const [isScannerActive] = useState(true);
 
-  // Use QRScanner
-  // const { default: QRScanner } = require("../../Shared/QRScanner");
+  // ...
 
   const handleScan = async (result: string) => {
     if (!result) return;
@@ -60,7 +58,7 @@ export function MetodeGuru({
     }
   };
 
-  const handleError = (err: string) => {
+  const handleError = (_err: string) => {
     // console.warn(err);
   };
 
@@ -82,10 +80,12 @@ export function MetodeGuru({
     closeDispensasi();
   };
 
+  /* 
   const handleManual = () => {
     onPilihManual();
     handleClose();
   };
+  */
 
   return (
     <>
@@ -156,25 +156,7 @@ export function MetodeGuru({
               gap: 16,
             }}
           >
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={handleManual}
-                style={{
-                  border: "1px solid #D1D5DB",
-                  background: "#FFFFFF",
-                  color: "#1F2937",
-                  padding: "10px 16px",
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  width: '100%'
-                }}
-              >
-                Input Manual
-              </button>
-            </div>
+
 
             <button
               type="button"

@@ -412,10 +412,12 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
     setActiveModal("schedule");
   };
 
+  /*
   const handlePilihManual = () => {
     setActiveModal(null);
     setCurrentPage("input-manual");
   };
+  */
 
   // ========== SCAN LOGIC ==========
   const handleScanResult = async (result: string) => {
@@ -928,8 +930,7 @@ export default function DashboardGuru({ user, onLogout }: DashboardGuruProps) {
               isOpen={activeModal === "metode"}
               onClose={() => setActiveModal(null)}
               onPilihQR={handlePilihQR}
-              onPilihManual={handlePilihManual}
-              onTidakBisaMengajar={handleTidakBisaMengajar}
+              onTidakBisaMengajar={handlePilihMetodeDariTidakBisaMengajar}
               scheduleId={selectedSchedule?.id}
             />
 

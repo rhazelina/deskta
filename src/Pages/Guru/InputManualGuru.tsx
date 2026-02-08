@@ -185,6 +185,7 @@ export default function InputManualGuru({
     setEditKeterangan('');
   };
 
+  /*
   const handleSimpan = async () => {
     const siswaWithStatus = siswaList.filter((s) => s.status !== null);
     if (siswaWithStatus.length === 0) {
@@ -227,6 +228,7 @@ export default function InputManualGuru({
       await popupAlert(`❌ Gagal menyimpan: ${e.message || 'Error tidak diketahui'}`);
     }
   };
+  */
 
   // Custom Status Renderer
   const StatusButton = ({ siswa }: { siswa: Siswa }) => {
@@ -361,7 +363,8 @@ export default function InputManualGuru({
               </div>
             </div>
 
-            {/* Simpan Button */}
+            {/* Simpan Button - Hidden for View Only */}
+            {/* 
             <button
               onClick={handleSimpan}
               style={{
@@ -389,6 +392,7 @@ export default function InputManualGuru({
             >
               Simpan
             </button>
+            */}
           </div>
 
           {/* Table Section - REVISI SEPERTI InputAbsenWaliKelas */}
@@ -440,13 +444,15 @@ export default function InputManualGuru({
                           name={`status-${siswa.id}`}
                           checked={siswa.status === 'present'}
                           onChange={() => handleStatusChange(siswa.id, 'present')}
+                          disabled={true}
                           style={{
                             width: '18px',
                             height: '18px',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             accentColor: STATUS_COLORS_HEX.present,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
+                            opacity: 0.6
                           }}
                         />
                       </td>
@@ -457,14 +463,16 @@ export default function InputManualGuru({
                           type="radio"
                           name={`status-${siswa.id}`}
                           checked={siswa.status === 'sick'}
-                          onChange={() => handleStatusChange(siswa.id, 'sick')}
+                          readOnly
+                          disabled={true}
                           style={{
                             width: '18px',
                             height: '18px',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             accentColor: STATUS_COLORS_HEX.sick,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
+                            opacity: 0.6
                           }}
                         />
                       </td>
@@ -475,14 +483,16 @@ export default function InputManualGuru({
                           type="radio"
                           name={`status-${siswa.id}`}
                           checked={siswa.status === 'izin' || siswa.status === 'excused'}
-                          onChange={() => handleStatusChange(siswa.id, 'izin')}
+                          readOnly
+                          disabled={true}
                           style={{
                             width: '18px',
                             height: '18px',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             accentColor: STATUS_COLORS_HEX.izin,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
+                            opacity: 0.6
                           }}
                         />
                       </td>
@@ -493,14 +503,16 @@ export default function InputManualGuru({
                           type="radio"
                           name={`status-${siswa.id}`}
                           checked={siswa.status === 'absent'}
-                          onChange={() => handleStatusChange(siswa.id, 'absent')}
+                          readOnly
+                          disabled={true}
                           style={{
                             width: '18px',
                             height: '18px',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             accentColor: STATUS_COLORS_HEX.absent,
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
+                            opacity: 0.6
                           }}
                         />
                       </td>
@@ -511,14 +523,16 @@ export default function InputManualGuru({
                           type="radio"
                           name={`status-${siswa.id}`}
                           checked={siswa.status === 'pulang'}
-                          onChange={() => handleStatusChange(siswa.id, 'pulang')}
+                          readOnly
+                          disabled={true}
                           style={{
                             width: '18px',
                             height: '18px',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             accentColor: '#2F85EB',
                             border: '2px solid #D1D5DB',
                             borderRadius: '50%',
+                            opacity: 0.6
                           }}
                           title="Status Pulang"
                         />

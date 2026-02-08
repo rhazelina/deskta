@@ -2,6 +2,8 @@
 import { Eye, FileDown, Calendar, ArrowLeft, Search } from "lucide-react";
 import WalikelasLayout from "../../component/Walikelas/layoutwakel";
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+import { dashboardService } from "../../services/dashboard";
+import { attendanceService } from "../../services/attendance";
 
 interface RekapKehadiranSiswaProps {
   user: { name: string; role: string };
@@ -31,14 +33,22 @@ export function RekapKehadiranSiswa({
 }: RekapKehadiranSiswaProps) {
   const { alert: popupAlert } = usePopup();
   const [searchTerm, setSearchTerm] = useState('');
-  const [periodeMulai, setPeriodeMulai] = useState('2026-02-03');
-  const [periodeSelesai, setPeriodeSelesai] = useState('2026-02-03');
+
+  // Default dates: First and last day of current month
+  const date = new Date();
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  const [periodeMulai, setPeriodeMulai] = useState(firstDay);
+  const [periodeSelesai, setPeriodeSelesai] = useState(lastDay);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Data kelas
-  const kelasInfo = {
-    namaKelas: 'X Mekatronika 1',
-    waliKelas: 'Ewiti Erniyah S.pd',
-  };
+  const [kelasInfo, setKelasInfo] = useState({
+    id: 0,
+    namaKelas: 'Memuat...',
+    waliKelas: user.name,
+  });
 
   // Warna sesuai revisi
   const COLORS = {
@@ -49,18 +59,61 @@ export function RekapKehadiranSiswa({
     SAKIT: "#520C8F"
   };
 
-  // Data dummy
-  const [rows] = useState<RekapRow[]>([
-    { id: '1', no: 1, nisn: '1348576392', namaSiswa: 'Wito Suherman Suhermin', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '2', no: 2, nisn: '1348576393', namaSiswa: 'Ahmad Fauzi', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '3', no: 3, nisn: '1348576394', namaSiswa: 'Siti Nurhaliza', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '4', no: 4, nisn: '1348576395', namaSiswa: 'Budi Santoso', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '5', no: 5, nisn: '1348576396', namaSiswa: 'Dewi Sartika', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '6', no: 6, nisn: '1348576397', namaSiswa: 'Rizki Ramadhan', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '7', no: 7, nisn: '1348576398', namaSiswa: 'Fitri Handayani', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '8', no: 8, nisn: '1348576399', namaSiswa: 'Andi Wijaya', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-    { id: '9', no: 9, nisn: '1348576400', namaSiswa: 'Rina Pratiwi', hadir: 5, izin: 2, sakit: 3, tidakHadir: 4, pulang: 1, status: 'aktif' },
-  ]);
+  // Data rows
+  const [rows, setRows] = useState<RekapRow[]>([]);
+
+  // Fetch Data
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Get Homeroom Class Info
+        const classData = await dashboardService.getMyHomeroom();
+        setKelasInfo({
+          id: classData.id,
+          namaKelas: classData.name,
+          waliKelas: classData.homeroom_teacher?.user?.name || user.name,
+        });
+
+        // 2. Get Students Summary
+        if (classData.id) {
+          const response = await attendanceService.getClassStudentsSummary(classData.id, {
+            from: periodeMulai,
+            to: periodeSelesai
+          });
+
+          // Assume response.data is the array of students with summary
+          // Adjust based on actual API response structure. 
+          // If response.data.data exists, use that.
+          const studentsData = (response.data as any).data || response.data;
+
+          if (Array.isArray(studentsData)) {
+            const mappedRows: RekapRow[] = studentsData.map((item: any, index: number) => ({
+              id: item.id.toString(),
+              no: index + 1,
+              nisn: item.nisn || '-',
+              namaSiswa: item.name,
+              hadir: item.attendance_summary?.present || 0,
+              izin: (item.attendance_summary?.izin || 0) + (item.attendance_summary?.excused || 0),
+              sakit: item.attendance_summary?.sick || 0,
+              tidakHadir: (item.attendance_summary?.absent || 0) + (item.attendance_summary?.alpha || 0),
+              pulang: (item.attendance_summary?.pulang || 0) + (item.attendance_summary?.dinas || 0), // Adjust mapping if needed
+              status: 'aktif' // Default active
+            }));
+            setRows(mappedRows);
+          }
+        }
+
+      } catch (error) {
+        console.error("Error fetching rekap data:", error);
+        // await popupAlert("Gagal memuat data rekap kehadiran."); // Optional: suppress error popup on load
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [periodeMulai, periodeSelesai, user.name]);
 
   useEffect(() => {
     // Inject CSS untuk ubah icon kalender jadi putih
@@ -111,6 +164,7 @@ export function RekapKehadiranSiswa({
     onMenuClick("daftar-ketidakhadiran-walikelas", {
       siswaName: row.namaSiswa,
       siswaIdentitas: row.nisn,
+      studentId: row.id, // Pass studentId for detail page fetching
     });
   };
 
@@ -119,6 +173,7 @@ export function RekapKehadiranSiswa({
   };
 
   const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return "-";
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
   };
@@ -172,7 +227,7 @@ export function RekapKehadiranSiswa({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       await popupAlert("✅ File Excel berhasil diunduh!");
     } catch (error) {
       console.error('Error exporting CSV:', error);
@@ -207,7 +262,7 @@ export function RekapKehadiranSiswa({
       doc.setFont('helvetica', 'normal');
       doc.text(`Kelas: ${kelasInfo.namaKelas}`, 14, 25);
       doc.text(`Wali Kelas: ${kelasInfo.waliKelas}`, 14, 31);
-      
+
       // Periode (kanan atas)
       doc.text(`Periode: ${formatDisplayDate(periodeMulai)} - ${formatDisplayDate(periodeSelesai)}`, pageWidth - 14, 25, { align: 'right' });
 
@@ -280,7 +335,7 @@ export function RekapKehadiranSiswa({
           fontStyle: 'bold',
           halign: 'center'
         },
-        didParseCell: function(data: any) {
+        didParseCell: function (data: any) {
           // Highlight total row
           if (data.row.index === filteredRows.length) {
             data.cell.styles.fillColor = [59, 130, 246];
@@ -317,14 +372,14 @@ export function RekapKehadiranSiswa({
 
       // Download PDF - langsung download otomatis
       const filename = `Rekap_Kehadiran_${kelasInfo.namaKelas.replace(/\s+/g, '_')}_${periodeMulai}_${periodeSelesai}.pdf`;
-      
+
       // Simpan dan download langsung
       doc.save(filename);
-      
+
       await popupAlert("✅ File PDF berhasil diunduh!");
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      await popupAlert("❌ Terjadi kesalahan saat mengekspor PDF. Pastikan library jsPDF sudah terinstall.\n\nJalankan: npm install jspdf jspdf-autotable");
+      await popupAlert("❌ Terjadi kesalahan saat mengekspor PDF. Pastikan library jsPDF sudah terinstall.");
     }
   };
 
@@ -411,15 +466,15 @@ export function RekapKehadiranSiswa({
                 justifyContent: "center",
               }}
             >
-              <svg 
-                width="22" 
-                height="22" 
-                viewBox="0 0 24 24" 
-                fill="white" 
-                stroke="white" 
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="white"
+                stroke="white"
                 strokeWidth="0.5"
               >
-                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
               </svg>
             </div>
             <div>
@@ -555,22 +610,27 @@ export function RekapKehadiranSiswa({
           >
             <button
               onClick={handleExportExcel}
+              disabled={isLoading || rows.length === 0}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
                 padding: "10px 16px",
-                backgroundColor: "#10B981",
+                backgroundColor: (isLoading || rows.length === 0) ? "#9CA3AF" : "#10B981",
                 color: "#FFFFFF",
                 border: "none",
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: (isLoading || rows.length === 0) ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#059669"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#10B981"}
+              onMouseEnter={(e) => {
+                if (!isLoading && rows.length > 0) e.currentTarget.style.backgroundColor = "#059669";
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && rows.length > 0) e.currentTarget.style.backgroundColor = "#10B981";
+              }}
             >
               <FileDown size={16} />
               Unduh Excel
@@ -578,22 +638,27 @@ export function RekapKehadiranSiswa({
 
             <button
               onClick={handleExportPDF}
+              disabled={isLoading || rows.length === 0}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
                 padding: "10px 16px",
-                backgroundColor: "#EF4444",
+                backgroundColor: (isLoading || rows.length === 0) ? "#9CA3AF" : "#EF4444",
                 color: "#FFFFFF",
                 border: "none",
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: (isLoading || rows.length === 0) ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#DC2626"}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#EF4444"}
+              onMouseEnter={(e) => {
+                if (!isLoading && rows.length > 0) e.currentTarget.style.backgroundColor = "#DC2626";
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && rows.length > 0) e.currentTarget.style.backgroundColor = "#EF4444";
+              }}
             >
               <FileDown size={16} />
               Unduh PDF
@@ -683,7 +748,11 @@ export function RekapKehadiranSiswa({
 
           {/* Body Tabel */}
           <div>
-            {filteredRows.length === 0 ? (
+            {isLoading ? (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6B7280' }}>
+                Memuat data...
+              </div>
+            ) : filteredRows.length === 0 ? (
               <div style={{
                 padding: '60px 20px',
                 textAlign: 'center',
@@ -701,7 +770,7 @@ export function RekapKehadiranSiswa({
                   Belum ada data kehadiran siswa.
                 </p>
                 <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#B9B9B9' }}>
-                  Data rekap kehadiran akan muncul di sini setelah Anda menginput kehadiran.
+                  Filter mungkin perlu disesuaikan atau belum ada data untuk periode ini.
                 </p>
               </div>
             ) : (
@@ -729,7 +798,7 @@ export function RekapKehadiranSiswa({
                   <div style={{ textAlign: 'center', color: COLORS.SAKIT, fontWeight: '700' }}>{row.sakit}</div>
                   <div style={{ textAlign: 'center', color: COLORS.TIDAK_HADIR, fontWeight: '700' }}>{row.tidakHadir}</div>
                   <div style={{ textAlign: 'center', color: COLORS.PULANG, fontWeight: '700' }}>{row.pulang}</div>
-                  <div style={{ 
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -774,7 +843,3 @@ export function RekapKehadiranSiswa({
     </WalikelasLayout>
   );
 }
-
-
-
-

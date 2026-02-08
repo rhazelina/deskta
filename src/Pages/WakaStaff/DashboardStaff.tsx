@@ -82,22 +82,15 @@ const dailyAttendanceData = [
   { day: "Jumat", hadir: 44, tidak_hadir: 0, izin: 1, sakit: 1, pulang: 1 },
 ];
 
-// Updated monthly data with 5 categories sesuai gambar
-const monthlyAttendance = [
-  { month: "Jan", hadir: 210, izin: 8, tidak_hadir: 4, sakit: 3, pulang: 2 },
-  { month: "Feb", hadir: 198, izin: 12, tidak_hadir: 6, sakit: 2, pulang: 1 },
-  { month: "Mar", hadir: 215, izin: 10, tidak_hadir: 5, sakit: 4, pulang: 3 },
-  { month: "Apr", hadir: 224, izin: 9, tidak_hadir: 4, sakit: 1, pulang: 2 },
-  { month: "Mei", hadir: 230, izin: 7, tidak_hadir: 3, sakit: 2, pulang: 1 },
-  { month: "Jun", hadir: 218, izin: 11, tidak_hadir: 6, sakit: 3, pulang: 4 },
-];
+
 
 const statCards = [
-  { label: "Tepat Waktu", value: "2100", color: "#1FA83D" },
-  { label: "Terlambat", value: "10", color: "#ACA40D" },
-  { label: "Izin", value: "18", color: "#520C8F" },
-  { label: "Sakit", value: "5", color: "#D90000" },
-  { label: "Pulang", value: "3", color: "#2F85EB" },
+  { label: "Tepat Waktu", key: "hadir", color: "#1FA83D" },
+  { label: "Terlambat", key: "terlambat", color: "#FFA500" },
+  { label: "Izin", key: "izin", color: "#ACA40D" },
+  { label: "Sakit", key: "sakit", color: "#520C8F" },
+  { label: "Alpha", key: "alpha", color: "#D90000" },
+  { label: "Pulang", key: "pulang", color: "#2F85EB" },
 ];
 
 const historyInfo = {
@@ -126,34 +119,29 @@ const COLORS = {
 
 export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) {
   const { confirm: popupConfirm } = usePopup();
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [currentPage, setCurrentPage] = useState<WakaPage>("dashboard");
-  const [viewMode, setViewMode] = useState<"daily" | "monthly">("monthly");
   const navigate = useNavigate();
 
   // API data states
-  const [adminSummary, setAdminSummary] = useState<any>(null);
-  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [wakaSummary, setWakaSummary] = useState<any>(null);
 
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
-        const [summary, attendance] = await Promise.all([
-          dashboardService.getAdminSummary(),
-          dashboardService.getWakaAttendanceSummary(),
+        const [wakaStats] = await Promise.all([
+          dashboardService.getWakaDashboardSummary(),
         ]);
-        setAdminSummary(summary);
-        setAttendanceSummary(attendance);
+        setWakaSummary(wakaStats);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchDashboardData();
+    // Refresh every minute
+    const interval = setInterval(fetchDashboardData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const [selectedGuru, setSelectedGuru] = useState<string | null>(null);
@@ -389,7 +377,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                       gap: "12px",
                     }}
                   >
-                    {statCards.map((item) => (
+                    {statCards.filter(item => item.label !== "Pulang").map((item) => (
                       <div
                         key={item.label}
                         style={{
@@ -400,16 +388,6 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                           backgroundColor: `${item.color}10`,
                           transition: "all 0.2s ease",
                           cursor: "default",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = `${item.color}20`;
-                          e.currentTarget.style.borderColor = item.color;
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = `${item.color}10`;
-                          e.currentTarget.style.borderColor = `${item.color}20`;
-                          e.currentTarget.style.transform = "translateY(0)";
                         }}
                       >
                         <p
@@ -431,7 +409,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                             color: item.color,
                           }}
                         >
-                          {item.value}
+                          {wakaSummary?.statistik ? wakaSummary.statistik[item.key] : 0}
                         </p>
                       </div>
                     ))}
@@ -470,7 +448,14 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                     title="Grafik Kehadiran Bulanan"
                     subtitle="Periode Jan - Jun"
                   />
-                  <MonthlyLineChart data={monthlyAttendance} />
+                  <MonthlyLineChart data={wakaSummary?.trend?.map((t: any) => ({
+                    month: t.label,
+                    hadir: t.hadir,
+                    izin: t.izin,
+                    tidak_hadir: t.alpha,
+                    sakit: t.sakit,
+                    pulang: t.terlambat // Mapping 'terlambat' to 'pulang' logic for chart
+                  })) || []} />
                 </div>
               </div>
             </div>

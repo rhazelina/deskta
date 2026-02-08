@@ -1,4 +1,5 @@
 ﻿import { Home, BookOpen, Users, GraduationCap, LogOut, Calendar } from 'lucide-react';
+import LogoSchool from '../assets/Icon/logo smk.png'; // Added Logo import
 
 interface SidebarProps {
   currentPage: string;
@@ -17,8 +18,8 @@ interface MenuItem {
 
 // Menu untuk Admin
 const MENU_ITEMS_ADMIN: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
-  { id: "jurusan", label: "Data Jurusan", icon: <BookOpen size={20} /> },
+  { id: "dashboard", label: "Beranda", icon: <Home size={20} /> },
+  { id: "jurusan", label: "Data Konsentrasi keahlian", icon: <BookOpen size={20} /> },
   { id: "kelas", label: "Data Kelas", icon: <Users size={20} /> },
   { id: "siswa", label: "Data Siswa", icon: <GraduationCap size={20} /> },
   { id: "guru", label: "Data Guru", icon: <GraduationCap size={20} /> },
@@ -26,7 +27,7 @@ const MENU_ITEMS_ADMIN: MenuItem[] = [
 
 // Waka staff
 const MENU_ITEMS_WAKA: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  { id: "dashboard", label: "Beranda", icon: <Home size={20} /> },
   { id: "jadwal-kelas", label: "Jadwal Kelas", icon: <Calendar size={20} /> },
   { id: "jadwal-guru", label: "Jadwal Guru", icon: <Calendar size={20} /> },
   { id: "kehadiran-siswa", label: "Kehadiran Siswa", icon: <Users size={20} /> },
@@ -35,14 +36,14 @@ const MENU_ITEMS_WAKA: MenuItem[] = [
 
 // siswa
 const MENU_ITEMS_SISWA: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  { id: "dashboard", label: "Beranda", icon: <Home size={20} /> },
   { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   { id: "absensi", label: "Daftar Ketidakhadiran", icon: <Users size={20} /> },
 ];
 
 //pengurus kelas
 const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  { id: "dashboard", label: "Beranda", icon: <Home size={20} /> },
   { id: "daftar-mapel", label: "Daftar Mapel", icon: <BookOpen size={20} /> },
   { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   { id: "absensi", label: "Daftar Ketidakhadiran", icon: <Users size={20} /> },
@@ -50,14 +51,13 @@ const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
 
 //wali kelas
 const MENU_ITEMS_WALIKELAS: MenuItem[] = [
-  { id: "Dashboard", label: "Beranda", icon: <Home size={20} /> },
-   { id: "jadwal-pengurus", label: "Jadwal Kelas", icon: <Home size={20} /> },
-
+  { id: "Beranda", label: "Beranda", icon: <Home size={20} /> },
+  { id: "jadwal-pengurus", label: "Jadwal Kelas", icon: <Calendar size={20} /> },
 ];
 
 // Menu untuk Guru
 const MENU_ITEMS_GURU: MenuItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  { id: "dashboard", label: "Beranda", icon: <Home size={20} /> },
   // { id: "presensi", label: "Presensi", icon: <Calendar size={20} /> },
   { id: "jadwal-anda", label: "Jadwal Anda", icon: <Calendar size={20} /> },
   // { id: "kehadiran", label: "Kehadiran Siswa", icon: <Users size={20} /> },
@@ -137,6 +137,15 @@ export default function Sidebar({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* LOGO ADDITION */}
+          {isOpen && (
+            <img
+              src={LogoSchool}
+              alt="Logo"
+              style={{ width: "32px", height: "auto" }}
+            />
+          )}
+
           <button
             onClick={onToggle}
             style={{
@@ -167,12 +176,12 @@ export default function Sidebar({
           >
             {isOpen ? "◀" : "▶"}
           </button>
-          
+
           {isOpen && (
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span
                 style={{
-                  fontSize: "18px",
+                  fontSize: "14px", // Adjusted size for better fit with logo
                   fontWeight: 800,
                   color: "#E2E8F0",
                   letterSpacing: "0.3px",
@@ -180,27 +189,16 @@ export default function Sidebar({
               >
                 {roleLabel}
               </span>
-              {/* <span style={{ fontSize: "12px", color: "#9CA3AF", marginTop: "2px" }}>
-                Sistem Kontrol
-              </span> */}
             </div>
           )}
         </div>
-        
+
         {!isOpen && (
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#94A3B8",
-              fontWeight: 800,
-              border: "1px solid rgba(148, 163, 184, 0.3)",
-              borderRadius: "8px",
-              padding: "4px 8px",
-              background: "rgba(15, 23, 42, 0.7)",
-            }}
-          >
-            {roleLabel.charAt(0)}
-          </div>
+          <img
+            src={LogoSchool}
+            alt="Logo"
+            style={{ width: "24px", height: "auto" }}
+          />
         )}
       </div>
 
@@ -278,7 +276,7 @@ export default function Sidebar({
             >
               {item.icon}
             </div>
-            
+
             {isOpen && (
               <span
                 style={{
@@ -292,7 +290,7 @@ export default function Sidebar({
                 {item.label}
               </span>
             )}
-            
+
             {currentPage === item.id && isOpen && (
               <div style={{
                 width: "6px",
@@ -364,7 +362,7 @@ export default function Sidebar({
           }}>
             <LogOut size={20} />
           </div>
-          
+
           {isOpen && (
             <>
               <span style={{ flex: 1, textAlign: "left" }}>Keluar</span>
@@ -372,303 +370,7 @@ export default function Sidebar({
             </>
           )}
         </button>
-        
-        {/* {isOpen && (
-          <div style={{
-            fontSize: "11px",
-            color: "#9CA3AF",
-            textAlign: "center",
-            marginTop: "12px",
-            padding: "4px",
-            borderTop: "1px solid #374151",
-          }}>
-            SMKN 2 Singosari
-          </div> */}
-        {/* )} */}
       </div>
     </aside>
   );
 }
-
-// import DashboardIcon from "../assets/Icon/home.png";
-// import JurusanIcon from "../assets/Icon/Chalkboard.png";
-// import KelasIcon from "../assets/Icon/ChalkboardTeacher.png";
-// import SiswaIcon from "../assets/Icon/Student.png";
-// import GuruIcon from "../assets/Icon/GraduationCap.png";
-// import NotifikasiIcon from "../assets/Icon/Bell.png";
-// // import PengaturanIcon from "../assets/Icon/settings.png";
-// import LogoutIcon from "../assets/Icon/Log out.png";
-// import ShiftIcon from "../assets/Icon/Shift.png";
-// import CalendarIcon from "../assets/Icon/calender.png";
-
-// interface SidebarProps {
-//   currentPage: string;
-//   onMenuClick: (page: string) => void;
-//   onLogout: () => void;
-//   isOpen: boolean;
-//   onToggle: () => void;
-//   userRole?: string;
-// }
-
-// interface MenuItem {
-//   id: string;
-//   label: string;
-//   icon: string;
-// }
-
-// // Menu untuk Admin
-// const MENU_ITEMS_ADMIN: MenuItem[] = [
-//   { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
-//   { id: "jurusan", label: "Data Jurusan", icon: JurusanIcon },
-//   { id: "kelas", label: "Data Kelas", icon: KelasIcon },
-//   { id: "siswa", label: "Data Siswa", icon: SiswaIcon },
-//   { id: "guru", label: "Data Guru", icon: GuruIcon },
-//   // { id: "notifikasi", label: "Notifikasi", icon: NotifikasiIcon },
-//   // { id: "pengaturan", label: "Pengaturan", icon: PengaturanIcon },
-// ];
-
-// // Menu untuk Guru
-// const MENU_ITEMS_GURU: MenuItem[] = [
-//   { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
-//   // { id: "jadwal", label: "Jadwal Mengajar", icon: KelasIcon },
-//   { id: "presensi", label: "Presensi", icon: CalendarIcon },
-//   // { id: "dispensasi", label: "Dispensasi & Izin", icon: JurusanIcon },
-//   { id: "kehadiran", label: "Kehadiran Siswa", icon: SiswaIcon },
-//   // { id: "pengaturan", label: "Pengaturan", icon: PengaturanIcon },
-// ];
-
-// // waka staff
-// const MENU_ITEMS_WAKA: MenuItem[] = [
-//   { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
-//   { id: "jadwal-kelas", label: "Jadwal Kelas", icon: KelasIcon },
-//   { id: "jadwal-guru", label: "Jadwal Guru", icon: GuruIcon },
-//   { id: "kehadiran-siswa", label: "Kehadiran Siswa", icon: SiswaIcon },
-//   { id: "kehadiran-guru", label: "Kehadiran Guru", icon: GuruIcon },
-//   { id: "Guru-Pengganti", label: "Guru-Pengganti", icon: ShiftIcon },
-//   { id: "Notifikasi", label: "Notifikasi", icon: NotifikasiIcon },
- 
-// ];
-
-// const MENU_ITEMS_SISWA: MenuItem[] = [
-//   { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
-//   { id: "jadwal-anda", label: "Jadwal Anda", icon: CalendarIcon },
-//   { id: "absensi", label: "Daftar Ketidakhadiran", icon: SiswaIcon },
-//   // { id: "notidikasi", label: "Notifikasi", icon: NotifikasiIcon },
-// ];
-
-// const MENU_ITEMS_PENGURUS_KELAS: MenuItem[] = [
-//   { id: "dashboard", label: "Dashboard", icon: DashboardIcon },
-//   { id: "daftar-mapel", label: "Daftar Mapel", icon: JurusanIcon },
-//   { id: "absensi", label: "Daftar Ketidakhadiran", icon: SiswaIcon },
-//   { id: "laporan", label: "Laporan Kelas", icon: KelasIcon },
-// ];
-
-// export default function Sidebar({
-//   currentPage,
-//   onMenuClick,
-//   onLogout,
-//   isOpen,
-//   onToggle,
-//   userRole = "admin", // Default admin
-// }: SidebarProps) {
-//   // select menu berdasarkan role
-
-//   let MENU_ITEMS = MENU_ITEMS_ADMIN;
-//   let roleLabel = "Admin";
-
-//   if (userRole === "guru") {
-//     MENU_ITEMS = MENU_ITEMS_GURU;
-//     roleLabel = "Guru";
-//   } else if (userRole === "waka") {
-//     MENU_ITEMS = MENU_ITEMS_WAKA;
-//     roleLabel = "Waka Staff";
-//   } else if (userRole === "siswa") {
-//     MENU_ITEMS = MENU_ITEMS_SISWA;
-//     roleLabel = "Siswa";
-//   } else if (userRole === "pengurus_kelas") {
-//     MENU_ITEMS = MENU_ITEMS_PENGURUS_KELAS;
-//     roleLabel = "Pengurus Kelas";
-//   }
-
-//   return (
-//     <aside
-//       style={{
-//         width: isOpen ? "256px" : "80px",
-//         backgroundColor: "#1F2937",
-//         color: "white",
-//         display: "flex",
-//         flexDirection: "column",
-//         height: "100vh",
-//         transition: "width 0.3s ease-in-out",
-//         overflow: "hidden",
-//       }}
-//     >
-//       {/* Logo */}
-//       <div
-//         style={{
-//           padding: "8px 12px",
-//           borderBottom: "none",
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "flex-start",
-//           gap: "8px",
-//           flexShrink: 0,
-//           backgroundColor: "#001f3e",
-//           color: "white",
-//           height: "48px",
-//           minHeight: "48px",
-//         }}
-//       >
-//         {/* Hamburger Button */}
-//         <button
-//           onClick={onToggle}
-//           style={{
-//             fontSize: "18px",
-//             backgroundColor: "transparent",
-//             border: "1.5px solid white",
-//             color: "white",
-//             cursor: "pointer",
-//             padding: "2px 6px",
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "center",
-//             borderRadius: "4px",
-//           }}
-//           title="Toggle Sidebar"
-//         >
-//           â˜°
-//         </button>
-
-//         {/* Role Label */}
-//         {isOpen && (
-//           <span style={{ fontSize: "18px", fontWeight: "bold", flex: 1 }}>
-//             {roleLabel}
-//           </span>
-//         )}
-//       </div>
-
-//       {/* Menu Items */}
-//       <nav
-//         style={{
-//           flex: 1,
-//           padding: "12px",
-//           overflowY: "auto",
-//           display: "flex",
-//           flexDirection: "column",
-//           gap: "8px",
-//         }}
-//       >
-//         {MENU_ITEMS.map((item) => (
-//           <button
-//             key={item.id}
-//             onClick={() => onMenuClick(item.id)}
-//             style={{
-//               display: "flex",
-//               alignItems: "center",
-//               gap: "12px",
-//               padding: "12px 16px",
-//               borderRadius: "8px",
-//               border: "none",
-//               cursor: "pointer",
-//               transition: "all 0.2s ease",
-//               backgroundColor:
-//                 currentPage === item.id ? "#2563EB" : "transparent",
-//               color: currentPage === item.id ? "white" : "#D1D5DB",
-//               fontSize: "14px",
-//               fontWeight: "500",
-//               textAlign: "left",
-//             }}
-//             onMouseEnter={(e) => {
-//               if (currentPage !== item.id) {
-//                 (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-//                   "#374151";
-//               }
-//             }}
-//             onMouseLeave={(e) => {
-//               if (currentPage !== item.id) {
-//                 (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-//                   "transparent";
-//               }
-//             }}
-//             title={!isOpen ? item.label : undefined}
-//           >
-//             <img
-//               src={item.icon}
-//               alt={item.label}
-//               style={{
-//                 width: "20px",
-//                 height: "20px",
-//                 flexShrink: 0,
-//                 filter:
-//                   currentPage === item.id
-//                     ? "brightness(1) invert(0)"
-//                     : "brightness(0.8) invert(1)",
-//               }}
-//             />
-//             {isOpen && (
-//               <span
-//                 style={{
-//                   whiteSpace: "nowrap",
-//                   overflow: "hidden",
-//                   textOverflow: "ellipsis",
-//                 }}
-//               >
-//                 {item.label}
-//               </span>
-//             )}
-//           </button>
-//         ))}
-//       </nav>
-
-//       {/* Logout */}
-//       <div
-//         style={{
-//           padding: "12px",
-//           borderTop: "1px solid #374151",
-//           flexShrink: 0,
-//         }}
-//       >
-//         <button
-//           onClick={onLogout}
-//           style={{
-//             width: "100%",
-//             display: "flex",
-//             alignItems: "center",
-//             gap: "12px",
-//             padding: "12px 16px",
-//             backgroundColor: "#DC2626",
-//             color: "white",
-//             border: "none",
-//             borderRadius: "8px",
-//             cursor: "pointer",
-//             fontSize: "14px",
-//             fontWeight: "600",
-//             transition: "background-color 0.2s ease",
-//           }}
-//           onMouseEnter={(e) => {
-//             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-//               "#B91C1C";
-//           }}
-//           onMouseLeave={(e) => {
-//             (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-//               "#DC2626";
-//           }}
-//           title={!isOpen ? "Logout" : undefined}
-//         >
-//           <img
-//             src={LogoutIcon}
-//             alt="Logout"
-//             style={{
-//               width: "20px",
-//               height: "20px",
-//               flexShrink: 0,
-//               backgroundColor: "transparent",
-//               filter: "brightness(1) invert(0)",
-//             }}
-//           />
-//           {isOpen && <span>Keluar</span>}
-//         </button>
-//       </div>
-//     </aside>
-//   );
-// }

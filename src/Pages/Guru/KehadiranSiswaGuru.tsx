@@ -3,15 +3,8 @@ import GuruLayout from '../../component/Guru/GuruLayout.tsx';
 import CalendarIcon from '../../assets/Icon/calender.png';
 import EditIcon from '../../assets/Icon/Edit.png';
 import ChalkboardIcon from '../../assets/Icon/Chalkboard.png';
-
-// STATUS COLOR PALETTE - High Contrast for Accessibility
-const STATUS_COLORS = {
-  hadir: '#1FA83D',   // HIJAU - Hadir
-  izin: '#ACA40D',    // KUNING - Izin
-  sakit: '#520C8F',   // UNGU - Sakit
-  alpha: '#D90000',   // MERAH - Tidak Hadir
-  pulang: '#2F85EB',  // BIRU - Pulang
-};
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
+import { STATUS_BACKEND_TO_FRONTEND, STATUS_COLORS_HEX } from "../../utils/statusMapping";
 
 interface KehadiranSiswaGuruProps {
   user: { name: string; role: string };
@@ -25,12 +18,12 @@ interface SiswaData {
   nisn: string;
   nama: string;
   mapel: string;
-  status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'pulang';
-  keterangan?: string; // Tambahan untuk izin/sakit/pulang
-  tanggal?: string; // Tambahkan tanggal untuk konsistensi dengan AbsensiSiswa
-  jamPelajaran?: string; // Tambahkan jam pelajaran
-  guru?: string; // Tambahkan nama guru
-  waktuHadir?: string; // Tambahkan waktu hadir untuk status hadir
+  status: 'present' | 'late' | 'excused' | 'sick' | 'absent' | 'dinas' | 'izin' | 'pulang' | null;
+  keterangan?: string;
+  tanggal?: string;
+  jamPelajaran?: string;
+  guru?: string;
+  waktuHadir?: string;
 }
 
 export default function KehadiranSiswaGuru({
@@ -39,12 +32,8 @@ export default function KehadiranSiswaGuru({
   currentPage,
   onMenuClick,
 }: KehadiranSiswaGuruProps) {
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
   const [currentDate] = useState(new Date().toLocaleDateString('id-ID'));
-  // Use props or navigation state for these if possible, fallback to manual for now or "Pilih Kelas"
-  // For this fix, we will fetch data if classId is available (which we need to pass)
-  // Assuming current implementation relies on `selectedSchedule` context or props, but interfaces are strict.
-  // We will fetch based on the FIRST schedule found or similar if no prop.
-  // Ideally, GuruDashboard passes props. Let's assume we can pass `selectedSchedule`.
 
   const [selectedKelas, setSelectedKelas] = useState('Memuat...');
   const [selectedMapel, setSelectedMapel] = useState('Memuat...');
@@ -52,9 +41,8 @@ export default function KehadiranSiswaGuru({
   const [selectedSiswa, setSelectedSiswa] = useState<SiswaData | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [siswaList, setSiswaList] = useState<SiswaData[]>([]);
+  const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
 
-  // Fetch Data Effect
-  // Fetch Data Effect
   useMemo(() => {
     const fetchData = async () => {
       try {
@@ -64,6 +52,7 @@ export default function KehadiranSiswaGuru({
 
         if (schedules.length > 0) {
           const schedule = schedules[0];
+          setActiveScheduleId(schedule.id.toString());
           setSelectedKelas(schedule.class?.name || 'Kelas');
           setSelectedMapel(schedule.subject_name || schedule.title || 'Mapel');
 
@@ -89,9 +78,9 @@ export default function KehadiranSiswaGuru({
                   nisn: s.nisn || '-',
                   nama: s.user?.name || 'Siswa',
                   mapel: schedule.subject_name || schedule.title || 'Mapel',
-                  status: record ? record.status : 'alpha', // Use real status or default to alpha
+                  status: record ? record.status : null, // Default to null if no record
                   tanggal: currentDate,
-                  jamPelajaran: '1-2', // Placeholder, ideally calculated from schedule
+                  jamPelajaran: '1-2',
                   guru: user.name,
                   keterangan: record?.reason,
                   waktuHadir: record ? new Date(record.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : undefined
@@ -111,6 +100,47 @@ export default function KehadiranSiswaGuru({
     };
     fetchData();
   }, [user.name, currentDate]);
+
+  const handleCloseAttendance = async () => {
+    if (!activeScheduleId) {
+      await popupAlert("Tidak ada jadwal aktif saat ini.");
+      return;
+    }
+
+    const confirmed = await popupConfirm({
+      title: "Tutup Absensi?",
+      message: "Siswa yang belum absen akan otomatis ditandai sebagai ALPHA (Tidak Hadir). Lanjutkan?",
+      confirmText: "Ya, Tutup Absensi",
+      cancelText: "Batal"
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const { dashboardService } = await import('../../services/dashboard');
+      // Retrieve token
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8000/api/me/schedules/${activeScheduleId}/close`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "Gagal menutup absensi");
+
+      await popupAlert(`✅ ${data.message}`);
+      window.location.reload();
+
+    } catch (e: any) {
+      console.error(e);
+      await popupAlert(`❌ Error: ${e.message}`);
+    }
+  };
 
   const handleEditClick = (siswa: SiswaData) => {
     setEditingSiswa(siswa);
@@ -136,14 +166,20 @@ export default function KehadiranSiswaGuru({
   // Fungsi untuk mendapatkan teks status
   const getStatusText = (status: string, waktuHadir?: string) => {
     switch (status) {
+      case "absent":
       case "alpha":
         return "Siswa tidak hadir tanpa keterangan";
       case "izin":
+      case "excused":
         return "Siswa izin dengan keterangan";
       case "sakit":
+      case "sick":
         return "Siswa sakit dengan surat dokter";
       case "hadir":
+      case "present":
         return waktuHadir ? `Siswa hadir tepat waktu pada ${waktuHadir}` : "Siswa hadir tepat waktu";
+      case "late":
+        return waktuHadir ? `Siswa terlambat hadir pada ${waktuHadir}` : "Siswa terlambat";
       case "pulang":
         return "Siswa pulang lebih awal karena ada kepentingan";
       default:
@@ -153,8 +189,11 @@ export default function KehadiranSiswaGuru({
 
   // Custom Status Renderer dengan icon mata untuk SEMUA STATUS
   const StatusButton = ({ status, siswa }: { status: string; siswa: SiswaData }) => {
-    const color = STATUS_COLORS[status as keyof typeof STATUS_COLORS] || '#1FA83D';
-    const label = status === 'alpha' ? 'Tidak Hadir' : status.charAt(0).toUpperCase() + status.slice(1);
+    if (!status) return <span style={{ color: '#9CA3AF', fontSize: '13px' }}>-</span>;
+
+    const color = STATUS_COLORS_HEX[status] || '#6B7280';
+    // Use mapped label or fallback to Title Case
+    const label = STATUS_BACKEND_TO_FRONTEND[status] || (status.charAt(0).toUpperCase() + status.slice(1));
 
     return (
       <div
@@ -344,37 +383,77 @@ export default function KehadiranSiswaGuru({
             {currentDate}
           </div>
 
-          {/* Class Info Card */}
-          <div style={{
-            backgroundColor: '#0F172A',
-            color: 'white',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            width: 'fit-content',
-            minWidth: '250px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            {/* Decorative circle */}
+          {/* Class Info & Action Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Class Info Card */}
             <div style={{
-              position: 'absolute',
-              left: -10,
-              bottom: -20,
-              width: 60,
-              height: 60,
-              backgroundColor: 'rgba(255,255,255,0.05)',
-              borderRadius: '50%'
-            }} />
+              backgroundColor: '#0F172A',
+              color: 'white',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              width: 'fit-content',
+              minWidth: '250px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Decorative circle */}
+              <div style={{
+                position: 'absolute',
+                left: -10,
+                bottom: -20,
+                width: 60,
+                height: 60,
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '50%'
+              }} />
 
-            <img src={ChalkboardIcon} alt="Class" style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)', zIndex: 1 }} />
-            <div style={{ zIndex: 1 }}>
-              <div style={{ fontSize: '16px', fontWeight: '700' }}>{selectedKelas}</div>
-              <div style={{ fontSize: '13px', opacity: 0.8 }}>{selectedMapel}</div>
+              <img src={ChalkboardIcon} alt="Class" style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)', zIndex: 1 }} />
+              <div style={{ zIndex: 1 }}>
+                <div style={{ fontSize: '16px', fontWeight: '700' }}>{selectedKelas}</div>
+                <div style={{ fontSize: '13px', opacity: 0.8 }}>{selectedMapel}</div>
+              </div>
             </div>
+
+            {/* Close Attendance Button */}
+            <button
+              onClick={handleCloseAttendance}
+              disabled={!activeScheduleId || activeScheduleId === '0'}
+              style={{
+                backgroundColor: '#DC2626',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: activeScheduleId ? 'pointer' : 'not-allowed',
+                boxShadow: '0 4px 6px -1px rgba(220, 38, 38, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                opacity: activeScheduleId ? 1 : 0.6,
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (activeScheduleId) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(220, 38, 38, 0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeScheduleId) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(220, 38, 38, 0.3)';
+                }
+              }}
+            >
+              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'white', opacity: 0.8 }}></div>
+              Tutup Absensi
+            </button>
           </div>
         </div>
 

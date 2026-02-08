@@ -77,6 +77,28 @@ function XIcon({ size = 24 }: { size?: number }) {
   );
 }
 
+// Icon check untuk status hadir
+function CheckIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <path
+        d="M20 6L9 17L4 12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function InputAbsenWalikelas({
   user,
   onLogout,
@@ -84,7 +106,7 @@ export function InputAbsenWalikelas({
   onMenuClick,
 }: InputAbsenWalikelasProps) {
   const { alert: popupAlert } = usePopup();
-  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState('Memuat...');
   const [selectedMapel] = useState('Wali Kelas');
   const [currentDate, setCurrentDate] = useState(() => {
     const d = new Date();
@@ -188,10 +210,10 @@ export function InputAbsenWalikelas({
 
   const handleStatusClick = (siswa: Siswa, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (siswa.status === null) return;
+    // if (siswa.status === null) return; // Allow opening even if null to set status
 
     setSelectedSiswa(siswa);
-    setEditStatus(siswa.status);
+    setEditStatus(siswa.status || 'hadir'); // Default to 'hadir' if modifying
     setEditKeterangan(siswa.keterangan || '');
     setIsModalOpen(true);
   };
@@ -269,7 +291,24 @@ export function InputAbsenWalikelas({
     sakit: '#520C8F',
   };
 
-  // Custom Status Renderer seperti di AbsensiSiswa.tsx
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "alpha":
+        return "Siswa tidak hadir tanpa keterangan";
+      case "izin":
+        return "Siswa izin dengan keterangan";
+      case "sakit":
+        return "Siswa sakit dengan surat dokter";
+      case "hadir":
+        return "Siswa hadir tepat waktu";
+      case "pulang":
+        return "Siswa pulang lebih awal karena ada kepentingan";
+      default:
+        return status;
+    }
+  };
+
+  // Custom Status Renderer - merged styling
   const StatusButton = ({ siswa }: { siswa: Siswa }) => {
     if (!siswa.status) {
       return <span style={{ color: '#9CA3AF', fontSize: '12px' }}>-</span>;
@@ -323,22 +362,26 @@ export function InputAbsenWalikelas({
     );
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "alpha":
-        return "Siswa tidak hadir tanpa keterangan";
-      case "izin":
-        return "Siswa izin dengan keterangan";
-      case "sakit":
-        return "Siswa sakit dengan surat dokter";
-      case "hadir":
-        return "Siswa hadir tepat waktu";
-      case "pulang":
-        return "Siswa pulang lebih awal karena ada kepentingan";
-      default:
-        return status;
-    }
-  };
+  // Fungsi helper untuk DetailRow di modal
+  function DetailRow({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottom: "1px solid #E5E7EB",
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {icon}
+          <div style={{ fontWeight: 600, color: "#374151" }}>{label} :</div>
+        </div>
+        <div style={{ fontWeight: 500, color: "#1F2937", textAlign: 'right' }}>
+          {value}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -589,7 +632,7 @@ export function InputAbsenWalikelas({
         </div>
       </WalikelasLayout>
 
-      {/* Modal Edit Status */}
+      {/* Modal Edit Status (With Merging Style) */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         {selectedSiswa && editStatus && (
           <div style={{
@@ -738,6 +781,7 @@ export function InputAbsenWalikelas({
               </div>
 
               {/* Status Selection (hanya untuk edit selain view) */}
+
               {editStatus !== 'hadir' && (
                 <div style={{
                   marginBottom: 24,
@@ -798,29 +842,6 @@ export function InputAbsenWalikelas({
                 marginTop: 24,
               }}>
                 <button
-                  onClick={() => setIsModalOpen(false)}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
-                    backgroundColor: "#FFFFFF",
-                    color: "#374151",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#F9FAFB";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#FFFFFF";
-                  }}
-                >
-                  {editStatus === 'hadir' ? 'Tutup' : 'Batal'}
-                </button>
-                <button
                   onClick={handleSaveEdit}
                   style={{
                     flex: 1,
@@ -841,7 +862,7 @@ export function InputAbsenWalikelas({
                     e.currentTarget.style.opacity = "1";
                   }}
                 >
-                  {editStatus === 'hadir' ? 'Simpan Keterangan' : 'Simpan Perubahan'}
+                  Simpan Perubahan
                 </button>
               </div>
             </div>
@@ -851,22 +872,3 @@ export function InputAbsenWalikelas({
     </>
   );
 }
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 16,
-      paddingBottom: 12,
-      borderBottom: "1px solid #E5E7EB",
-    }}>
-      <div style={{ fontWeight: 600, color: "#374151" }}>{label} :</div>
-      <div style={{ fontWeight: 500, color: "#1F2937" }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-

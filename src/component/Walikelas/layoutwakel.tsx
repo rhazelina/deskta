@@ -1,10 +1,12 @@
 import { type ReactNode, useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from '../Sidebar';
+import AWANKANAN from '../../assets/Icon/AWANKANAN.png';
 import AWANKIRI from '../../assets/Icon/AWANKIRI.png';
-import AwanBawahkanan from '../../assets/Icon/AwanBawahkanan.png';
-import { useLocalLenis } from '../Shared/SmoothScroll';
+import INO from '../../assets/Icon/InoBlue.svg';
+import RASI from '../../assets/Icon/RasiRed.svg';
 import LogoSchool from '../../assets/Icon/logo smk.png';
+import { useLocalLenis } from '../Shared/SmoothScroll';
 
 interface WalikelasLayoutProps {
   children: ReactNode;
@@ -16,6 +18,7 @@ interface WalikelasLayoutProps {
     role: string;
   };
   onLogout: () => void;
+  hideBackground?: boolean;
 }
 
 export default function WalikelasLayout({
@@ -25,6 +28,7 @@ export default function WalikelasLayout({
   onMenuClick,
   user,
   onLogout,
+  hideBackground = false,
 }: WalikelasLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('walikelasSidebarOpen');
@@ -45,37 +49,90 @@ export default function WalikelasLayout({
   return (
     <div
       style={{
-        position: 'relative',
-        display: 'flex',
-        height: '100vh',
-        width: '100vw',
-        backgroundColor: '#FFFFFF',
-        overflow: 'hidden',
+        position: "relative",
+        display: "flex",
+        height: "100vh",
+        width: "100vw",
+        backgroundColor: "#FFFFFF",
+        overflow: "hidden",
       }}
     >
-      {/* BACKGROUND LAYER - Simple untuk walikelas */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      >
-        <img
-          src={AWANKIRI}
-          alt="Awan Kiri Atas"
-          style={{ position: 'absolute', top: 0, left: 0, width: 215, height: 'auto' }}
-        />
-        <img
-          src={AwanBawahkanan}
-          alt="Awan Kanan Bawah"
-          style={{ position: 'absolute', bottom: 20, right: 20, width: 'auto', height: 'auto' }}
-        />
-      </div>
+      {/* BACKGROUND LAYER GLOBAL - Sama seperti AdminLayout */}
+      {!hideBackground && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            overflow: "hidden",
+          }}
+        >
+          {/* Background warna dengan opacity rendah */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "#F8FAFC",
+            }}
+          />
+
+          {/* Awan dan dekorasi - sama seperti AdminLayout */}
+          <img
+            src={AWANKIRI}
+            alt="Awan Kiri Atas"
+            style={{
+              position: "absolute",
+              top: -20,
+              left: -30,
+              width: 280,
+              height: "auto",
+              filter: "brightness(1.1)",
+              opacity: 0.15,
+            }}
+          />
+          <img
+            src={AWANKANAN}
+            alt="Awan Kanan Atas"
+            style={{
+              position: "absolute",
+              top: -30,
+              right: -40,
+              width: 300,
+              height: "auto",
+              filter: "brightness(1.1)",
+              opacity: 0.15,
+            }}
+          />
+          <img
+            src={INO}
+            alt="INO"
+            style={{
+              position: "absolute",
+              bottom: -20,
+              left: -40,
+              width: 260,
+              height: "auto",
+              opacity: 0.1,
+            }}
+          />
+          <img
+            src={RASI}
+            alt="RASI"
+            style={{
+              position: "absolute",
+              bottom: -20,
+              right: -30,
+              width: 220,
+              height: "auto",
+              opacity: 0.1,
+            }}
+          />
+        </div>
+      )}
 
       {/* Sidebar */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ position: "relative", zIndex: 20 }}>
         <Sidebar
           currentPage={currentPage}
           onMenuClick={onMenuClick}
@@ -87,22 +144,32 @@ export default function WalikelasLayout({
       </div>
 
       {/* Main Content */}
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', width: '100%' }}>
-        {/* Header */}
-        {/* Header */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          width: "100%",
+        }}
+      >
+        {/* Header - Sama persis dengan AdminLayout */}
         <header
           style={{
+            backgroundColor: "white",
             height: "72px",
-            minHeight: "72px",
-            background: "white",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 28px",
+            gap: "16px",
             boxShadow: "0 2px 12px rgba(0, 31, 62, 0.08)",
             borderBottom: "1px solid #E5E7EB",
-            zIndex: 5,
             flexShrink: 0,
+            zIndex: 15,
+            position: "relative",
           }}
         >
           <div style={{ flex: 1 }}>
@@ -148,11 +215,11 @@ export default function WalikelasLayout({
               <div style={{ fontSize: "14px", fontWeight: "600", color: "#001F3E" }}>
                 {user.name}
               </div>
-              <div style={{ fontSize: "12px", color: "#6B7280" }}>
+              <div style={{ fontSize: "12px", color: "#6B7280", textTransform: "capitalize" }}>
                 Wali Kelas
               </div>
-              
             </div>
+            {/* Logo SMK - Sama seperti AdminLayout */}
             <img
               src={LogoSchool}
               alt="Logo SMK"
@@ -169,35 +236,64 @@ export default function WalikelasLayout({
           </div>
         </header>
 
-        {/* Content */}
-        {/* Content */}
-<main
-  id="main-scroll-container"
-  ref={scrollContainerRef}
-  
+        {/* Content Area - Diperbarui untuk konsistensi */}
+        <div
           style={{
             flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
+            position: "relative",
+            overflow: "hidden",
+            backgroundColor: "transparent",
           }}
         >
-          <div style={{ maxWidth: '100%', width: '100%' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
+          {/* Main Content Container dengan smooth scroll */}
+          <main
+            id="main-scroll-container"
+            ref={scrollContainerRef}
+            style={{
+              position: "relative",
+              zIndex: 5,
+              height: "100%",
+              overflowY: "auto",
+              overflowX: "hidden",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Content Wrapper dengan background putih */}
+            <div
+              style={{
+                position: "relative",
+                zIndex: 5,
+                maxWidth: "1400px",
+                width: "100%",
+                margin: "0 auto",
+                flex: 1,
+              }}
+            >
+              {/* Animasi untuk transisi halaman */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPage}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  style={{
+                    position: "relative",
+                    zIndex: 5,
+                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                    borderRadius: "12px",
+                    padding: "0",
+                    width: "100%",
+                  }}
+                >
+                  {children}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

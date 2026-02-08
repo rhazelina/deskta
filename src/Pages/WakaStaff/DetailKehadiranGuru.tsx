@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
-import { User, SquarePen, ArrowLeft, Eye, X } from "lucide-react";
+import { useState } from "react";
+import { User, ArrowLeft, Eye, X } from "lucide-react";
 import StaffLayout from "../../component/WakaStaff/StaffLayout";
-import { FormModal } from "../../component/Shared/FormModal";
-import { Select } from "../../component/Shared/Select";
 
 type StatusKehadiran = "Hadir" | "Izin" | "Sakit" | "Alfa" | "Tidak Hadir" | "Pulang";
 
@@ -27,12 +25,12 @@ interface DetailKehadiranGuruProps {
 export default function DetailKehadiranGuru({
   user = { name: "Admin", role: "waka" },
   currentPage = "detail-kehadiran-guru",
-  onMenuClick = () => {},
-  onLogout = () => {},
-  onBack = () => {},
+  onMenuClick = () => { },
+  onLogout = () => { },
+  onBack = () => { },
   guruName = "Ewit Emiyah S.pd",
 }: DetailKehadiranGuruProps) {
-  const [rows, setRows] = useState<RowKehadiran[]>([
+  const [rows] = useState<RowKehadiran[]>([
     {
       no: 1,
       tanggal: "25-05-2025",
@@ -88,50 +86,13 @@ export default function DetailKehadiranGuru({
     phone: "0918415784",
   };
 
-  const statusOptions = useMemo(
-    () => [
-      { label: "Hadir", value: "Hadir" },
-      { label: "Izin", value: "Izin" },
-      { label: "Sakit", value: "Sakit" },
-      { label: "Tidak Hadir", value: "Tidak Hadir" },
-      { label: "Pulang", value: "Pulang" },
-    ],
-    []
-  );
-
-  const [editingRow, setEditingRow] = useState<RowKehadiran | null>(null);
-  const [editStatus, setEditStatus] = useState<StatusKehadiran>("Hadir");
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // State untuk modal detail
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<RowKehadiran | null>(null);
 
-  const handleOpenEdit = (row: RowKehadiran) => {
-    setEditingRow(row);
-    setEditStatus(row.status);
-    setIsEditOpen(true);
-  };
-
   const handleOpenDetail = (row: RowKehadiran) => {
     setSelectedDetail(row);
     setIsDetailOpen(true);
-  };
-
-  const handleSubmitEdit = () => {
-    if (!editingRow) return;
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setRows((prev) =>
-        prev.map((r) =>
-          r === editingRow ? { ...r, status: editStatus } : r
-        )
-      );
-      setIsSubmitting(false);
-      setIsEditOpen(false);
-      setEditingRow(null);
-    }, 300);
   };
 
   // Fungsi untuk mendapatkan warna status sesuai format yang diberikan
@@ -263,7 +224,6 @@ export default function DetailKehadiranGuru({
           <div style={{ textAlign: "left", paddingLeft: "2px" }}>Mapel</div>
           <div style={{ textAlign: "left", paddingLeft: "2px" }}>Kelas</div>
           <div style={{ textAlign: "center" }}>Status</div>
-          <div style={{ textAlign: "center" }}>Aksi</div>
         </div>
 
         {/* ROWS - TANPA SPACE KOSONG DI TENGAH */}
@@ -288,17 +248,17 @@ export default function DetailKehadiranGuru({
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = i % 2 === 0 ? "#FFFFFF" : "#F9FAFB"}
             >
               {/* NO */}
-              <div style={{ 
-                textAlign: "center", 
-                fontWeight: 600, 
+              <div style={{
+                textAlign: "center",
+                fontWeight: 600,
                 color: "#374151",
               }}>
                 {r.no}
               </div>
-              
+
               {/* TANGGAL - DIKANANKAN */}
-              <div style={{ 
-                fontWeight: 500, 
+              <div style={{
+                fontWeight: 500,
                 color: "#1F2937",
                 textAlign: "left",
                 paddingLeft: "4px",
@@ -306,20 +266,20 @@ export default function DetailKehadiranGuru({
               }}>
                 {r.tanggal}
               </div>
-              
+
               {/* JAM - DIKANANKAN */}
-              <div style={{ 
-                textAlign: "center", 
+              <div style={{
+                textAlign: "center",
                 fontWeight: 500,
                 color: "#1F2937",
                 paddingLeft: "2px",
               }}>
                 {r.jam}
               </div>
-              
+
               {/* MAPEL - DIKANANKAN */}
-              <div style={{ 
-                fontWeight: 500, 
+              <div style={{
+                fontWeight: 500,
                 color: "#1F2937",
                 textAlign: "left",
                 paddingLeft: "4px",
@@ -329,10 +289,10 @@ export default function DetailKehadiranGuru({
               }}>
                 {r.mapel}
               </div>
-              
+
               {/* KELAS */}
-              <div style={{ 
-                fontWeight: 500, 
+              <div style={{
+                fontWeight: 500,
                 color: "#1F2937",
                 textAlign: "left",
                 paddingLeft: "4px",
@@ -389,58 +349,13 @@ export default function DetailKehadiranGuru({
                 </div>
               </div>
 
-              {/* TOMBOL EDIT */}
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <button
-                  onClick={() => handleOpenEdit(r)}
-                  style={{
-                    background: "#F3F4F6",
-                    border: "1px solid #D1D5DB",
-                    cursor: "pointer",
-                    padding: "7px",
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.2s",
-                    width: "32px",
-                    height: "32px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#E5E7EB";
-                    e.currentTarget.style.borderColor = "#9CA3AF";
-                    e.currentTarget.style.transform = "scale(1.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#F3F4F6";
-                    e.currentTarget.style.borderColor = "#D1D5DB";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                  title="Edit Status"
-                >
-                  <SquarePen size={16} color="#4B5563" />
-                </button>
-              </div>
+
             </div>
           );
         })}
       </div>
 
-      {/* MODAL EDIT */}
-      <FormModal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        title="Ubah Kehadiran"
-        onSubmit={handleSubmitEdit}
-        submitLabel="Simpan"
-        isSubmitting={isSubmitting}
-      >
-        <Select
-          value={editStatus}
-          onChange={(v) => setEditStatus(v as StatusKehadiran)}
-          options={statusOptions}
-        />
-      </FormModal>
+
 
       {/* MODAL DETAIL */}
       {selectedDetail && (

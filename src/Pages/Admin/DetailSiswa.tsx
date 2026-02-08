@@ -1,9 +1,10 @@
-﻿import { useState, useEffect } from 'react';
+﻿// FILE: DetailSiswa.tsx - Halaman Detail Siswa dengan Data Lengkap
+import { useState, useEffect } from 'react';
 import AdminLayout from '../../component/Admin/AdminLayout';
-import { EditSiswaForm } from '../../component/Shared/EditSiswa';
-import { Edit, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { User as UserIcon, ArrowLeft, Edit2, Save, X } from 'lucide-react';
 import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
+/* ===================== INTERFACE DEFINITIONS ===================== */
 interface User {
   role: string;
   name: string;
@@ -20,7 +21,9 @@ interface Siswa {
   tahunAngkatan: string;
   kelas: string;
   kelasId: string;
-  password: string;
+  // Additional fields for API compatibility
+  password?: string;
+  originalData?: any; // To store full API object
 }
 
 interface DetailSiswaProps {
@@ -29,40 +32,10 @@ interface DetailSiswaProps {
   currentPage: string;
   onMenuClick: (page: string) => void;
   siswaId: string;
-  onUpdateSiswa?: (updatedSiswa: Siswa) => void; // Tambah prop ini
+  onUpdateSiswa?: (updatedSiswa: Siswa) => void;
 }
 
-// Data untuk dropdown di form
-const jurusanListForForm = [
-  { id: 'MT', nama: 'Mekatronika' },
-  { id: 'AN', nama: 'Animasi' },
-  { id: 'EI', nama: 'Elektronika Industri' },
-  { id: 'RPL', nama: 'Rekayasa Perangkat Lunak' },
-];
-
-const kelasListForForm = [
-  { id: 'X-MT-1', nama: 'X Mekatronika 1' },
-  { id: 'X-AN-2', nama: 'X Animasi 2' },
-  { id: 'XI-EI-1', nama: 'XI Elektronika Industri 1' },
-  { id: 'XII-RPL-1', nama: 'XII Rekayasa Perangkat Lunak 1' },
-  { id: 'XII-RPL-2', nama: 'XII Rekayasa Perangkat Lunak 2' },
-];
-
-// Data default jika tidak ditemukan
-const defaultSiswaData: Siswa = {
-  id: '1',
-  namaSiswa: 'Muhammad Wito Suherman',
-  nisn: '0918415784',
-  jenisKelamin: 'Laki-Laki',
-  noTelp: '08218374859',
-  jurusan: 'Mekatronika',
-  jurusanId: 'MTK',
-  tahunAngkatan: '2023 - 2026',
-  kelas: 'XII Mekatronika 1',
-  kelasId: 'XII-MTK-1',
-  password: 'ABC123',
-};
-
+/* ===================== MAIN COMPONENT ===================== */
 export default function DetailSiswa({
   user,
   onLogout,
@@ -72,201 +45,256 @@ export default function DetailSiswa({
   onUpdateSiswa,
 }: DetailSiswaProps) {
   const { alert: popupAlert } = usePopup();
-  const [siswaData, setSiswaData] = useState<Siswa>(defaultSiswaData);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [dataUpdated, setDataUpdated] = useState(false);
 
-  // Load data siswa berdasarkan ID
+  // ==================== STATE MANAGEMENT ====================
+  const [siswaData, setSiswaData] = useState<Siswa | null>(null);
+  const [originalData, setOriginalData] = useState<Siswa | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(true);
+
+  // Options state
+  const [jurusanOptions, setJurusanOptions] = useState<{ value: string, label: string }[]>([]);
+  const [kelasOptions, setKelasOptions] = useState<{ value: string, label: string }[]>([]);
+
+  // ==================== LOAD DATA SISWA ====================
   useEffect(() => {
-    // Coba ambil data dari localStorage (simulasi data dari SiswaAdmin)
-    const savedSiswa = localStorage.getItem('selectedSiswa');
-    if (savedSiswa) {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const parsedSiswa = JSON.parse(savedSiswa);
-        if (parsedSiswa.id === siswaId) {
-          setSiswaData(parsedSiswa);
-          return;
+        const { studentService } = await import('../../services/student');
+        const { majorService } = await import('../../services/major');
+        const { classService } = await import('../../services/class');
+
+        // Parallel fetch options and student data
+        const [majors, classes, studentAPI] = await Promise.all([
+          majorService.getMajors(),
+          classService.getClasses(),
+          studentService.getStudentById(siswaId).catch(() => null)
+        ]);
+
+        // Set Options
+        setJurusanOptions(majors.map((m: any) => ({ value: String(m.id), label: m.name })));
+        setKelasOptions(classes.map((c: any) => ({ value: String(c.id), label: c.name || `${c.grade} ${c.label}` })));
+
+        let studentToSet: Siswa | null = null;
+
+        if (studentAPI && studentAPI.id) {
+          // Map API data to Siswa interface
+          studentToSet = {
+            id: String(studentAPI.id),
+            namaSiswa: studentAPI.user?.name || studentAPI.name || '-',
+            nisn: studentAPI.nisn || '',
+            jenisKelamin: studentAPI.gender === 'L' ? 'Laki-Laki' : 'Perempuan',
+            noTelp: studentAPI.user?.phone || studentAPI.phone || '',
+            jurusan: studentAPI.class_room?.major?.name || '-',
+            jurusanId: studentAPI.class_room?.major?.id ? String(studentAPI.class_room.major.id) : '',
+            tahunAngkatan: '2023 - 2026', // Placeholder as API might not have it directly
+            kelas: studentAPI.class_room?.name || '-',
+            kelasId: studentAPI.class_id ? String(studentAPI.class_id) : '',
+            originalData: studentAPI
+          };
+        } else {
+          // Fallback to localStorage
+          const savedSiswa = localStorage.getItem('selectedSiswa');
+          if (savedSiswa) {
+            try {
+              const parsed = JSON.parse(savedSiswa);
+              if (parsed.id === siswaId) {
+                studentToSet = parsed;
+              }
+            } catch (e) { console.error(e); }
+          }
         }
+
+        if (studentToSet) {
+          setSiswaData(studentToSet);
+          setOriginalData(studentToSet);
+        } else {
+          void popupAlert("Data siswa tidak ditemukan.");
+        }
+
       } catch (error) {
-        console.error('Error parsing saved siswa:', error);
+        console.error("Error loading detail siswa:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    // Jika tidak ada data di localStorage, coba ambil dari dummy data berdasarkan ID
-    // Di aplikasi nyata, ini akan diambil dari API
-    const dummyData = [
-      { 
-        id: '1', 
-        namaSiswa: 'Muhammad Wito Suherman', 
-        nisn: '0918415784', 
-        jenisKelamin: 'Laki-Laki', 
-        noTelp: '08218374859',
-        jurusan: 'Mekatronika', 
-        jurusanId: 'MTK', 
-        tahunAngkatan: '2023 - 2026',
-        kelas: 'XII Mekatronika 1', 
-        kelasId: 'XII-MTK-1',
-        password: 'ABC123'
-      },
-      { 
-        id: '2', 
-        namaSiswa: 'Siti Nurhaliza', 
-        nisn: '2347839284', 
-        jenisKelamin: 'Perempuan', 
-        noTelp: '08123456789',
-        jurusan: 'Rekayasa Perangkat Lunak', 
-        jurusanId: 'RPL', 
-        tahunAngkatan: '2023 - 2026',
-        kelas: '10', 
-        kelasId: '10-RPL-1',
-        password: 'password123'
-      },
-    ];
-
-    const foundSiswa = dummyData.find(s => s.id === siswaId);
-    if (foundSiswa) {
-      setSiswaData(foundSiswa);
+    if (siswaId) {
+      fetchData();
     }
   }, [siswaId]);
 
-  // Handler untuk submit edit
-  const handleEditSubmit = async (data: {
-    jenisKelamin: string;
-    noTelp: string;
-    jurusanId: string;
-    tahunAngkatan: string;
-    kelasId: string;
-    password: string;
-  }) => {
-    const jurusanNama = jurusanListForForm.find(j => j.id === data.jurusanId)?.nama || data.jurusanId;
-    const kelasNama = kelasListForForm.find(k => k.id === data.kelasId)?.nama || data.kelasId;
-    
-    const updatedSiswa = {
-      ...siswaData,
-      jenisKelamin: data.jenisKelamin,
-      noTelp: data.noTelp,
-      jurusan: jurusanNama,
-      jurusanId: data.jurusanId,
-      tahunAngkatan: data.tahunAngkatan,
-      kelas: kelasNama,
-      kelasId: data.kelasId,
-      password: data.password,
-    };
-    
+  // ==================== FORM VALIDATION ====================
+  const validateForm = (): boolean => {
+    if (!siswaData) return false;
+
+    const errors: { [key: string]: string } = {};
+
+    // Validasi nama siswa
+    if (!siswaData.namaSiswa.trim()) {
+      errors.namaSiswa = 'Nama siswa harus diisi';
+    } else if (siswaData.namaSiswa.trim().length < 3) {
+      errors.namaSiswa = 'Nama siswa minimal 3 karakter';
+    }
+
+    // Validasi NISN
+    if (!siswaData.nisn.trim()) {
+      errors.nisn = 'NISN harus diisi';
+    } else if (!/^\d{10}$/.test(siswaData.nisn)) {
+      errors.nisn = 'NISN harus 10 digit angka';
+    }
+
+    // Validasi nomor telepon (UPDATED: 12-13 digit)
+    if (siswaData.noTelp && siswaData.noTelp.trim()) {
+      // Allow empty or valid format
+      // Regex for 10-14 digits usually
+      if (!/^\d{10,14}$/.test(siswaData.noTelp) && !/^08\d{8,11}$/.test(siswaData.noTelp)) {
+        // Relaxed validation
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // ==================== EVENT HANDLERS ====================
+
+  const handleEnableEdit = () => {
+    setIsEditMode(true);
+    setFormErrors({});
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setSiswaData(originalData ? { ...originalData } : null); // Deep copy to avoid ref issues
+    setFormErrors({});
+  };
+
+  // Handler untuk menyimpan perubahan data
+  const handleSaveChanges = async () => {
+    if (!siswaData) return;
+
+    if (!validateForm()) {
+      void popupAlert('⚠️ Mohon perbaiki error pada form!');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { studentService } = await import('../../services/student');
+
+      // Prepare API Payload
+      const payload = {
+        name: siswaData.namaSiswa,
+        nisn: siswaData.nisn,
+        nis: siswaData.nisn,
+        class_id: parseInt(siswaData.kelasId), // Ensure integer
+        gender: siswaData.jenisKelamin === 'Laki-Laki' ? 'L' : 'P',
+        phone: siswaData.noTelp,
+        // Preserve other fields
+        username: siswaData.nisn,
+        password: siswaData.password || undefined // Only send if changed/exists
+      };
+
+      if (siswaData.originalData?.id) {
+        const updated = await studentService.updateStudent(siswaData.originalData.id, payload);
+
+        // Update local state with result
+        const updatedSiswaUI: Siswa = {
+          ...siswaData,
+          originalData: updated
+        };
+
+        setSiswaData(updatedSiswaUI);
+        setOriginalData(updatedSiswaUI);
+
+        // Update localStorage
+        localStorage.setItem('selectedSiswa', JSON.stringify(updatedSiswaUI));
+
+        // Callback
+        if (onUpdateSiswa) onUpdateSiswa(updatedSiswaUI);
+
+        setIsEditMode(false);
+        void popupAlert('✓ Data berhasil diperbarui!');
+      } else {
+        void popupAlert('Error: ID Siswa tidak valid');
+      }
+
+    } catch (e: any) {
+      console.error(e);
+      void popupAlert(e?.response?.data?.message || "Gagal menyimpan perubahan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (isEditMode) {
+      // We can't use window.confirm easily with async logic, but standard confirm is fine for now
+      if (confirm('Anda sedang dalam mode edit. Yakin ingin kembali tanpa menyimpan?')) {
+        setIsEditMode(false);
+        setSiswaData(originalData);
+        onMenuClick('siswa');
+      }
+    } else {
+      onMenuClick('siswa');
+    }
+  };
+
+  // Handler untuk perubahan field
+  const handleFieldChange = (field: keyof Siswa, value: string) => {
+    if (!siswaData) return;
+
+    const updatedSiswa = { ...siswaData };
+
+    if (field === 'jurusanId') {
+      const selectedJurusan = jurusanOptions.find(j => j.value === value);
+      updatedSiswa.jurusanId = value;
+      updatedSiswa.jurusan = selectedJurusan?.label || value;
+    } else if (field === 'kelasId') { // Handle kelas change explicitly
+      const selectedKelas = kelasOptions.find(k => k.value === value);
+      updatedSiswa.kelasId = value;
+      updatedSiswa.kelas = selectedKelas?.label || value;
+    } else {
+      // @ts-ignore
+      updatedSiswa[field] = value;
+    }
+
     setSiswaData(updatedSiswa);
-    setIsEditModalOpen(false);
-    setDataUpdated(true);
-
-    // Simpan ke localStorage (sementara)
-    localStorage.setItem('selectedSiswa', JSON.stringify(updatedSiswa));
-    
-    // Panggil callback untuk update data di parent (SiswaAdmin)
-    if (onUpdateSiswa) {
-      onUpdateSiswa(updatedSiswa);
-    }
-    
-    await popupAlert('✓ Data siswa berhasil diperbarui!');
   };
 
-  // Handler untuk tombol kembali
-  const handleBack = async () => {
-    if (dataUpdated) {
-      await popupAlert('✅ Data telah diperbarui! Kembali ke halaman daftar siswa.');
-    }
-    onMenuClick('siswa');
-  };
+  const handleGenderChange = (val: string) => {
+    if (!siswaData) return;
+    setSiswaData({ ...siswaData, jenisKelamin: val === 'L' ? 'Laki-Laki' : 'Perempuan' });
+  }
 
-  // Field item component untuk reusability
-  const FieldItem = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string;
-  }) => (
-    <div style={{ marginBottom: '24px' }}>
-      <label
-        style={{
-          display: 'block',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#FFFFFF',
-          marginBottom: '8px',
-        }}
+  // ==================== LOADING STATE ====================
+  if (loading && !siswaData) {
+    return (
+      <AdminLayout
+        pageTitle="Detail Siswa"
+        currentPage={currentPage}
+        onMenuClick={onMenuClick}
+        user={user}
+        onLogout={onLogout}
       >
-        {label}
-      </label>
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: '1px solid #E5E7EB',
-          minHeight: '44px',
+        <div style={{
           display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '14px',
-            color: '#1F2937',
-            display: 'block',
-            width: '100%',
-          }}
-        >
-          {value}
-        </span>
-      </div>
-    </div>
-  );
+          minHeight: '400px',
+          color: '#6B7280',
+          fontSize: '18px',
+        }}>
+          Loading data siswa...
+        </div>
+      </AdminLayout>
+    );
+  }
 
-  // Password field component khusus untuk password
-  const PasswordField = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string;
-  }) => (
-    <div style={{ marginBottom: '24px' }}>
-      <label
-        style={{
-          display: 'block',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#FFFFFF',
-          marginBottom: '8px',
-        }}
-      >
-        {label}
-      </label>
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: '1px solid #E5E7EB',
-          minHeight: '44px',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '14px',
-            color: '#1F2937',
-            fontFamily: 'monospace',
-            letterSpacing: '1px',
-            display: 'block',
-            width: '100%',
-          }}
-        >
-          {value}
-        </span>
-      </div>
-    </div>
-  );
+  if (!siswaData) return null; // Should have alerted if not found
 
   return (
     <AdminLayout
@@ -275,6 +303,7 @@ export default function DetailSiswa({
       onMenuClick={onMenuClick}
       user={user}
       onLogout={onLogout}
+      hideBackground
     >
       <div
         style={{
@@ -282,187 +311,459 @@ export default function DetailSiswa({
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          minHeight: 'calc(100vh - 64px)',
-          padding: window.innerWidth < 768 ? '16px' : '32px',
+          minHeight: '100vh',
+          padding: window.innerWidth < 768 ? '16px' : '24px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          paddingTop: '40px',
         }}
       >
         <div
           style={{
-            maxWidth: '800px',
+            maxWidth: '1000px',
+            width: '100%',
             margin: '0 auto',
           }}
         >
-          {/* Card Container - Navy solid */}
           <div
             style={{
               backgroundColor: 'rgba(15, 23, 42, 0.95)',
               borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
               overflow: 'hidden',
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            {/* Header with Profile */}
+            {/* ============ HEADER WITH PROFILE & EDIT BUTTON ============ */}
             <div
               style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                padding: '32px 24px',
+                padding: window.innerWidth < 768 ? '20px' : '28px 32px',
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+                alignItems: window.innerWidth < 768 ? 'flex-start' : 'center',
                 gap: '20px',
                 position: 'relative',
               }}
             >
-              {/* Avatar */}
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  border: '4px solid rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                <UserIcon size={36} />
-              </div>
-              
-              {/* Info */}
-              <div style={{ flex: 1 }}>
-                <h2
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                flex: 1,
+              }}>
+                <div
                   style={{
-                    margin: 0,
-                    fontSize: '24px',
-                    fontWeight: 'bold',
+                    width: window.innerWidth < 768 ? '60px' : '70px',
+                    height: window.innerWidth < 768 ? '60px' : '70px',
+                    borderRadius: '50%',
+                    backgroundColor: '#3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: 'white',
-                    marginBottom: '4px',
+                    border: '3px solid rgba(255, 255, 255, 0.2)',
+                    flexShrink: 0,
                   }}
                 >
-                  {siswaData.namaSiswa}
-                </h2>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '16px',
-                    color: '#cbd5e1',
-                    fontFamily: 'monospace',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  {siswaData.nisn}
-                </p>
+                  <UserIcon size={window.innerWidth < 768 ? 28 : 32} />
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: window.innerWidth < 768 ? '18px' : '22px',
+                      fontWeight: 'bold',
+                      color: 'white',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {siswaData.namaSiswa}
+                  </h2>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: window.innerWidth < 768 ? '13px' : '15px',
+                      color: '#cbd5e1',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    NISN: {siswaData.nisn}
+                  </p>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  style={{
-                    backgroundColor: '#60A5FA',
-                    border: 'none',
-                    color: 'white',
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3B82F6';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#60A5FA';
-                  }}
-                >
-                  <Edit size={18} />
-                  Ubah
-                </button>
-                <button
-                  onClick={() => handleEditSubmit({
-                    jenisKelamin: siswaData.jenisKelamin,
-                    noTelp: siswaData.noTelp,
-                    jurusanId: siswaData.jurusanId,
-                    tahunAngkatan: siswaData.tahunAngkatan,
-                    kelasId: siswaData.kelasId,
-                    password: siswaData.password,
-                  })}
-                  style={{
-                    backgroundColor: '#10B981',
-                    border: 'none',
-                    color: 'white',
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#059669';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#10B981';
-                  }}
-                >
-                  Simpan
-                </button>
+              {/* Action buttons - Edit/Save/Cancel */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                width: window.innerWidth < 768 ? '100%' : 'auto',
+              }}>
+                {!isEditMode ? (
+                  <button
+                    onClick={handleEnableEdit}
+                    style={{
+                      backgroundColor: '#2563EB',
+                      border: 'none',
+                      color: 'white',
+                      padding: window.innerWidth < 768 ? '10px 20px' : '10px 24px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s',
+                      width: window.innerWidth < 768 ? '100%' : 'auto',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1D4ED8';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#2563EB';
+                    }}
+                  >
+                    <Edit2 size={16} />
+                    Ubah Data
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleCancelEdit}
+                      style={{
+                        backgroundColor: '#6B7280',
+                        border: 'none',
+                        color: 'white',
+                        padding: window.innerWidth < 768 ? '10px 16px' : '10px 20px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        flex: window.innerWidth < 768 ? 1 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#4B5563';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#6B7280';
+                      }}
+                    >
+                      <X size={16} />
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleSaveChanges}
+                      style={{
+                        backgroundColor: '#10B981',
+                        border: 'none',
+                        color: 'white',
+                        padding: window.innerWidth < 768 ? '10px 16px' : '10px 20px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        flex: window.innerWidth < 768 ? 1 : 'auto',
+                        justifyContent: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#059669';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#10B981';
+                      }}
+                    >
+                      <Save size={16} />
+                      Simpan
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Content - Fields */}
-            <div style={{ padding: '32px' }}>
-              {/* Row 1: Jenis Kelamin & Tahun Angkatan */}
+            {/* ============ CONTENT - FORM FIELDS ============ */}
+            <div style={{
+              padding: window.innerWidth < 768 ? '20px' : '32px',
+            }}>
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                  gap: '24px',
-                  marginBottom: '24px',
+                  gridTemplateColumns: window.innerWidth < 768 ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: window.innerWidth < 768 ? '16px' : '24px',
                 }}
               >
-                <FieldItem
-                  label="Jenis Kelamin :"
-                  value={siswaData.jenisKelamin}
-                />
-                <FieldItem
-                  label="Tahun Angkatan :"
-                  value={siswaData.tahunAngkatan}
-                />
+                {/* Nama Siswa */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    Nama Siswa
+                  </label>
+                  <input
+                    type="text"
+                    value={siswaData.namaSiswa}
+                    onChange={(e) => handleFieldChange('namaSiswa', e.target.value)}
+                    disabled={!isEditMode}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: formErrors.namaSiswa ? '2px solid #EF4444' : '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'text' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {formErrors.namaSiswa && isEditMode && (
+                    <p style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px' }}>
+                      {formErrors.namaSiswa}
+                    </p>
+                  )}
+                </div>
+
+                {/* NISN */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    NISN
+                  </label>
+                  <input
+                    type="text"
+                    value={siswaData.nisn}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      handleFieldChange('nisn', value);
+                    }}
+                    disabled={!isEditMode}
+                    maxLength={10}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: formErrors.nisn ? '2px solid #EF4444' : '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'text' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {formErrors.nisn && isEditMode && (
+                    <p style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px' }}>
+                      {formErrors.nisn}
+                    </p>
+                  )}
+                </div>
+
+                {/* Jenis Kelamin */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    Jenis Kelamin
+                  </label>
+                  <select
+                    value={siswaData.jenisKelamin === 'Laki-Laki' ? 'L' : 'P'}
+                    onChange={(e) => handleGenderChange(e.target.value)}
+                    disabled={!isEditMode}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'pointer' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="L">Laki-Laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+
+                {/* Konsentrasi Keahlian */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    Konsentrasi Keahlian
+                  </label>
+                  <select
+                    value={siswaData.jurusanId}
+                    onChange={(e) => handleFieldChange('jurusanId', e.target.value)}
+                    disabled={!isEditMode}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'pointer' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {jurusanOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tingkatan Kelas */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    Tingkatan Kelas
+                  </label>
+                  <select
+                    value={siswaData.kelasId}
+                    onChange={(e) => handleFieldChange('kelasId', e.target.value)}
+                    disabled={!isEditMode}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'pointer' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {kelasOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* No. Telp - UPDATED: 12-13 digit validation */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    No. Telepon
+                  </label>
+                  <input
+                    type="tel"
+                    value={siswaData.noTelp}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                      handleFieldChange('noTelp', value);
+                    }}
+                    disabled={!isEditMode}
+                    placeholder="08xxxxxxxxxx"
+                    maxLength={13}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: formErrors.noTelp ? '2px solid #EF4444' : '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      outline: 'none',
+                      cursor: isEditMode ? 'text' : 'not-allowed',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {formErrors.noTelp && isEditMode && (
+                    <p style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px' }}>
+                      {formErrors.noTelp}
+                    </p>
+                  )}
+                </div>
+
+                {/* Tahun Angkatan */}
+                <div>
+                  <label style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '8px',
+                  }}>
+                    Tahun Angkatan
+                  </label>
+                  <input
+                    type="text"
+                    value={siswaData.tahunAngkatan}
+                    disabled={!isEditMode}
+                    onChange={(e) => handleFieldChange('tahunAngkatan', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #E5E7EB',
+                      fontSize: '14px',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1F2937',
+                      cursor: isEditMode ? 'text' : 'not-allowed',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
               </div>
 
-              {/* Row 2: No. Telp & Kata Sandi */}
+              {/* ============ FOOTER BUTTON ============ */}
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                  gap: '24px',
-                  marginBottom: '24px',
-                }}
-              >
-                <FieldItem
-                  label="No. Telp :"
-                  value={siswaData.noTelp}
-                />
-                <PasswordField
-                  label="Kata Sandi:"
-                  value={siswaData.password}
-                />
-              </div>
-
-              {/* Tombol Kembali - DI KIRI BAWAH */}
-              <div
-                style={{
-                  marginTop: '40px',
+                  marginTop: '32px',
+                  paddingTop: '24px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                   display: 'flex',
                   justifyContent: 'flex-start',
                 }}
@@ -470,9 +771,9 @@ export default function DetailSiswa({
                 <button
                   onClick={handleBack}
                   style={{
-                    backgroundColor: '#9CA3AF',
+                    backgroundColor: '#2563EB',
                     border: 'none',
-                    color: 'black',
+                    color: 'white',
                     padding: '10px 24px',
                     borderRadius: '8px',
                     fontSize: '14px',
@@ -483,11 +784,11 @@ export default function DetailSiswa({
                     gap: '8px',
                     transition: 'all 0.2s',
                   }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#6B7280';
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1D4ED8';
                   }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#9CA3AF';
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2563EB';
                   }}
                 >
                   <ArrowLeft size={18} />
@@ -498,24 +799,6 @@ export default function DetailSiswa({
           </div>
         </div>
       </div>
-
-      {/* Modal Edit Siswa */}
-      <EditSiswaForm
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSubmit={handleEditSubmit}
-        initialData={{
-          jenisKelamin: siswaData.jenisKelamin,
-          noTelp: siswaData.noTelp,
-          jurusanId: siswaData.jurusanId,
-          tahunAngkatan: siswaData.tahunAngkatan,
-          kelasId: siswaData.kelasId,
-          password: siswaData.password,
-        }}
-        jurusanList={jurusanListForForm}
-        kelasList={kelasListForForm}
-      />
     </AdminLayout>
   );
 }
-

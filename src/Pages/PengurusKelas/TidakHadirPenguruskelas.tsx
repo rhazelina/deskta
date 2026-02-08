@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PengurusKelasLayout from "../../component/PengurusKelas/PengurusKelasLayout";
 import { Select } from "../../component/Shared/Select";
 import { Modal } from "../../component/Shared/Modal";
+import { dashboardService } from "../../services/dashboard";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 interface AbsensiRecord {
   id: string;
@@ -15,114 +17,7 @@ interface AbsensiRecord {
   nis?: string;
 }
 
-// Dummy data - nanti dari API
-const dummyData: AbsensiRecord[] = [
-  {
-    id: "1",
-    tanggal: "25-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "alpha",
-    namaSiswa: "Ahmad Fauzi",
-    nis: "20250001",
-  },
-  {
-    id: "2",
-    tanggal: "24-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "alpha",
-    namaSiswa: "Budi Santoso",
-    nis: "20250002",
-  },
-  {
-    id: "3",
-    tanggal: "25-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "izin",
-    keterangan: "Ijin tidak masuk karena ada keperluan keluarga",
-    namaSiswa: "Citra Dewi",
-    nis: "20250003",
-  },
-  {
-    id: "4",
-    tanggal: "25-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "sakit",
-    keterangan: "Demam tinggi dan dokter menyarankan istirahat",
-    namaSiswa: "Dewi Lestari",
-    nis: "20250004",
-  },
-  {
-    id: "5",
-    tanggal: "25-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "alpha",
-    namaSiswa: "Eko Pratama",
-    nis: "20250005",
-  },
-  {
-    id: "6",
-    tanggal: "25-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "alpha",
-    namaSiswa: "Fitri Amelia",
-    nis: "20250006",
-  },
-  {
-    id: "7",
-    tanggal: "26-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Bahasa Indonesia",
-    guru: "Budi Santoso S.Pd",
-    status: "izin",
-    keterangan: "Menghadiri acara keluarga",
-    namaSiswa: "Gunawan Setiawan",
-    nis: "20250007",
-  },
-  {
-    id: "8",
-    tanggal: "26-05-2025",
-    jamPelajaran: "5-8",
-    mataPelajaran: "Bahasa Inggris",
-    guru: "Siti Nurhaliza S.Pd",
-    status: "sakit",
-    keterangan: "Flu berat dan batuk",
-    namaSiswa: "Hana Putri",
-    nis: "20250008",
-  },
-  {
-    id: "9",
-    tanggal: "26-05-2025",
-    jamPelajaran: "1-4",
-    mataPelajaran: "Matematika",
-    guru: "Alifah Diantebes Aindra S.pd",
-    status: "hadir",
-    namaSiswa: "Irfan Maulana",
-    nis: "20250009",
-  },
-  {
-    id: "10",
-    tanggal: "26-05-2025",
-    jamPelajaran: "5-8",
-    mataPelajaran: "Bahasa Inggris",
-    guru: "Siti Nurhaliza S.Pd",
-    status: "pulang",
-    keterangan: "Pulang lebih awal karena sakit perut",
-    namaSiswa: "Joko Widodo",
-    nis: "20250010",
-  },
-];
+
 
 function CalendarIcon() {
   return (
@@ -237,53 +132,80 @@ export default function TidakHadirPenguruskelas({
   onMenuClick = () => { },
   onLogout = () => { },
 }: TidakHadirPenguruskelasProps) {
-  const [startDate, setStartDate] = useState("2025-05-24");
-  const [endDate, setEndDate] = useState("2025-05-26");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>("semua");
   const [selectedRecord, setSelectedRecord] = useState<AbsensiRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<AbsensiRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { alert: popupAlert } = usePopup();
 
-  // Filter data
+  const fetchAttendance = async () => {
+    setLoading(true);
+    try {
+      // Fetch attendance separately for start and end date if they are different, or loop?
+      // For now, let's just fetch for the start date as 'date' param, 
+      // since the API seems to support single date.
+      // Ideally backend supports range.
+      const response = await dashboardService.getMyClassAttendance({ date: startDate });
+
+      // Transform response to match AbsensiRecord if needed
+      // Assuming response is an array of attendance records
+      const formattedData: AbsensiRecord[] = response.map((item: any) => ({
+        id: item.id.toString(),
+        tanggal: item.date, // Assuming YYYY-MM-DD
+        jamPelajaran: `${item.schedule?.start_time?.slice(0, 5)} - ${item.schedule?.end_time?.slice(0, 5)} `,
+        mataPelajaran: item.schedule?.subject_name || '-',
+        guru: item.schedule?.teacher?.user?.name || '-',
+        status: item.status,
+        keterangan: item.reason,
+        namaSiswa: item.student?.user?.name || item.user?.name || '-',
+        nis: item.student?.nis || item.user?.nis || '-',
+      }));
+      setAttendanceData(formattedData);
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      popupAlert("Gagal mengambil data kehadiran");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [startDate]); // Re-fetch when date changes. Note: logic only supports single date for now based on API.
+
+  // Filter data (Client side filtering for Status, Date Range logic adjustment)
   const filteredData = useMemo(() => {
-    if (!startDate || !endDate) return dummyData;
+    // If we only fetch for 'startDate', we don't strictly need date range filtering client side 
+    // unless we accumulate data. For now, assuming single date view is acceptable or we'd need loop.
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    return dummyData.filter((item) => {
-      const [day, month, year] = item.tanggal.split("-").map(Number);
-      const itemDate = new Date(year, month - 1, day);
-
-      const inDateRange = itemDate >= start && itemDate <= end;
-
+    return attendanceData.filter((item) => {
       let statusMatch = true;
       if (statusFilter !== "semua") {
         if (statusFilter === "izin/sakit") {
           statusMatch = item.status === "izin" || item.status === "sakit";
         } else if (statusFilter === "alpha") {
-          statusMatch = item.status === "alpha";
-        } else if (statusFilter === "pulang") {
-          statusMatch = item.status === "pulang";
-        } else if (statusFilter === "hadir") {
-          statusMatch = item.status === "hadir";
+          statusMatch = item.status === "alpha" || item.status === "absent"; // Map absent to alpha
+        } else {
+          statusMatch = item.status === statusFilter;
         }
       }
-
-      return inDateRange && statusMatch;
+      return statusMatch;
     });
-  }, [startDate, endDate, statusFilter]);
+  }, [attendanceData, statusFilter]);
 
   // Hitung summary berdasarkan data filtered
   const summary = useMemo(() => {
-    const hadir = filteredData.filter((d) => d.status === "hadir").length;
-    const pulang = filteredData.filter((d) => d.status === "pulang").length;
-    const izin = filteredData.filter((d) => d.status === "izin").length;
-    const sakit = filteredData.filter((d) => d.status === "sakit").length;
-    const alpha = filteredData.filter((d) => d.status === "alpha").length;
+    const hadir = attendanceData.filter((d) => d.status === "hadir").length; // Summary form ALL fetched data or filtered? Usually for dashboard cards it's good to show totals for the day.
+    const pulang = attendanceData.filter((d) => d.status === "pulang").length;
+    const izin = attendanceData.filter((d) => d.status === "izin").length;
+    const sakit = attendanceData.filter((d) => d.status === "sakit").length;
+    const alpha = attendanceData.filter((d) => d.status === "alpha" || d.status === "absent").length;
 
-    return { hadir, pulang, izin, sakit, alpha, total: filteredData.length };
-  }, [filteredData]);
+    return { hadir, pulang, izin, sakit, alpha, total: attendanceData.length };
+  }, [attendanceData]);
 
   // Fungsi untuk membuka modal detail - SEMUA STATUS bisa diklik
   const handleStatusClick = (record: AbsensiRecord, e: React.MouseEvent) => {
@@ -499,7 +421,7 @@ export default function TidakHadirPenguruskelas({
               justifyContent: "space-between",
             }}
           >
-            {/* Date Range Picker */}
+            {/* Date Picker */}
             <div
               style={{
                 background: "#0B2948",
@@ -543,38 +465,6 @@ export default function TidakHadirPenguruskelas({
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      color: "#0F172A",
-                      fontWeight: "600",
-                      fontSize: "13px",
-                      outline: "none",
-                      fontFamily: "inherit",
-                      cursor: "pointer",
-                      colorScheme: "light",
-                    }}
-                  />
-                </div>
-
-                <span style={{ fontWeight: "bold", color: "#FFFFFF", fontSize: "14px" }}>-</span>
-
-                <div
-                  style={{
-                    background: "#FFFFFF",
-                    borderRadius: "6px",
-                    padding: "6px 10px",
-                    color: "#0F172A",
-                    fontWeight: "600",
-                    fontSize: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
                     style={{
                       border: "none",
                       background: "transparent",
@@ -707,11 +597,11 @@ export default function TidakHadirPenguruskelas({
                               textAlign: col.align || "left",
                             }}
                           >
-                            {col.key === "no" 
+                            {col.key === "no"
                               ? index + 1
                               : col.render
-                              ? col.render(row[col.key as keyof AbsensiRecord], row)
-                              : row[col.key as keyof AbsensiRecord]}
+                                ? col.render(row[col.key as keyof AbsensiRecord], row)
+                                : row[col.key as keyof AbsensiRecord]}
                           </td>
                         ))}
                       </tr>
@@ -747,7 +637,7 @@ export default function TidakHadirPenguruskelas({
                 fontSize: "14px",
                 color: "#64748B",
               }}>
-                <span>Menampilkan {filteredData.length} dari {dummyData.length} data</span>
+                <span>Menampilkan {filteredData.length} data</span>
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <button
                     style={{
@@ -833,7 +723,7 @@ export default function TidakHadirPenguruskelas({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: "auto",
               flex: 1,
@@ -957,8 +847,8 @@ export default function TidakHadirPenguruskelas({
                       color: "#9CA3AF",
                       textAlign: "center",
                     }}>
-                      {selectedRecord.status === "hadir" 
-                        ? "Tidak ada bukti foto yang diperlukan" 
+                      {selectedRecord.status === "hadir"
+                        ? "Tidak ada bukti foto yang diperlukan"
                         : "[Area untuk menampilkan bukti foto]"}
                     </p>
                   </div>
@@ -967,7 +857,7 @@ export default function TidakHadirPenguruskelas({
 
               {/* Catatan untuk status Hadir */}
               {selectedRecord.status === "hadir" && (
-                <div style={{ 
+                <div style={{
                   marginTop: 24,
                   padding: "12px 16px",
                   backgroundColor: "#F0FDF4",
@@ -1001,7 +891,7 @@ function SummaryCard({ label, value, color = "#0B2948" }: { label: string; value
         background: "#FFFFFF",
         borderRadius: "12px",
         padding: "12px 24px",
-        border: `1px solid ${color}20`,
+        border: `1px solid ${color} 20`,
         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
         minWidth: "100px",
         textAlign: "center",
