@@ -32,7 +32,7 @@ import {
   ArcElement,
   Filler,
 } from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
+import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,

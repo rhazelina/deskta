@@ -4,8 +4,8 @@ import StaffLayout from '../../component/WakaStaff/StaffLayout';
 import { Select } from '../../component/Shared/Select';
 import { Table } from '../../component/Shared/Table';
 import { Eye, Upload } from "lucide-react";
-import { classService, ClassRoom } from '../../services/class';
-import { usePopup } from '../../contexts/PopupContext';
+import { classService, type ClassRoom } from '../../services/class';
+import { usePopup } from '../../component/Shared/Popup/PopupProvider';
 
 interface JadwalKelasStaffProps {
   user: {
@@ -29,7 +29,7 @@ export default function JadwalKelasStaff({
   const [selectedTingkat, setSelectedTingkat] = useState('');
   const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [loading, setLoading] = useState(false);
-  const { popupAlert, popupConfirm } = usePopup();
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
 
   useEffect(() => {
     fetchClasses();

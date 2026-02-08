@@ -4,8 +4,8 @@ import StaffLayout from "../../component/WakaStaff/StaffLayout";
 import { SearchBox } from "../../component/Shared/Search";
 import { Table } from "../../component/Shared/Table";
 import { Eye, Upload } from "lucide-react";
-import { teacherService, Teacher } from "../../services/teacher";
-import { usePopup } from "../../contexts/PopupContext";
+import { teacherService, type Teacher } from "../../services/teacher";
+import { usePopup } from "../../component/Shared/Popup/PopupProvider";
 
 interface JadwalGuruStaffProps {
   user: {
@@ -28,7 +28,7 @@ export default function JadwalGuruStaff({
   const [searchValue, setSearchValue] = useState("");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(false);
-  const { popupAlert, popupConfirm } = usePopup();
+  const { alert: popupAlert, confirm: popupConfirm } = usePopup();
 
   useEffect(() => {
     fetchTeachers();

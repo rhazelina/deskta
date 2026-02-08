@@ -35,7 +35,7 @@ export default function JadwalPengurus({
             pageTitle="Jadwal Kelas"
             currentPage={currentPage}
             onMenuClick={onMenuClick}
-            user={user}
+            user={{ ...user, role: user.role || 'wali_kelas' }}
             onLogout={onLogout}
         >
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
