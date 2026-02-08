@@ -74,13 +74,7 @@ const PAGE_TITLES: Record<WakaPage, string> = {
 };
 
 // Dummy data updated for Monthly view (Mon-Fri) with 5 categories sesuai gambar
-const dailyAttendanceData = [
-  { day: "Senin", hadir: 42, tidak_hadir: 2, izin: 3, sakit: 1, pulang: 0 },
-  { day: "Selasa", hadir: 38, tidak_hadir: 1, izin: 5, sakit: 2, pulang: 1 },
-  { day: "Rabu", hadir: 45, tidak_hadir: 0, izin: 2, sakit: 1, pulang: 0 },
-  { day: "Kamis", hadir: 40, tidak_hadir: 1, izin: 4, sakit: 3, pulang: 2 },
-  { day: "Jumat", hadir: 44, tidak_hadir: 0, izin: 1, sakit: 1, pulang: 1 },
-];
+
 
 
 
@@ -425,11 +419,7 @@ export default function DashboardStaff({ user, onLogout }: DashboardStaffProps) 
                   gap: "24px",
                 }}
               >
-                {/* Weekly Chart - Kembali ke bentuk semula dengan warna baru */}
-                <div style={cardStyle}>
-                  <SectionHeader title="Grafik Kehadiran Harian" subtitle="Rekap Mingguan (Senin - Jumat)" />
-                  <WeeklyBarGraph />
-                </div>
+
 
                 {/* Monthly Chart - Line Chart seperti DashboardSiswa */}
                 <div style={{
@@ -490,128 +480,9 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <span
-        style={{
-          width: "10px",
-          height: "10px",
-          borderRadius: "999px",
-          backgroundColor: color,
-          display: "inline-block",
-          flexShrink: 0,
-        }}
-      />
-      <span style={{ fontSize: "12px", color: "#4B5563", fontWeight: 500 }}>{label}</span>
-    </div>
-  );
-}
 
-function WeeklyBarGraph() {
-  const maxValue =
-    dailyAttendanceData.reduce(
-      (acc, item) => Math.max(acc, item.hadir, item.tidak_hadir, item.izin, item.sakit, item.pulang),
-      1
-    ) || 1;
 
-  return (
-    <div style={{ position: "relative" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          gap: "16px",
-          height: "220px",
-          marginBottom: "32px",
-        }}
-      >
-        {dailyAttendanceData.map((item) => (
-          <div key={item.day} style={{ flex: 1, textAlign: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "flex-end",
-                gap: "4px",
-                height: "180px",
-              }}
-            >
-              {/* Hadir */}
-              <div
-                title={`Hadir: ${item.hadir}`}
-                style={{
-                  width: "14px",
-                  height: `${(item.hadir / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: `linear-gradient(180deg, ${COLORS.HADIR} 0%, ${COLORS.HADIR}90 100%)`,
-                }}
-              />
-              {/* Tidak Hadir */}
-              <div
-                title={`Tidak Hadir: ${item.tidak_hadir}`}
-                style={{
-                  width: "14px",
-                  height: `${(item.tidak_hadir / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: `linear-gradient(180deg, ${COLORS.TIDAK_HADIR} 0%, ${COLORS.TIDAK_HADIR}90 100%)`,
-                }}
-              />
-              {/* Izin */}
-              <div
-                title={`Izin: ${item.izin}`}
-                style={{
-                  width: "14px",
-                  height: `${(item.izin / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: `linear-gradient(180deg, ${COLORS.IZIN} 0%, ${COLORS.IZIN}90 100%)`,
-                }}
-              />
-              {/* Sakit */}
-              <div
-                title={`Sakit: ${item.sakit}`}
-                style={{
-                  width: "14px",
-                  height: `${(item.sakit / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: `linear-gradient(180deg, ${COLORS.SAKIT} 0%, ${COLORS.SAKIT}90 100%)`,
-                }}
-              />
-              {/* Pulang */}
-              <div
-                title={`Pulang: ${item.pulang}`}
-                style={{
-                  width: "14px",
-                  height: `${(item.pulang / maxValue) * 160}px`,
-                  borderRadius: "4px 4px 0 0",
-                  background: `linear-gradient(180deg, ${COLORS.PULANG} 0%, ${COLORS.PULANG}90 100%)`,
-                }}
-              />
-            </div>
-            <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#475569" }}>
-              {item.day}
-            </p>
-          </div>
-        ))}
-      </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          justifyContent: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <LegendDot color={COLORS.HADIR} label="Jumlah Guru Hadir" />
-        <LegendDot color={COLORS.IZIN} label="Jumlah Guru Izin" />
-        <LegendDot color={COLORS.PULANG} label="Jumlah Guru Pulang" />
-        <LegendDot color={COLORS.TIDAK_HADIR} label="Jumlah Guru Tidak Hadir" />
-        <LegendDot color={COLORS.SAKIT} label="Jumlah Guru Sakit" />
-      </div>
-    </div>
-  );
-}
 
 // Monthly Line Chart Component - dengan 5 kategori
 function MonthlyLineChart({

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import SiswaLayout from "../../component/Siswa/SiswaLayout";
 // import openBook from "../../assets/Icon/open-book.png";
 import { Modal } from "../../component/Shared/Modal";
@@ -11,15 +11,14 @@ import {
   Bell,
   Megaphone,
   Clock,
-  GraduationCap,
-  Target,
   BookOpen,
   BookOpenCheck,
   BarChart3,
-  PieChart,
-  ArrowRight,
   TrendingUp,
-  AlarmClock,
+  Target,
+  ArrowRight,
+  PieChart, // Re-adding because it is used
+  AlarmClock, // Re-adding because it is used
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -75,7 +74,7 @@ const formatScheduleFromAPI = (schedule: any): ScheduleItem => {
 };
 
 export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) {
-  const { alert: popupAlert } = usePopup();
+  // const { alert: popupAlert } = usePopup();
   const [currentPage, setCurrentPage] = useState<SiswaPage>("dashboard");
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
@@ -147,7 +146,7 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
           izin: data.excused || 0,
           sakit: data.sick || 0,
           alpha: data.absent || 0,
-          dispen: data.dispensation || 0,
+          dispen: (data as any).dispensation || 0,
         });
       } catch (error) {
         console.error('Failed to fetch attendance:', error);
@@ -171,10 +170,10 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
     setIsScheduleModalOpen(true);
   };
 
-  // Dummy user data
+  // User info
   const userInfo = {
-    name: user.name || "Muhammad Wito S.",
-    id: "0918415784",
+    name: user.name || "-",
+    id: user.phone || "-", // Assuming phone is used as ID/NISN temporarily or passed prop
   };
 
   const renderPage = () => {
@@ -840,163 +839,11 @@ export default function DashboardSiswa({ user, onLogout }: DashboardSiswaProps) 
 }
 
 // Monthly Line Chart Component - KOMPONEN BARU DENGAN GRAFIK GARIS
-function MonthlyLineChart({
-  data,
-}: {
-  data: Array<{ month: string; hadir: number; izin: number; sakit: number; alpha: number; dispen: number }>;
-}) {
-  const chartData = {
-    labels: data.map((d) => d.month),
-    datasets: [
-      {
-        label: "Hadir",
-        data: data.map((d) => d.hadir),
-        borderColor: "#1FA83D", // REVISI: Hadir > #1FA83D
-        backgroundColor: "rgba(31, 168, 61, 0.1)",
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#1FA83D",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Izin",
-        data: data.map((d) => d.izin),
-        borderColor: "#ACA40D", // REVISI: Izin > #ACA40D
-        backgroundColor: "rgba(172, 164, 13, 0.1)",
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#ACA40D",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Sakit",
-        data: data.map((d) => d.sakit),
-        borderColor: "#520C8F", // REVISI: Sakit > #520C8F
-        backgroundColor: "rgba(82, 12, 143, 0.1)",
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#520C8F",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Tidak Hadir",
-        data: data.map((d) => d.alpha),
-        borderColor: "#D90000", // REVISI: Tidak Hadir > #D90000
-        backgroundColor: "rgba(217, 0, 0, 0.1)",
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#D90000",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: "Pulang", // Mengganti Dispen dengan Pulang
-        data: data.map((d) => d.dispen),
-        borderColor: "#2F85EB", // REVISI: Pulang > #2F85EB
-        backgroundColor: "rgba(47, 133, 235, 0.1)",
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#2F85EB",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+// Unused component removed
 
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 8,
-          padding: 20,
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif",
-          },
-        },
-      },
-      tooltip: {
-        backgroundColor: "#1F2937",
-        padding: 12,
-        titleFont: { size: 13, family: "'Inter', sans-serif" },
-        bodyFont: { size: 12, family: "'Inter', sans-serif" },
-        cornerRadius: 8,
-        displayColors: true,
-        callbacks: {
-          label: function (context: any) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            label += context.parsed.y + ' hari';
-            return label;
-          }
-        }
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 11,
-          },
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "#F3F4F6",
-          drawBorder: false,
-        },
-        border: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 11,
-          },
-          padding: 8,
-          stepSize: 10,
-        },
-      },
-    },
-    interaction: {
-      mode: "index" as const,
-      intersect: false,
-    },
-  };
 
-  return (
-    <div style={{ height: "300px", width: "100%" }}>
-      <Line data={chartData} options={options} />
-    </div>
-  );
-}
+
+
 
 // Weekly Donut Chart Component
 function WeeklyDonutChart({
@@ -1071,6 +918,7 @@ function WeeklyDonutChart({
   );
 }
 
+
 // Modal Component untuk Siswa
 interface JadwalSiswaModalProps {
   isOpen: boolean;
@@ -1079,6 +927,7 @@ interface JadwalSiswaModalProps {
 }
 
 function JadwalSiswaModal({ isOpen, onClose, data }: JadwalSiswaModalProps) {
+  const { alert: popupAlert } = usePopup();
   if (!data) return null;
 
   return (

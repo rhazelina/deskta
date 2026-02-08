@@ -130,7 +130,7 @@ export default function SiswaAdmin({
         noTelp: s.user?.phone || '-',
         jurusan: s.class_room?.major?.name || '-',
         jurusanId: s.class_room?.major?.id ? String(s.class_room.major.id) : '',
-        tahunAngkatan: '2023 - 2026', // Dummy
+        tahunAngkatan: '', // Dynamic if available
         kelas: s.class_room?.name || '-',
         kelasId: s.class_id ? String(s.class_id) : '',
         originalData: s

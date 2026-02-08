@@ -73,79 +73,7 @@ export default function RekapKehadiranSiswa({
     };
   }, []);
 
-  // Dummy data siswa
-  const [siswaData] = useState<SiswaRow[]>([
-    {
-      no: 1,
-      nisn: "1348576392",
-      namaSiswa: "Muhammad Wito Suherman",
-      hadir: 23,
-      sakit: 3,
-      izin: 2,
-      alpha: 2,
-      pulang: 2,
-    },
-    {
-      no: 2,
-      nisn: "1348576393",
-      namaSiswa: "Siti Nurhaliza Putri",
-      hadir: 25,
-      sakit: 1,
-      izin: 2,
-      alpha: 1,
-      pulang: 1,
-    },
-    {
-      no: 3,
-      nisn: "1348576394",
-      namaSiswa: "Ahmad Fauzi Rahman",
-      hadir: 22,
-      sakit: 2,
-      izin: 3,
-      alpha: 2,
-      pulang: 1,
-    },
-    {
-      no: 4,
-      nisn: "1348576395",
-      namaSiswa: "Dewi Lestari Wulandari",
-      hadir: 24,
-      sakit: 2,
-      izin: 1,
-      alpha: 1,
-      pulang: 2,
-    },
-    {
-      no: 5,
-      nisn: "1348576396",
-      namaSiswa: "Budi Santoso Wijaya",
-      hadir: 23,
-      sakit: 3,
-      izin: 2,
-      alpha: 2,
-      pulang: 0,
-    },
-    {
-      no: 6,
-      nisn: "1348576397",
-      namaSiswa: "Rina Kartika Sari",
-      hadir: 26,
-      sakit: 1,
-      izin: 1,
-      alpha: 1,
-      pulang: 1,
-    },
-    {
-      no: 7,
-      nisn: "1348576398",
-      namaSiswa: "Andi Prakoso Nugroho",
-      hadir: 21,
-      sakit: 4,
-      izin: 2,
-      alpha: 2,
-      pulang: 1,
-    },
-  ]);
+  const [siswaData] = useState<SiswaRow[]>([]);
 
   const handleExportExcel = () => {
     // Buat data untuk Excel
@@ -256,7 +184,7 @@ export default function RekapKehadiranSiswa({
     // Buat Blob dan download
     const blob = new Blob([htmlContent], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    
+
     // Buka di tab baru untuk print to PDF
     const printWindow = window.open(url, "_blank");
     if (printWindow) {
@@ -276,16 +204,16 @@ export default function RekapKehadiranSiswa({
 
   const columns = useMemo(
     () => [
-      { 
-        key: "nisn", 
+      {
+        key: "nisn",
         label: <div style={{ textAlign: "center" }}>NISN</div>,
         render: (value: string) => (
           <div style={{ textAlign: "center" }}>{value}</div>
         ),
       },
       { key: "namaSiswa", label: "Nama Siswa" },
-      { 
-        key: "hadir", 
+      {
+        key: "hadir",
         label: <div style={{ textAlign: "center" }}>Hadir</div>,
         render: (value: number) => (
           <div style={{ textAlign: "center" }}>
@@ -293,8 +221,8 @@ export default function RekapKehadiranSiswa({
           </div>
         ),
       },
-      { 
-        key: "sakit", 
+      {
+        key: "sakit",
         label: <div style={{ textAlign: "center" }}>Sakit</div>,
         render: (value: number) => (
           <div style={{ textAlign: "center" }}>
@@ -302,8 +230,8 @@ export default function RekapKehadiranSiswa({
           </div>
         ),
       },
-      { 
-        key: "izin", 
+      {
+        key: "izin",
         label: <div style={{ textAlign: "center" }}>Izin</div>,
         render: (value: number) => (
           <div style={{ textAlign: "center" }}>
@@ -311,8 +239,8 @@ export default function RekapKehadiranSiswa({
           </div>
         ),
       },
-      { 
-        key: "alpha", 
+      {
+        key: "alpha",
         label: <div style={{ textAlign: "center" }}>Tidak Hadir</div>,
         render: (value: number) => (
           <div style={{ textAlign: "center" }}>
@@ -320,8 +248,8 @@ export default function RekapKehadiranSiswa({
           </div>
         ),
       },
-      { 
-        key: "pulang", 
+      {
+        key: "pulang",
         label: <div style={{ textAlign: "center" }}>Pulang</div>,
         render: (value: number) => (
           <div style={{ textAlign: "center" }}>
@@ -438,15 +366,15 @@ export default function RekapKehadiranSiswa({
                 justifyContent: "center",
               }}
             >
-              <svg 
-                width="22" 
-                height="22" 
-                viewBox="0 0 24 24" 
-                fill="white" 
-                stroke="white" 
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="white"
+                stroke="white"
                 strokeWidth="0.5"
               >
-                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
               </svg>
             </div>
             <div>
@@ -492,14 +420,14 @@ export default function RekapKehadiranSiswa({
                   borderRadius: 6,
                 }}
               >
-                <svg 
-                  width="18" 
-                  height="18" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="white" 
-                  strokeWidth="2.5" 
-                  strokeLinecap="round" 
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>

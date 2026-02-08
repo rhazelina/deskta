@@ -4,7 +4,7 @@ import { Select } from "../../component/Shared/Select";
 import { Modal } from "../../component/Shared/Modal";
 
 // Statuses handled by mapping util
-import { STATUS_BACKEND_TO_FRONTEND, STATUS_COLORS_HEX, STATUS_FRONTEND_TO_BACKEND } from '../../utils/statusMapping';
+import { STATUS_BACKEND_TO_FRONTEND, STATUS_COLORS_HEX } from '../../utils/statusMapping';
 
 interface AbsensiRecord {
   id: string;
@@ -133,8 +133,8 @@ export default function AbsensiSiswa({
   onMenuClick = () => { },
   onLogout = () => { },
 }: AbsensiSiswaProps) {
-  const [startDate, setStartDate] = useState("2025-05-24");
-  const [endDate, setEndDate] = useState("2025-05-26");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>("semua");
   const [selectedRecord, setSelectedRecord] = useState<AbsensiRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -180,7 +180,7 @@ export default function AbsensiSiswa({
 
   const filteredData = useMemo(() => {
     return records.filter((item) => {
-      const mappedFilter = statusFilter !== 'semua' ? STATUS_BACKEND_TO_FRONTEND[STATUS_FRONTEND_TO_BACKEND[statusFilter]]?.toLowerCase() : null;
+      // const mappedFilter = statusFilter !== 'semua' ? STATUS_BACKEND_TO_FRONTEND[STATUS_FRONTEND_TO_BACKEND[statusFilter]]?.toLowerCase() : null;
       // Logic is complicated by lowercase/uppercase mix.
       // Let's simplified: item.status is "Hadir", "Sakit" etc (Title case from mapping).
 
@@ -396,7 +396,7 @@ export default function AbsensiSiswa({
     <>
       <SiswaLayout
         pageTitle="Daftar Ketidakhadiran"
-        currentPage={currentPage}
+        currentPage={currentPage as any}
         onMenuClick={onMenuClick}
         user={user}
         onLogout={onLogout}
@@ -874,7 +874,7 @@ export default function AbsensiSiswa({
                       color: "#9CA3AF",
                       textAlign: "center",
                     }}>
-                      {selectedRecord.status === "hadir"
+                      {(selectedRecord.status as string) === "hadir"
                         ? "Tidak ada bukti foto yang diperlukan"
                         : "[Area untuk menampilkan bukti foto]"}
                     </p>
@@ -883,7 +883,7 @@ export default function AbsensiSiswa({
               )}
 
               {/* Catatan untuk status Hadir */}
-              {selectedRecord.status === "hadir" && (
+              {(selectedRecord.status as string) === "hadir" && (
                 <div style={{
                   marginTop: 24,
                   padding: "12px 16px",

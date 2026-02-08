@@ -42,23 +42,8 @@ export default function KehadiranSiswa({
   const [selectedJurusan, setSelectedJurusan] = useState("");
   const [selectedKelas, setSelectedKelas] = useState("");
 
-  // Dummy data (disesuaikan dengan gambar)
-  const [kelasData] = useState<KelasRow[]>([
-    {
-      id: "1",
-      tingkat: "12",
-      namaKelas: "XII Mekatronika 2",
-      namaJurusan: "Mekatronika",
-      waliKelas: "Ewit Erniyah",
-    },
-    {
-      id: "2",
-      tingkat: "12",
-      namaKelas: "XII Mekatronika 2",
-      namaJurusan: "Mekatronika",
-      waliKelas: "Ewit Erniyah",
-    },
-  ]);
+  // Data kosong (menunggu integrasi backend)
+  const [kelasData] = useState<KelasRow[]>([]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);

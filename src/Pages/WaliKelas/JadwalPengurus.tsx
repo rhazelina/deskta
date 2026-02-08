@@ -3,7 +3,7 @@ import DummyJadwal from "../../assets/Icon/DummyJadwal.png";
 import { User } from "lucide-react";
 
 interface JadwalPengurusProps {
-    user: { name: string; phone: string };
+    user: { name: string; phone: string; role?: string };
     currentPage: string;
     onMenuClick: (page: string) => void;
     onLogout: () => void;
@@ -25,8 +25,8 @@ export default function JadwalPengurus({
 }: JadwalPengurusProps) {
     // Data default jika tidak ada props
     const kelasInfo = {
-        namaKelas: namaKelas || "XII RPL 2",
-        waliKelas: waliKelas || "Triana Ardiane S.pd",
+        namaKelas: namaKelas || "-",
+        waliKelas: waliKelas || "-",
         jadwalImage: jadwalImage || DummyJadwal
     };
 
@@ -88,9 +88,9 @@ export default function JadwalPengurus({
                 </div>
 
                 {/* Jadwal Image */}
-                <div style={{ 
-                    background: "#FFFFFF", 
-                    borderRadius: 14, 
+                <div style={{
+                    background: "#FFFFFF",
+                    borderRadius: 14,
                     padding: 16,
                     border: "1px solid #E2E8F0",
                 }}>

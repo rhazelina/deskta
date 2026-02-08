@@ -31,9 +31,9 @@ interface DaftarKetidakhadiranProps {
 export default function DaftarKetidakhadiran({
   user = { name: "Admin", role: "waka" },
   currentPage = "daftar-ketidakhadiran",
-  onMenuClick = () => {},
-  onLogout = () => {},
-  onBack = () => {},
+  onMenuClick = () => { },
+  onLogout = () => { },
+  onBack = () => { },
   siswaName = "Muhammad Wito S.",
   siswaIdentitas = "0918415784",
 }: DaftarKetidakhadiranProps) {
@@ -50,109 +50,8 @@ export default function DaftarKetidakhadiran({
   const [selectedRecord, setSelectedRecord] = useState<RowKehadiran | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Data dummy dengan semua status dan keterangan lengkap
-  const [rows] = useState<RowKehadiran[]>([
-    {
-      no: 1,
-      tanggal: "20-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Hadir",
-      waktuMasuk: "07:15",
-      keterangan: "Hadir tepat waktu dengan presensi masuk"
-    },
-    {
-      no: 2,
-      tanggal: "20-05-2025",
-      jam: "3-4",
-      mapel: "Bahasa Indonesia",
-      guru: "Siti Nurhaliza S.pd",
-      status: "Hadir",
-      waktuMasuk: "09:05",
-      keterangan: "Hadir sesuai jadwal"
-    },
-    {
-      no: 3,
-      tanggal: "21-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Hadir",
-      waktuMasuk: "07:10",
-      keterangan: "Hadir tepat waktu"
-    },
-    {
-      no: 4,
-      tanggal: "21-05-2025",
-      jam: "5-6",
-      mapel: "Fisika",
-      guru: "Budi Santoso S.pd",
-      status: "Izin",
-      keterangan: "Ijin tidak masuk karena ada keperluan keluarga di luar kota",
-      buktiFoto: "surat-izin-keluarga.jpg",
-    },
-    {
-      no: 5,
-      tanggal: "22-05-2025",
-      jam: "3-4",
-      mapel: "Kimia",
-      guru: "Dewi Lestari S.pd",
-      status: "Sakit",
-      keterangan: "Demam tinggi dan dokter menyarankan istirahat total selama 3 hari",
-      buktiFoto: "surat-keterangan-dokter.jpg",
-    },
-    {
-      no: 6,
-      tanggal: "23-05-2025",
-      jam: "1-2",
-      mapel: "Matematika",
-      guru: "Alifah Diantebes Aindra S.pd",
-      status: "Alfa",
-      keterangan: "Siswa tidak hadir tanpa keterangan yang jelas",
-    },
-    {
-      no: 7,
-      tanggal: "23-05-2025",
-      jam: "7-8",
-      mapel: "Bahasa Inggris",
-      guru: "Ahmad Fauzi S.pd",
-      status: "Alfa",
-      keterangan: "Siswa tidak hadir tanpa pemberitahuan",
-    },
-    {
-      no: 8,
-      tanggal: "24-05-2025",
-      jam: "3-4",
-      mapel: "Sejarah",
-      guru: "Rina Kartika S.pd",
-      status: "Pulang",
-      keterangan: "Pulang lebih awal karena sakit kepala dan mual",
-      waktuKeluar: "10:45",
-      buktiFoto: "surat-izin-pulang.jpg",
-    },
-    {
-      no: 9,
-      tanggal: "24-05-2025",
-      jam: "5-6",
-      mapel: "Seni Budaya",
-      guru: "Joko Susilo S.pd",
-      status: "Pulang",
-      keterangan: "Pulang untuk menghadiri acara keluarga yang penting",
-      waktuKeluar: "11:30",
-      buktiFoto: "surat-keluarga.jpg",
-    },
-    {
-      no: 10,
-      tanggal: "25-05-2025",
-      jam: "1-2",
-      mapel: "PJOK",
-      guru: "Andi Pratama S.pd",
-      status: "Sakit",
-      keterangan: "Keseleo saat olahraga, diberikan surat izin dari UKS",
-      buktiFoto: "surat-uks.jpg",
-    },
-  ]);
+  // Data kosong (menunggu integrasi backend)
+  const [rows] = useState<RowKehadiran[]>([]);
 
   // Hitung statistik dengan semua 5 status
   const stats = {
@@ -211,7 +110,7 @@ export default function DaftarKetidakhadiran({
   const StatusButton = ({ status, row }: { status: StatusKehadiran; row: RowKehadiran }) => {
     const bgColor = getStatusColor(status);
     const textColor = "#FFFFFF";
-    
+
     // SEMUA status bisa diklik untuk melihat detail
     const isClickable = true;
 
@@ -588,7 +487,7 @@ export default function DaftarKetidakhadiran({
             </div>
 
             {/* Content Modal */}
-            <div style={{ 
+            <div style={{
               padding: 24,
               overflowY: "auto",
               flex: 1,

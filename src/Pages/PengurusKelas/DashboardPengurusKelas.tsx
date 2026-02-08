@@ -22,7 +22,7 @@ import {
   ArcElement,
   Filler,
 } from "chart.js";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Doughnut, Line } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
@@ -68,12 +68,9 @@ export default function DashboardPengurusKelas({
   const [currentDate, setCurrentDate] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [isMapelModalOpen, setIsMapelModalOpen] = useState(false);
-
-  // API data states
-  const [classInfo, setClassInfo] = useState<any>(null);
   const [todaySchedules, setTodaySchedules] = useState<any[]>([]);
-  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+
+  // Chart data states - populated from API
 
   // Chart data states - populated from API
   const [monthlyTrendData, setMonthlyTrendData] = useState<any[]>([]);
@@ -89,26 +86,22 @@ export default function DashboardPengurusKelas({
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
-        const [classData, schedulesData, summaryData] = await Promise.all([
+        // setLoading(true);
+        const [, schedulesData, summaryData] = await Promise.all([
           dashboardService.getMyClass(),
           dashboardService.getMyClassSchedules(),
           dashboardService.getMyAttendanceSummary(),
         ]);
-
-        setClassInfo(classData);
 
         // Filter today's schedules
         const today = new Date().getDay();
         const todaySchedule = schedulesData.filter((s: any) => s.day === today);
         setTodaySchedules(todaySchedule);
 
-        setAttendanceSummary(summaryData);
-
         // Transform API data for charts
-        if (summaryData?.status_summary) {
+        if ((summaryData as any)?.status_summary) {
           // Transform status summary to weekly stats
-          const stats = summaryData.status_summary.reduce((acc: any, item: any) => {
+          const stats = (summaryData as any).status_summary.reduce((acc: any, item: any) => {
             const status = item.status.toLowerCase();
             if (status === 'present') acc.hadir = item.total;
             else if (status === 'excused' || status === 'izin') acc.izin = item.total;
@@ -122,11 +115,11 @@ export default function DashboardPengurusKelas({
         }
 
         // Transform daily summary to monthly trend (last 6 months)
-        if (summaryData?.daily_summary) {
+        if ((summaryData as any)?.daily_summary) {
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
           const monthlyData: any = {};
 
-          summaryData.daily_summary.forEach((item: any) => {
+          (summaryData as any).daily_summary.forEach((item: any) => {
             const date = new Date(item.day);
             const monthKey = monthNames[date.getMonth()];
 
@@ -149,7 +142,7 @@ export default function DashboardPengurusKelas({
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
 
@@ -204,10 +197,10 @@ export default function DashboardPengurusKelas({
     setCurrentPage("Beranda");
   };
 
-  // Dummy user info
+  // User info
   const userInfo = {
-    name: user.name || "Muhammad Wito S.",
-    id: "0918415784",
+    name: user.name || "-",
+    id: user.phone || "-",
   };
 
   return (
